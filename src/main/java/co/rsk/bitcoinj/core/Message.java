@@ -108,7 +108,7 @@ public abstract class Message {
     }
 
     private void selfCheck(byte[] payload, int offset) {
-        if (!(this instanceof VersionMessage)) {
+        //if (!(this instanceof VersionMessage)) {
             byte[] payloadBytes = new byte[cursor - offset];
             System.arraycopy(payload, offset, payloadBytes, 0, cursor - offset);
             byte[] reserialized = bitcoinSerialize();
@@ -116,7 +116,7 @@ public abstract class Message {
                 throw new RuntimeException("Serialization is wrong: \n" +
                         Utils.HEX.encode(reserialized) + " vs \n" +
                         Utils.HEX.encode(payloadBytes));
-        }
+        //}
     }
 
     protected Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {

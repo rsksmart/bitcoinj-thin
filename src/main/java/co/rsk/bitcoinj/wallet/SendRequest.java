@@ -23,7 +23,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.math.BigInteger;
 import java.util.Date;
 
-import org.bitcoin.protocols.payments.Protos.PaymentDetails;
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.Coin;
 import co.rsk.bitcoinj.core.Context;
@@ -33,8 +32,6 @@ import co.rsk.bitcoinj.core.Transaction;
 import co.rsk.bitcoinj.core.TransactionOutput;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
-import co.rsk.bitcoinj.utils.ExchangeRate;
-import co.rsk.bitcoinj.wallet.KeyChain.KeyPurpose;
 import co.rsk.bitcoinj.wallet.Wallet.MissingSigsMode;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -136,11 +133,6 @@ public class SendRequest {
     public MissingSigsMode missingSigsMode = MissingSigsMode.THROW;
 
     /**
-     * If not null, this exchange rate is recorded with the transaction during completion.
-     */
-    public ExchangeRate exchangeRate = null;
-
-    /**
      * If not null, this memo is recorded with the transaction during completion. It can be used to record the memo
      * of the payment request that initiated the transaction.
      */
@@ -204,32 +196,6 @@ public class SendRequest {
         return req;
     }
 
-    /**
-     * Construct a SendRequest for a CPFP (child-pays-for-parent) transaction. The resulting transaction is already
-     * completed, so you should directly proceed to signing and broadcasting/committing the transaction. CPFP is
-     * currently only supported by a few miners, so use with care.
-     */
-    public static SendRequest childPaysForParent(Wallet wallet, Transaction parentTransaction, Coin feeRaise) {
-        TransactionOutput outputToSpend = null;
-        for (final TransactionOutput output : parentTransaction.getOutputs()) {
-            if (output.isMine(wallet) && output.isAvailableForSpending()
-                    && output.getValue().isGreaterThan(feeRaise)) {
-                outputToSpend = output;
-                break;
-            }
-        }
-        // TODO spend another confirmed output of own wallet if needed
-        checkNotNull(outputToSpend, "Can't find adequately sized output that spends to us");
-
-        final Transaction tx = new Transaction(parentTransaction.getParams());
-        tx.addInput(outputToSpend);
-        tx.addOutput(outputToSpend.getValue().subtract(feeRaise), wallet.freshAddress(KeyPurpose.CHANGE));
-        tx.setPurpose(Transaction.Purpose.RAISE_FEE);
-        final SendRequest req = forTx(tx);
-        req.completed = true;
-        return req;
-    }
-
     public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value) {
         long time = releaseTime.getTime() / 1000L;
         checkArgument(time >= Transaction.LOCKTIME_THRESHOLD, "Release time was too small");
@@ -247,13 +213,6 @@ public class SendRequest {
         req.tx = new Transaction(params);
         req.tx.addOutput(value, output);
         return req;
-    }
-
-    /** Copy data from payment request. */
-    public SendRequest fromPaymentDetails(PaymentDetails paymentDetails) {
-        if (paymentDetails.hasMemo())
-            this.memo = paymentDetails.getMemo();
-        return this;
     }
 
     @Override

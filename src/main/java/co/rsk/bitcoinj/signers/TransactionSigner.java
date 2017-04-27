@@ -17,7 +17,6 @@
 package co.rsk.bitcoinj.signers;
 
 import co.rsk.bitcoinj.core.Transaction;
-import co.rsk.bitcoinj.crypto.ChildNumber;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.wallet.KeyBag;
 
@@ -43,18 +42,8 @@ public interface TransactionSigner {
 
         public final Transaction partialTx;
 
-        /**
-         * HD key paths used for each input to derive a signing key. It's useful for multisig inputs only.
-         * The keys used to create a single P2SH address have the same derivation path, so to use a correct key each signer
-         * has to know a derivation path of signing keys used by previous signers. For each input signers will use the
-         * same derivation path and we need to store only one key path per input. As TransactionInput is mutable, inputs
-         * are identified by their scriptPubKeys (keys in this map).
-         */
-        public final Map<Script, List<ChildNumber>> keyPaths;
-
         public ProposedTransaction(Transaction partialTx) {
             this.partialTx = partialTx;
-            this.keyPaths = new HashMap<Script, List<ChildNumber>>();
         }
     }
 

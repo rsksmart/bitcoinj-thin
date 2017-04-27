@@ -39,9 +39,11 @@ import static com.google.common.base.Preconditions.*;
  * in the case where multiple instances of the library are in use simultaneously.</p>
  */
 public class Context {
+    /** The version of this library release, as a string. */
+    public static final String BITCOINJ_VERSION = "0.14.4";
+
     private static final Logger log = LoggerFactory.getLogger(Context.class);
 
-    private TxConfidenceTable confidenceTable;
     private NetworkParameters params;
     private int eventHorizon = 100;
     private boolean ensureMinRequiredFee = true;
@@ -54,8 +56,7 @@ public class Context {
      * @param params The network parameters that will be associated with this context.
      */
     public Context(NetworkParameters params) {
-        log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
-        this.confidenceTable = new TxConfidenceTable();
+        log.info("Creating bitcoinj {} context.", BITCOINJ_VERSION);
         this.params = params;
         lastConstructed = this;
         // We may already have a context in our TLS slot. This can happen a lot during unit tests, so just ignore it.
@@ -146,16 +147,6 @@ public class Context {
      */
     public static void propagate(Context context) {
         slot.set(checkNotNull(context));
-    }
-
-    /**
-     * Returns the {@link TxConfidenceTable} created by this context. The pool tracks advertised
-     * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
-     * With an un-tampered with internet connection, the more peers announce a transaction the more confidence you can
-     * have that it's really valid.
-     */
-    public TxConfidenceTable getConfidenceTable() {
-        return confidenceTable;
     }
 
     /**

@@ -54,32 +54,12 @@ class DummySerializer extends MessageSerializer {
     }
 
     @Override
-    public AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
-    public Message makeAlertMessage(byte[] payloadBytes) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
     public Block makeBlock(byte[] payloadBytes, int offset, int length) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public Message makeBloomFilter(byte[] payloadBytes) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
     public FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
-    public InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 

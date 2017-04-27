@@ -18,10 +18,6 @@
 package co.rsk.bitcoinj.core;
 
 import com.google.common.base.Objects;
-import co.rsk.bitcoinj.core.Block;
-import co.rsk.bitcoinj.core.StoredBlock;
-import co.rsk.bitcoinj.core.VerificationException;
-import co.rsk.bitcoinj.net.discovery.*;
 import co.rsk.bitcoinj.params.*;
 import co.rsk.bitcoinj.script.*;
 import co.rsk.bitcoinj.store.BlockStore;
@@ -35,7 +31,6 @@ import java.math.*;
 import java.util.*;
 
 import static co.rsk.bitcoinj.core.Coin.*;
-import co.rsk.bitcoinj.utils.VersionTally;
 
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
@@ -46,11 +41,6 @@ import co.rsk.bitcoinj.utils.VersionTally;
  * them, you are encouraged to call the static get() methods on each specific params class directly.</p>
  */
 public abstract class NetworkParameters {
-    /**
-     * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.
-     */
-    public static final byte[] SATOSHI_KEY = Utils.HEX.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
-
     /** The string returned by getId() for the main, production network where people trade things. */
     public static final String ID_MAINNET = "org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
@@ -79,7 +69,6 @@ public abstract class NetworkParameters {
     protected int dumpedPrivateKeyHeader;
     protected int interval;
     protected int targetTimespan;
-    protected byte[] alertSigningKey;
     protected int bip32HeaderPub;
     protected int bip32HeaderPriv;
 
@@ -103,12 +92,10 @@ public abstract class NetworkParameters {
     protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
     protected int[] addrSeeds;
-    protected HttpDiscovery.Details[] httpSeeds = {};
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters() {
-        alertSigningKey = SATOSHI_KEY;
         genesisBlock = createGenesis(this);
     }
 
@@ -286,11 +273,6 @@ public abstract class NetworkParameters {
         return addrSeeds;
     }
 
-    /** Returns discovery objects for seeds implementing the Cartographer protocol. See {@link co.rsk.bitcoinj.net.discovery.HttpDiscovery} for more info. */
-    public HttpDiscovery.Details[] getHttpSeeds() {
-        return httpSeeds;
-    }
-
     /**
      * <p>Genesis block for this chain.</p>
      *
@@ -370,14 +352,6 @@ public abstract class NetworkParameters {
     /** Maximum target represents the easiest allowable proof of work. */
     public BigInteger getMaxTarget() {
         return maxTarget;
-    }
-
-    /**
-     * The key used to sign {@link co.rsk.bitcoinj.core.AlertMessage}s. You can use {@link co.rsk.bitcoinj.core.ECKey#verify(byte[], byte[], byte[])} to verify
-     * signatures using it.
-     */
-    public byte[] getAlertSigningKey() {
-        return alertSigningKey;
     }
 
     /** Returns the 4 byte header for BIP32 (HD) wallet - public key part. */
@@ -471,54 +445,6 @@ public abstract class NetworkParameters {
      */
     public int getMajorityWindow() {
         return majorityWindow;
-    }
-
-    /**
-     * The flags indicating which block validation tests should be applied to
-     * the given block. Enables support for alternative blockchains which enable
-     * tests based on different criteria.
-     * 
-     * @param block block to determine flags for.
-     * @param height height of the block, if known, null otherwise. Returned
-     * tests should be a safe subset if block height is unknown.
-     */
-    public EnumSet<Block.VerifyFlag> getBlockVerificationFlags(final Block block,
-            final VersionTally tally, final Integer height) {
-        final EnumSet<Block.VerifyFlag> flags = EnumSet.noneOf(Block.VerifyFlag.class);
-
-        if (block.isBIP34()) {
-            final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP34);
-            if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
-                flags.add(Block.VerifyFlag.HEIGHT_IN_COINBASE);
-            }
-        }
-        return flags;
-    }
-
-    /**
-     * The flags indicating which script validation tests should be applied to
-     * the given transaction. Enables support for alternative blockchains which enable
-     * tests based on different criteria.
-     *
-     * @param block block the transaction belongs to.
-     * @param transaction to determine flags for.
-     * @param height height of the block, if known, null otherwise. Returned
-     * tests should be a safe subset if block height is unknown.
-     */
-    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block,
-            final Transaction transaction, final VersionTally tally, final Integer height) {
-        final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
-        if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
-            verifyFlags.add(Script.VerifyFlag.P2SH);
-
-        // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
-        // blocks, when 75% of the network has upgraded:
-        if (block.getVersion() >= Block.BLOCK_VERSION_BIP65 &&
-            tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP65) > this.getMajorityEnforceBlockUpgrade()) {
-            verifyFlags.add(Script.VerifyFlag.CHECKLOCKTIMEVERIFY);
-        }
-
-        return verifyFlags;
     }
 
     public abstract int getProtocolVersionNum(final ProtocolVersion version);

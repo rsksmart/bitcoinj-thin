@@ -51,26 +51,9 @@ public class BitcoinSerializer extends MessageSerializer {
     private static final Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>, String>();
 
     static {
-        names.put(VersionMessage.class, "version");
-        names.put(InventoryMessage.class, "inv");
         names.put(Block.class, "block");
-        names.put(GetDataMessage.class, "getdata");
         names.put(Transaction.class, "tx");
-        names.put(AddressMessage.class, "addr");
-        names.put(Ping.class, "ping");
-        names.put(Pong.class, "pong");
-        names.put(VersionAck.class, "verack");
-        names.put(GetBlocksMessage.class, "getblocks");
-        names.put(GetHeadersMessage.class, "getheaders");
-        names.put(GetAddrMessage.class, "getaddr");
-        names.put(HeadersMessage.class, "headers");
-        names.put(BloomFilter.class, "filterload");
         names.put(FilteredBlock.class, "merkleblock");
-        names.put(NotFoundMessage.class, "notfound");
-        names.put(MemoryPoolMessage.class, "mempool");
-        names.put(RejectMessage.class, "reject");
-        names.put(GetUTXOsMessage.class, "getutxos");
-        names.put(UTXOsMessage.class, "utxos");
     }
 
     /**
@@ -189,46 +172,14 @@ public class BitcoinSerializer extends MessageSerializer {
     private Message makeMessage(String command, int length, byte[] payloadBytes, byte[] hash, byte[] checksum) throws ProtocolException {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         Message message;
-        if (command.equals("version")) {
-            return new VersionMessage(params, payloadBytes);
-        } else if (command.equals("inv")) { 
-            message = makeInventoryMessage(payloadBytes, length);
-        } else if (command.equals("block")) {
+        if (command.equals("block")) {
             message = makeBlock(payloadBytes, length);
         } else if (command.equals("merkleblock")) {
             message = makeFilteredBlock(payloadBytes);
-        } else if (command.equals("getdata")) {
-            message = new GetDataMessage(params, payloadBytes, this, length);
-        } else if (command.equals("getblocks")) {
-            message = new GetBlocksMessage(params, payloadBytes);
-        } else if (command.equals("getheaders")) {
-            message = new GetHeadersMessage(params, payloadBytes);
         } else if (command.equals("tx")) {
             message = makeTransaction(payloadBytes, 0, length, hash);
-        } else if (command.equals("addr")) {
-            message = makeAddressMessage(payloadBytes, length);
-        } else if (command.equals("ping")) {
-            message = new Ping(params, payloadBytes);
-        } else if (command.equals("pong")) {
-            message = new Pong(params, payloadBytes);
-        } else if (command.equals("verack")) {
-            return new VersionAck(params, payloadBytes);
         } else if (command.equals("headers")) {
             return new HeadersMessage(params, payloadBytes);
-        } else if (command.equals("alert")) {
-            return makeAlertMessage(payloadBytes);
-        } else if (command.equals("filterload")) {
-            return makeBloomFilter(payloadBytes);
-        } else if (command.equals("notfound")) {
-            return new NotFoundMessage(params, payloadBytes);
-        } else if (command.equals("mempool")) {
-            return new MemoryPoolMessage();
-        } else if (command.equals("reject")) {
-            return new RejectMessage(params, payloadBytes);
-        } else if (command.equals("utxos")) {
-            return new UTXOsMessage(params, payloadBytes);
-        } else if (command.equals("getutxos")) {
-            return new GetUTXOsMessage(params, payloadBytes);
         } else {
             log.warn("No support for deserializing message with name {}", command);
             return new UnknownMessage(params, command, payloadBytes);
@@ -244,24 +195,6 @@ public class BitcoinSerializer extends MessageSerializer {
     }
 
     /**
-     * Make an address message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    @Override
-    public AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws ProtocolException {
-        return new AddressMessage(params, payloadBytes, this, length);
-    }
-
-    /**
-     * Make an alert message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    @Override
-    public Message makeAlertMessage(byte[] payloadBytes) throws ProtocolException {
-        return new AlertMessage(params, payloadBytes);
-    }
-
-    /**
      * Make a block from the payload. Extension point for alternative
      * serialization format support.
      */
@@ -271,30 +204,12 @@ public class BitcoinSerializer extends MessageSerializer {
     }
 
     /**
-     * Make an filter message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    @Override
-    public Message makeBloomFilter(byte[] payloadBytes) throws ProtocolException {
-        return new BloomFilter(params, payloadBytes);
-    }
-
-    /**
      * Make a filtered block from the payload. Extension point for alternative
      * serialization format support.
      */
     @Override
     public FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws ProtocolException {
         return new FilteredBlock(params, payloadBytes);
-    }
-
-    /**
-     * Make an inventory message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    @Override
-    public InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws ProtocolException {
-        return new InventoryMessage(params, payloadBytes, this, length);
     }
 
     /**

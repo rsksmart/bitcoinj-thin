@@ -52,19 +52,6 @@ public abstract class MessageSerializer {
     public abstract boolean isParseRetainMode();
 
     /**
-     * Make an address message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    public abstract AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
-
-    /**
-     * Make an alert message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    public abstract Message makeAlertMessage(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
-
-
-    /**
      * Make a block from the payload, using an offset of zero and the payload
      * length as block length.
      */
@@ -88,22 +75,10 @@ public abstract class MessageSerializer {
     public abstract Block makeBlock(final byte[] payloadBytes, final int offset, final int length) throws ProtocolException, UnsupportedOperationException;
 
     /**
-     * Make an filter message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    public abstract Message makeBloomFilter(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
-
-    /**
      * Make a filtered block from the payload. Extension point for alternative
      * serialization format support.
      */
     public abstract FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
-
-    /**
-     * Make an inventory message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    public abstract InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make a transaction from the payload. Extension point for alternative

@@ -17,7 +17,6 @@
 package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.script.Script;
-import co.rsk.bitcoinj.wallet.WalletTransaction;
 
 import java.util.Map;
 
@@ -36,7 +35,4 @@ public interface TransactionBag {
 
     /** Returns true if this wallet knows the script corresponding to the given hash. */
     boolean isPayToScriptHashMine(byte[] payToScriptHash);
-
-    /** Returns transactions from a specific pool. */
-    Map<Sha256Hash, Transaction> getTransactionPool(WalletTransaction.Pool pool);
 }
