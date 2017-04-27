@@ -18,7 +18,6 @@ package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.store.BlockStore;
 import co.rsk.bitcoinj.store.BlockStoreException;
-import co.rsk.bitcoinj.store.FullPrunedBlockStore;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
@@ -223,7 +222,6 @@ public class CheckpointManager {
             throws IOException, BlockStoreException {
         checkNotNull(params);
         checkNotNull(store);
-        checkArgument(!(store instanceof FullPrunedBlockStore), "You cannot use checkpointing with a full store.");
 
         time -= 86400 * 7;
 
