@@ -17,14 +17,7 @@
 
 package co.rsk.bitcoinj.crypto;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Stopwatch;
-import com.google.protobuf.ByteString;
-import com.lambdaworks.crypto.SCrypt;
 import co.rsk.bitcoinj.core.Utils;
-import co.rsk.bitcoinj.wallet.Protos;
-import co.rsk.bitcoinj.wallet.Protos.ScryptParameters;
-import co.rsk.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.BufferedBlockCipher;
@@ -58,20 +51,10 @@ public class KeyCrypterScrypt implements KeyCrypter {
     private static final Logger log = LoggerFactory.getLogger(KeyCrypterScrypt.class);
 
     /**
-     * Key length in bytes.
-     */
-    public static final int KEY_LENGTH = 32; // = 256 bits.
-
-    /**
      * The size of an AES block in bytes.
      * This is also the length of the initialisation vector.
      */
     public static final int BLOCK_LENGTH = 16;  // = 128 bits.
-
-    /**
-     * The length of the salt used.
-     */
-    public static final int SALT_LENGTH = 8;
 
     static {
         // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
@@ -83,92 +66,12 @@ public class KeyCrypterScrypt implements KeyCrypter {
 
     private static final SecureRandom secureRandom;
 
-    /** Returns SALT_LENGTH (8) bytes of random data */
-    public static byte[] randomSalt() {
-        byte[] salt = new byte[SALT_LENGTH];
-        secureRandom.nextBytes(salt);
-        return salt;
-    }
-
-    // Scrypt parameters.
-    private final ScryptParameters scryptParameters;
-
     /**
      * Encryption/Decryption using default parameters and a random salt.
      */
     public KeyCrypterScrypt() {
-        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(
-                ByteString.copyFrom(randomSalt()));
-        this.scryptParameters = scryptParametersBuilder.build();
     }
 
-    /**
-     * Encryption/Decryption using custom number of iterations parameters and a random salt.
-     * As of August 2016, a useful value for mobile devices is 4096 (derivation takes about 1 second).
-     *
-     * @param iterations
-     *            number of scrypt iterations
-     */
-    public KeyCrypterScrypt(int iterations) {
-        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder()
-                .setSalt(ByteString.copyFrom(randomSalt())).setN(iterations);
-        this.scryptParameters = scryptParametersBuilder.build();
-    }
-
-    /**
-     * Encryption/ Decryption using specified Scrypt parameters.
-     *
-     * @param scryptParameters ScryptParameters to use
-     * @throws NullPointerException if the scryptParameters or any of its N, R or P is null.
-     */
-    public KeyCrypterScrypt(ScryptParameters scryptParameters) {
-        this.scryptParameters = checkNotNull(scryptParameters);
-        // Check there is a non-empty salt.
-        // (Some early MultiBit wallets has a missing salt so it is not a hard fail).
-        if (scryptParameters.getSalt() == null
-                || scryptParameters.getSalt().toByteArray() == null
-                || scryptParameters.getSalt().toByteArray().length == 0) {
-            log.warn("You are using a ScryptParameters with no salt. Your encryption may be vulnerable to a dictionary attack.");
-        }
-    }
-
-    /**
-     * Generate AES key.
-     *
-     * This is a very slow operation compared to encrypt/ decrypt so it is normally worth caching the result.
-     *
-     * @param password    The password to use in key generation
-     * @return            The KeyParameter containing the created AES key
-     * @throws            KeyCrypterException
-     */
-    @Override
-    public KeyParameter deriveKey(CharSequence password) throws KeyCrypterException {
-        byte[] passwordBytes = null;
-        try {
-            passwordBytes = convertToByteArray(password);
-            byte[] salt = new byte[0];
-            if ( scryptParameters.getSalt() != null) {
-                salt = scryptParameters.getSalt().toByteArray();
-            } else {
-                // Warn the user that they are not using a salt.
-                // (Some early MultiBit wallets had a blank salt).
-                log.warn("You are using a ScryptParameters with no salt. Your encryption may be vulnerable to a dictionary attack.");
-            }
-
-            final Stopwatch watch = Stopwatch.createStarted();
-            byte[] keyBytes = SCrypt.scrypt(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
-            watch.stop();
-            log.info("Deriving key took {} for {} scrypt iterations.", watch, scryptParameters.getN());
-            return new KeyParameter(keyBytes);
-        } catch (Exception e) {
-            throw new KeyCrypterException("Could not generate key from password and salt.", e);
-        } finally {
-            // Zero the password bytes.
-            if (passwordBytes != null) {
-                java.util.Arrays.fill(passwordBytes, (byte) 0);
-            }
-        }
-    }
 
     /**
      * Password based encryption using AES - CBC 256 bits.
@@ -229,50 +132,4 @@ public class KeyCrypterScrypt implements KeyCrypter {
         }
     }
 
-    /**
-     * Convert a CharSequence (which are UTF16) into a byte array.
-     *
-     * Note: a String.getBytes() is not used to avoid creating a String of the password in the JVM.
-     */
-    private static byte[] convertToByteArray(CharSequence charSequence) {
-        checkNotNull(charSequence);
-
-        byte[] byteArray = new byte[charSequence.length() << 1];
-        for(int i = 0; i < charSequence.length(); i++) {
-            int bytePosition = i << 1;
-            byteArray[bytePosition] = (byte) ((charSequence.charAt(i)&0xFF00)>>8);
-            byteArray[bytePosition + 1] = (byte) (charSequence.charAt(i)&0x00FF);
-        }
-        return byteArray;
-    }
-
-    public ScryptParameters getScryptParameters() {
-        return scryptParameters;
-    }
-
-    /**
-     * Return the EncryptionType enum value which denotes the type of encryption/ decryption that this KeyCrypter
-     * can understand.
-     */
-    @Override
-    public EncryptionType getUnderstoodEncryptionType() {
-        return EncryptionType.ENCRYPTED_SCRYPT_AES;
-    }
-
-    @Override
-    public String toString() {
-        return "AES-" + KEY_LENGTH * 8 + "-CBC, Scrypt (N: " + scryptParameters.getN() + ")";
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(scryptParameters);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return Objects.equal(scryptParameters, ((KeyCrypterScrypt)o).scryptParameters);
-    }
 }

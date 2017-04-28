@@ -16,7 +16,6 @@
 
 package co.rsk.bitcoinj.crypto;
 
-import co.rsk.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import java.io.Serializable;
@@ -35,20 +34,6 @@ import java.io.Serializable;
  * to determine whether any given KeyCrypter can understand the type of encrypted data you have.</p>
  */
 public interface KeyCrypter extends Serializable {
-
-    /**
-     * Return the EncryptionType enum value which denotes the type of encryption/ decryption that this KeyCrypter
-     * can understand.
-     */
-    EncryptionType getUnderstoodEncryptionType();
-
-    /**
-     * Create a KeyParameter (which typically contains an AES key)
-     * @param password
-     * @return KeyParameter The KeyParameter which typically contains the AES key to use for encrypting and decrypting
-     * @throws KeyCrypterException
-     */
-    KeyParameter deriveKey(CharSequence password) throws KeyCrypterException;
 
     /**
      * Decrypt the provided encrypted bytes, converting them into unencrypted bytes.
