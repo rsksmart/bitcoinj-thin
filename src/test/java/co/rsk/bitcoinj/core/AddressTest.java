@@ -175,22 +175,6 @@ public class AddressTest {
     }
 
     @Test
-    public void p2shAddressCreationFromKeys() throws Exception {
-        // import some keys from this example: https://gist.github.com/gavinandresen/3966071
-        ECKey key1 = DumpedPrivateKey.fromBase58(mainParams, "5JaTXbAUmfPYZFRwrYaALK48fN6sFJp4rHqq2QSXs8ucfpE4yQU").getKey();
-        key1 = ECKey.fromPrivate(key1.getPrivKeyBytes());
-        ECKey key2 = DumpedPrivateKey.fromBase58(mainParams, "5Jb7fCeh1Wtm4yBBg3q3XbT6B525i17kVhy3vMC9AqfR6FH2qGk").getKey();
-        key2 = ECKey.fromPrivate(key2.getPrivKeyBytes());
-        ECKey key3 = DumpedPrivateKey.fromBase58(mainParams, "5JFjmGo5Fww9p8gvx48qBYDJNAzR9pmH5S389axMtDyPT8ddqmw").getKey();
-        key3 = ECKey.fromPrivate(key3.getPrivKeyBytes());
-
-        List<ECKey> keys = Arrays.asList(key1, key2, key3);
-        Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
-        Address address = Address.fromP2SHScript(mainParams, p2shScript);
-        assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
-    }
-
-    @Test
     public void cloning() throws Exception {
         Address a = new Address(testParams, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         Address b = a.clone();
