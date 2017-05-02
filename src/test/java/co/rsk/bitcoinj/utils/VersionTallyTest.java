@@ -37,7 +37,6 @@ public class VersionTallyTest {
 
     @Before
     public void setUp() throws Exception {
-        BriefLogFormatter.initVerbose();
         Context context = new Context(PARAMS);
     }
 
@@ -95,7 +94,7 @@ public class VersionTallyTest {
     @Test
     public void testInitialize() throws BlockStoreException {
         final BlockStore blockStore = new MemoryBlockStore(PARAMS);
-        final BlockChain chain = new BlockChain(PARAMS, blockStore);
+        final BlockChain chain = new BlockChain(new Context(PARAMS), blockStore);
 
         // Build a historical chain of version 2 blocks
         long timeSeconds = 1231006505;

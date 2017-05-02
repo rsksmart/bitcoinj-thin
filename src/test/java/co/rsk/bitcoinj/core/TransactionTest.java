@@ -17,7 +17,6 @@
 
 package co.rsk.bitcoinj.core;
 
-import co.rsk.bitcoinj.core.TransactionConfidence.*;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.*;
 import co.rsk.bitcoinj.script.*;
@@ -151,20 +150,6 @@ public class TransactionTest {
     }
 
     @Test
-    public void testIsMatureReturnsFalseIfTransactionIsCoinbaseAndConfidenceTypeIsNotEqualToBuilding() {
-        Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(PARAMS);
-
-        tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
-        assertEquals(tx.isMature(), false);
-
-        tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-        assertEquals(tx.isMature(), false);
-
-        tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
-        assertEquals(tx.isMature(), false);
-    }
-
-    @Test
     public void testCLTVPaymentChannelTransactionSpending() {
         BigInteger time = BigInteger.valueOf(20);
 
@@ -286,34 +271,6 @@ public class TransactionTest {
     public void testToStringWhenThereAreZeroInputs() {
         Transaction tx = new Transaction(PARAMS);
         assertEquals(tx.toString().contains("No inputs!"), true);
-    }
-
-    @Test
-    public void testTheTXByHeightComparator() {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(PARAMS);
-        tx1.getConfidence().setAppearedAtChainHeight(1);
-
-        Transaction tx2 = FakeTxBuilder.createFakeTx(PARAMS);
-        tx2.getConfidence().setAppearedAtChainHeight(2);
-
-        Transaction tx3 = FakeTxBuilder.createFakeTx(PARAMS);
-        tx3.getConfidence().setAppearedAtChainHeight(3);
-
-        SortedSet<Transaction> set = new TreeSet<Transaction>(Transaction.SORT_TX_BY_HEIGHT);
-        set.add(tx2);
-        set.add(tx1);
-        set.add(tx3);
-
-        Iterator<Transaction> iterator = set.iterator();
-
-        assertEquals(tx1.equals(tx2), false);
-        assertEquals(tx1.equals(tx3), false);
-        assertEquals(tx1.equals(tx1), true);
-
-        assertEquals(iterator.next().equals(tx3), true);
-        assertEquals(iterator.next().equals(tx2), true);
-        assertEquals(iterator.next().equals(tx1), true);
-        assertEquals(iterator.hasNext(), false);
     }
 
     @Test(expected = ScriptException.class)

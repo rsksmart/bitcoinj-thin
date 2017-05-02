@@ -201,47 +201,6 @@ public class BlockTest {
         block.verify(32768, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
     }
 
-    @Test
-    public void testReceiveCoinbaseTransaction() throws Exception {
-        // Block 169482 (hash 0000000000000756935f1ee9d5987857b604046f846d3df56d024cdb5f368665)
-        // contains coinbase transactions that are mining pool shares.
-        // The private key MINERS_KEY is used to check transactions are received by a wallet correctly.
-
-        // The address for this private key is 1GqtGtn4fctXuKxsVzRPSLmYWN1YioLi9y.
-        final String MINING_PRIVATE_KEY = "5JDxPrBRghF1EvSBjDigywqfmAjpHPmTJxYtQTYJxJRHLLQA4mG";
-
-        final long BLOCK_NONCE = 3973947400L;
-        final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642);
-        final NetworkParameters PARAMS = MainNetParams.get();
-
-        Block block169482 = PARAMS.getDefaultSerializer().makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block169482.dat")));
-
-        // Check block.
-        assertNotNull(block169482);
-        block169482.verify(169482, EnumSet.noneOf(Block.VerifyFlag.class));
-        assertEquals(BLOCK_NONCE, block169482.getNonce());
-
-        StoredBlock storedBlock = new StoredBlock(block169482, BigInteger.ONE, 169482); // Nonsense work - not used in test.
-
-        // Create a wallet contain the miner's key that receives a spend from a coinbase.
-        ECKey miningKey = DumpedPrivateKey.fromBase58(PARAMS, MINING_PRIVATE_KEY).getKey();
-        assertNotNull(miningKey);
-        Context context = new Context(PARAMS);
-        Wallet wallet = new Wallet(context);
-        wallet.importKey(miningKey);
-
-        // Initial balance should be zero by construction.
-        assertEquals(Coin.ZERO, wallet.getBalance());
-
-        // Give the wallet the first transaction in the block - this is the coinbase tx.
-        List<Transaction> transactions = block169482.getTransactions();
-        assertNotNull(transactions);
-        wallet.receiveFromBlock(transactions.get(0), storedBlock, NewBlockType.BEST_CHAIN, 0);
-
-        // Coinbase transaction should have been received successfully but be unavailable to spend (too young).
-        assertEquals(BALANCE_AFTER_BLOCK, wallet.getBalance(BalanceType.ESTIMATED));
-        assertEquals(Coin.ZERO, wallet.getBalance(BalanceType.AVAILABLE));
-    }
 
     @Test
     public void isBIPs() throws Exception {

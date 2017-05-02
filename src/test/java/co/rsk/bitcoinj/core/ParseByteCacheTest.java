@@ -84,17 +84,16 @@ public class ParseByteCacheTest {
     public void setUp() throws Exception {
         Context context = new Context(PARAMS);
         Wallet wallet = new Wallet(context);
-        wallet.freshReceiveKey();
 
         resetBlockStore();
         
         Transaction tx1 = createFakeTx(PARAMS,
                 valueOf(2, 0),
-                wallet.currentReceiveKey().toAddress(PARAMS));
+                new ECKey().toAddress(PARAMS));
         
         // add a second input so can test granularity of byte cache.
         Transaction prevTx = new Transaction(PARAMS);
-        TransactionOutput prevOut = new TransactionOutput(PARAMS, prevTx, COIN, wallet.currentReceiveKey().toAddress(PARAMS));
+        TransactionOutput prevOut = new TransactionOutput(PARAMS, prevTx, COIN, new ECKey().toAddress(PARAMS));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);

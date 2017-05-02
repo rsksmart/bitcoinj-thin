@@ -14,11 +14,11 @@
 
 package co.rsk.bitcoinj.core;
 
+import co.rsk.bitcoinj.params.UnitTestParams;
 import com.google.common.collect.ImmutableList;
 import co.rsk.bitcoinj.params.MainNetParams;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
-import co.rsk.bitcoinj.testing.TestWithWallet;
 import co.rsk.bitcoinj.wallet.SendRequest;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
@@ -27,40 +27,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class TransactionOutputTest extends TestWithWallet {
+public class TransactionOutputTest {
 
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
-
-    @Test
-    public void testMultiSigOutputToString() throws Exception {
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN);
-        ECKey myKey = new ECKey();
-        this.wallet.importKey(myKey);
-
-        // Simulate another signatory
-        ECKey otherKey = new ECKey();
-
-        // Create multi-sig transaction
-        Transaction multiSigTransaction = new Transaction(PARAMS);
-        ImmutableList<ECKey> keys = ImmutableList.of(myKey, otherKey);
-
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
-        multiSigTransaction.addOutput(Coin.COIN, scriptPubKey);
-
-        SendRequest req = SendRequest.forTx(multiSigTransaction);
-        this.wallet.completeTx(req);
-        TransactionOutput multiSigTransactionOutput = multiSigTransaction.getOutput(0);
-
-        assertThat(multiSigTransactionOutput.toString(), CoreMatchers.containsString("CHECKMULTISIG"));
-    }
+    protected static final NetworkParameters PARAMS = UnitTestParams.get();
 
     @Test
     public void testP2SHOutputScript() throws Exception {
@@ -82,7 +51,7 @@ public class TransactionOutputTest extends TestWithWallet {
 
     @Test
     public void getMinNonDustValue() throws Exception {
-        TransactionOutput payToAddressOutput = new TransactionOutput(PARAMS, null, Coin.COIN, myAddress);
+        TransactionOutput payToAddressOutput = new TransactionOutput(PARAMS, null, Coin.COIN, new ECKey().toAddress(PARAMS));
         assertEquals(Transaction.MIN_NONDUST_OUTPUT, payToAddressOutput.getMinNonDustValue());
     }
 }
