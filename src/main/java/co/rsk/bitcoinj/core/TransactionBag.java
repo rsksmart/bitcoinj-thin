@@ -18,10 +18,8 @@ package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.script.Script;
 
-import java.util.Map;
-
 /**
- * This interface is used to abstract the {@link co.rsk.bitcoinj.wallet.Wallet} and the {@link co.rsk.bitcoinj.core.Transaction}
+ * This interface is used to abstract the {@link co.rsk.bitcoinj.wallet.Wallet} and the {@link BtcTransaction}
  */
 public interface TransactionBag {
     /** Returns true if this wallet contains a public key which hashes to the given hash. */

@@ -16,14 +16,14 @@
 
 package co.rsk.bitcoinj.utils;
 
-import co.rsk.bitcoinj.core.BlockChain;
+import co.rsk.bitcoinj.core.BtcBlockChain;
 import co.rsk.bitcoinj.core.Context;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.StoredBlock;
 import co.rsk.bitcoinj.params.UnitTestParams;
-import co.rsk.bitcoinj.store.BlockStore;
+import co.rsk.bitcoinj.store.BtcBlockStore;
 import co.rsk.bitcoinj.store.BlockStoreException;
-import co.rsk.bitcoinj.store.MemoryBlockStore;
+import co.rsk.bitcoinj.store.BtcMemoryBlockStore;
 import co.rsk.bitcoinj.testing.FakeTxBuilder;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -93,8 +93,8 @@ public class VersionTallyTest {
 
     @Test
     public void testInitialize() throws BlockStoreException {
-        final BlockStore blockStore = new MemoryBlockStore(PARAMS);
-        final BlockChain chain = new BlockChain(new Context(PARAMS), blockStore);
+        final BtcBlockStore blockStore = new BtcMemoryBlockStore(PARAMS);
+        final BtcBlockChain chain = new BtcBlockChain(new Context(PARAMS), blockStore);
 
         // Build a historical chain of version 2 blocks
         long timeSeconds = 1231006505;

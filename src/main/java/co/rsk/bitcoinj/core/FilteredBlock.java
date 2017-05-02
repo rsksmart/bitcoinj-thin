@@ -29,20 +29,20 @@ import java.util.*;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class FilteredBlock extends Message {
-    private Block header;
+    private BtcBlock header;
 
     private PartialMerkleTree merkleTree;
     private List<Sha256Hash> cachedTransactionHashes = null;
     
     // A set of transactions whose hashes are a subset of getTransactionHashes()
     // These were relayed as a part of the filteredblock getdata, ie likely weren't previously received as loose transactions
-    private Map<Sha256Hash, Transaction> associatedTransactions = new HashMap<Sha256Hash, Transaction>();
+    private Map<Sha256Hash, BtcTransaction> associatedTransactions = new HashMap<Sha256Hash, BtcTransaction>();
     
     public FilteredBlock(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
     }
 
-    public FilteredBlock(NetworkParameters params, Block header, PartialMerkleTree pmt) {
+    public FilteredBlock(NetworkParameters params, BtcBlock header, PartialMerkleTree pmt) {
         super(params);
         this.header = header;
         this.merkleTree = pmt;
@@ -59,13 +59,13 @@ public class FilteredBlock extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        byte[] headerBytes = new byte[Block.HEADER_SIZE];
-        System.arraycopy(payload, 0, headerBytes, 0, Block.HEADER_SIZE);
+        byte[] headerBytes = new byte[BtcBlock.HEADER_SIZE];
+        System.arraycopy(payload, 0, headerBytes, 0, BtcBlock.HEADER_SIZE);
         header = params.getDefaultSerializer().makeBlock(headerBytes);
         
-        merkleTree = new PartialMerkleTree(params, payload, Block.HEADER_SIZE);
+        merkleTree = new PartialMerkleTree(params, payload, BtcBlock.HEADER_SIZE);
         
-        length = Block.HEADER_SIZE + merkleTree.getMessageSize();
+        length = BtcBlock.HEADER_SIZE + merkleTree.getMessageSize();
     }
     
     /**
@@ -87,7 +87,7 @@ public class FilteredBlock extends Message {
     /**
      * Gets a copy of the block header
      */
-    public Block getBlockHeader() {
+    public BtcBlock getBlockHeader() {
         return header.cloneAsHeader();
     }
     
@@ -101,7 +101,7 @@ public class FilteredBlock extends Message {
      * Provide this FilteredBlock with a transaction which is in its Merkle tree.
      * @return false if the tx is not relevant to this FilteredBlock
      */
-    public boolean provideTransaction(Transaction tx) throws VerificationException {
+    public boolean provideTransaction(BtcTransaction tx) throws VerificationException {
         Sha256Hash hash = tx.getHash();
         if (getTransactionHashes().contains(hash)) {
             associatedTransactions.put(hash, tx);
@@ -116,7 +116,7 @@ public class FilteredBlock extends Message {
     }
 
     /** Gets the set of transactions which were provided using provideTransaction() which match in getTransactionHashes() */
-    public Map<Sha256Hash, Transaction> getAssociatedTransactions() {
+    public Map<Sha256Hash, BtcTransaction> getAssociatedTransactions() {
         return Collections.unmodifiableMap(associatedTransactions);
     }
 

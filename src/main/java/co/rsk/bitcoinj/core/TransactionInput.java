@@ -67,17 +67,17 @@ public class TransactionInput extends ChildMessage {
     /**
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
      */
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes) {
-        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(params, UNCONNECTED, (Transaction) null));
+    public TransactionInput(NetworkParameters params, @Nullable BtcTransaction parentTransaction, byte[] scriptBytes) {
+        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(params, UNCONNECTED, (BtcTransaction) null));
     }
 
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
+    public TransactionInput(NetworkParameters params, @Nullable BtcTransaction parentTransaction, byte[] scriptBytes,
                             TransactionOutPoint outpoint) {
         this(params, parentTransaction, scriptBytes, outpoint, null);
     }
 
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
-            TransactionOutPoint outpoint, @Nullable Coin value) {
+    public TransactionInput(NetworkParameters params, @Nullable BtcTransaction parentTransaction, byte[] scriptBytes,
+                            TransactionOutPoint outpoint, @Nullable Coin value) {
         super(params);
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
@@ -90,7 +90,7 @@ public class TransactionInput extends ChildMessage {
     /**
      * Creates an UNSIGNED input that links to the given output
      */
-    TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
+    TransactionInput(NetworkParameters params, BtcTransaction parentTransaction, TransactionOutput output) {
         super(params);
         long outputIndex = output.getIndex();
         if(output.getParentTransaction() != null ) {
@@ -108,7 +108,7 @@ public class TransactionInput extends ChildMessage {
     /**
      * Deserializes an input message. This is usually part of a transaction message.
      */
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] payload, int offset) throws ProtocolException {
+    public TransactionInput(NetworkParameters params, @Nullable BtcTransaction parentTransaction, byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
         setParent(parentTransaction);
         this.value = null;
@@ -122,7 +122,7 @@ public class TransactionInput extends ChildMessage {
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] payload, int offset, MessageSerializer serializer)
+    public TransactionInput(NetworkParameters params, BtcTransaction parentTransaction, byte[] payload, int offset, MessageSerializer serializer)
             throws ProtocolException {
         super(params, payload, offset, parentTransaction, serializer, UNKNOWN_LENGTH);
         this.value = null;
@@ -250,8 +250,8 @@ public class TransactionInput extends ChildMessage {
     /**
      * @return The Transaction that owns this input.
      */
-    public Transaction getParentTransaction() {
-        return (Transaction) parent;
+    public BtcTransaction getParentTransaction() {
+        return (BtcTransaction) parent;
     }
 
     /**
@@ -276,8 +276,8 @@ public class TransactionInput extends ChildMessage {
      * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
      */
     @Nullable
-    TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
-        Transaction tx = transactions.get(outpoint.getHash());
+    TransactionOutput getConnectedOutput(Map<Sha256Hash, BtcTransaction> transactions) {
+        BtcTransaction tx = transactions.get(outpoint.getHash());
         if (tx == null)
             return null;
         return tx.getOutputs().get((int) outpoint.getIndex());
@@ -307,8 +307,8 @@ public class TransactionInput extends ChildMessage {
      * @param mode   Whether to abort if there's a pre-existing connection or not.
      * @return NO_SUCH_TX if the prevtx wasn't found, ALREADY_SPENT if there was a conflict, SUCCESS if not.
      */
-    public ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, ConnectMode mode) {
-        Transaction tx = transactions.get(outpoint.getHash());
+    public ConnectionResult connect(Map<Sha256Hash, BtcTransaction> transactions, ConnectMode mode) {
+        BtcTransaction tx = transactions.get(outpoint.getHash());
         if (tx == null) {
             return TransactionInput.ConnectionResult.NO_SUCH_TX;
         }
@@ -324,7 +324,7 @@ public class TransactionInput extends ChildMessage {
      * @param mode   Whether to abort if there's a pre-existing connection or not.
      * @return NO_SUCH_TX if transaction is not the prevtx, ALREADY_SPENT if there was a conflict, SUCCESS if not.
      */
-    public ConnectionResult connect(Transaction transaction, ConnectMode mode) {
+    public ConnectionResult connect(BtcTransaction transaction, ConnectMode mode) {
         if (!transaction.getHash().equals(outpoint.getHash()))
             return ConnectionResult.NO_SUCH_TX;
         checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
@@ -402,7 +402,7 @@ public class TransactionInput extends ChildMessage {
      * @throws VerificationException If the outpoint doesn't match the given output.
      */
     public void verify() throws VerificationException {
-        final Transaction fromTx = getOutpoint().fromTx;
+        final BtcTransaction fromTx = getOutpoint().fromTx;
         long spendingIndex = getOutpoint().getIndex();
         checkNotNull(fromTx, "Not connected");
         final TransactionOutput output = fromTx.getOutput((int) spendingIndex);
@@ -445,7 +445,7 @@ public class TransactionInput extends ChildMessage {
      * this method returns null.
      */
     @Nullable
-    public Transaction getConnectedTransaction() {
+    public BtcTransaction getConnectedTransaction() {
         return getOutpoint().fromTx;
     }
 

@@ -19,12 +19,8 @@ package co.rsk.bitcoinj.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import co.rsk.bitcoinj.store.BlockStore;
+import co.rsk.bitcoinj.store.BtcBlockStore;
 import co.rsk.bitcoinj.store.BlockStoreException;
-import co.rsk.bitcoinj.wallet.Wallet;
-
-import java.util.ArrayList;
-import java.util.List;
 
 // TODO: Rename this class to SPVBlockChain at some point.
 
@@ -33,22 +29,22 @@ import java.util.List;
  * choice to use for programs that have limited resources as it won't verify transactions signatures or attempt to store
  * all of the block chain. Really, this class should be called SPVBlockChain but for backwards compatibility it is not.
  */
-public class BlockChain extends AbstractBlockChain {
+public class BtcBlockChain extends BtcAbstractBlockChain {
     /** Keeps a map of block hashes to StoredBlocks. */
-    protected final BlockStore blockStore;
+    protected final BtcBlockStore blockStore;
 
 
     /**
      * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
      * and receiving coins but rather, just want to explore the network data structures.
      */
-    public BlockChain(Context context, BlockStore blockStore) throws BlockStoreException {
+    public BtcBlockChain(Context context, BtcBlockStore blockStore) throws BlockStoreException {
         super(context, blockStore);
         this.blockStore = blockStore;
     }
 
     @Override
-    protected StoredBlock addToBlockStore(StoredBlock storedPrev, Block blockHeader)
+    protected StoredBlock addToBlockStore(StoredBlock storedPrev, BtcBlock blockHeader)
             throws BlockStoreException, VerificationException {
         StoredBlock newBlock = storedPrev.build(blockHeader);
         blockStore.put(newBlock);

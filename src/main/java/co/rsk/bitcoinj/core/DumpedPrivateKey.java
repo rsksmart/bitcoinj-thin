@@ -85,8 +85,8 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
     /**
      * Returns an ECKey created from this encoded private key.
      */
-    public ECKey getKey() {
-        final ECKey key = ECKey.fromPrivate(bytes);
+    public BtcECKey getKey() {
+        final BtcECKey key = BtcECKey.fromPrivate(bytes);
         return compressed ? key : key.decompress();
     }
 

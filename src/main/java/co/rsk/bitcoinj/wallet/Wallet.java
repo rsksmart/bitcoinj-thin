@@ -19,17 +19,17 @@ package co.rsk.bitcoinj.wallet;
 
 import com.google.common.collect.*;
 import net.jcip.annotations.*;
-import co.rsk.bitcoinj.core.AbstractBlockChain;
+import co.rsk.bitcoinj.core.BtcAbstractBlockChain;
 import co.rsk.bitcoinj.core.Address;
-import co.rsk.bitcoinj.core.BlockChain;
+import co.rsk.bitcoinj.core.BtcBlockChain;
 import co.rsk.bitcoinj.core.Coin;
 import co.rsk.bitcoinj.core.Context;
-import co.rsk.bitcoinj.core.ECKey;
+import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.InsufficientMoneyException;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
-import co.rsk.bitcoinj.core.Transaction;
+import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.core.TransactionBag;
 import co.rsk.bitcoinj.core.TransactionInput;
 import co.rsk.bitcoinj.core.TransactionOutput;
@@ -73,7 +73,7 @@ import static com.google.common.base.Preconditions.*;
  * <p>To learn more about this class, read <b><a href="https://bitcoinj.github.io/working-with-the-wallet">
  *     working with the wallet.</a></b></p>
  *
- * <p>To fill up a Wallet with transactions, you need to use it in combination with a {@link BlockChain} and various
+ * <p>To fill up a Wallet with transactions, you need to use it in combination with a {@link BtcBlockChain} and various
  * other objects, see the <a href="https://bitcoinj.github.io/getting-started">Getting started</a> tutorial
  * on the website to learn more about how to set everything up.</p>
  *
@@ -296,7 +296,7 @@ public class Wallet
      */
     @Override
     @Nullable
-    public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
+    public BtcECKey findKeyFromPubHash(byte[] pubkeyHash) {
         return null;
     }
 
@@ -321,7 +321,7 @@ public class Wallet
      */
     @Override
     @Nullable
-    public ECKey findKeyFromPubKey(byte[] pubkey) {
+    public BtcECKey findKeyFromPubKey(byte[] pubkey) {
         return null;
     }
 
@@ -392,7 +392,7 @@ public class Wallet
      * @param chain If set, will be used to estimate lock times for block timelocked transactions.
      */
     public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions,
-                           @Nullable AbstractBlockChain chain) {
+                           @Nullable BtcAbstractBlockChain chain) {
         try {
             StringBuilder builder = new StringBuilder();
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
@@ -526,7 +526,7 @@ public class Wallet
         USE_DUMMY_SIG,
         /**
          * If signature is missing, {@link co.rsk.bitcoinj.signers.TransactionSigner.MissingSignatureException}
-         * will be thrown for P2SH and {@link ECKey.MissingPrivateKeyException} for other tx types.
+         * will be thrown for P2SH and {@link BtcECKey.MissingPrivateKeyException} for other tx types.
          */
         THROW
     }
@@ -658,13 +658,13 @@ public class Wallet
 
             // Check size.
             final int size = req.tx.unsafeBitcoinSerialize().length;
-            if (size > Transaction.MAX_STANDARD_TX_SIZE)
+            if (size > BtcTransaction.MAX_STANDARD_TX_SIZE)
                 throw new ExceededMaxTransactionSize();
 
             // Label the transaction as being a user requested payment. This can be used to render GUI wallet
             // transaction lists more appropriately, especially when the wallet starts to generate transactions itself
             // for internal purposes.
-            req.tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
+            req.tx.setPurpose(BtcTransaction.Purpose.USER_PAYMENT);
             // Record the exchange rate that was valid when the transaction was completed.
             req.tx.setMemo(req.memo);
             req.completed = true;
@@ -681,7 +681,7 @@ public class Wallet
      */
     public void signTransaction(SendRequest req) {
         try {
-            Transaction tx = req.tx;
+            BtcTransaction tx = req.tx;
             List<TransactionInput> inputs = tx.getInputs();
             List<TransactionOutput> outputs = tx.getOutputs();
             checkState(inputs.size() > 0);
@@ -722,12 +722,12 @@ public class Wallet
     }
 
     /** Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size. */
-    private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
-            boolean ensureMinRequiredFee) {
+    private boolean adjustOutputDownwardsForFee(BtcTransaction tx, CoinSelection coinSelection, Coin feePerKb,
+                                                boolean ensureMinRequiredFee) {
         final int size = tx.unsafeBitcoinSerialize().length + estimateBytesForSigning(coinSelection);
         Coin fee = feePerKb.multiply(size).divide(1000);
-        if (ensureMinRequiredFee && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
-            fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+        if (ensureMinRequiredFee && fee.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
+            fee = BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         TransactionOutput output = tx.getOutput(0);
         output.setValue(output.getValue().subtract(fee));
         return !output.isDust();
@@ -919,7 +919,7 @@ public class Wallet
         Coin fee = Coin.ZERO;
         while (true) {
             result = new FeeCalculation();
-            Transaction tx = new Transaction(params);
+            BtcTransaction tx = new BtcTransaction(params);
             addSuppliedInputs(tx, req.tx.getInputs());
 
             Coin valueNeeded = value;
@@ -1000,8 +1000,8 @@ public class Wallet
             size += estimateBytesForSigning(selection);
 
             Coin feePerKb = req.feePerKb;
-            if (needAtLeastReferenceFee && feePerKb.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
-                feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+            if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
+                feePerKb = BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE;
             }
             Coin feeNeeded = feePerKb.multiply(size).divide(1000);
 
@@ -1017,7 +1017,7 @@ public class Wallet
 
     }
 
-    private void addSuppliedInputs(Transaction tx, List<TransactionInput> originalInputs) {
+    private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
         for (TransactionInput input : originalInputs)
             tx.addInput(new TransactionInput(params, tx, input.bitcoinSerialize()));
     }
@@ -1027,7 +1027,7 @@ public class Wallet
         for (TransactionOutput output : selection.gathered) {
             try {
                 Script script = output.getScriptPubKey();
-                ECKey key = null;
+                BtcECKey key = null;
                 Script redeemScript = null;
                 if (script.isSentToAddress()) {
                     key = findKeyFromPubHash(script.getPubKeyHash());

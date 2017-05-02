@@ -13,8 +13,8 @@
  */
 
 /**
- * The core package contains classes for network messages like {@link co.rsk.bitcoinj.core.Block} and
- * {@link co.rsk.bitcoinj.core.Transaction}, peer connectivity via {@link co.rsk.bitcoinj.core.PeerGroup},
+ * The core package contains classes for network messages like {@link co.rsk.bitcoinj.core.BtcBlock} and
+ * {@link co.rsk.bitcoinj.core.BtcTransaction}, peer connectivity via {@link co.rsk.bitcoinj.core.PeerGroup},
  * and block chain management.
  * If what you're doing can be described as basic bitcoin tasks, the code is probably found here.
  * To learn more please consult the documentation on the website.

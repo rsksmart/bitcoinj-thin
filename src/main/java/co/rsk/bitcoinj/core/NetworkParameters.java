@@ -20,7 +20,7 @@ package co.rsk.bitcoinj.core;
 import com.google.common.base.Objects;
 import co.rsk.bitcoinj.params.*;
 import co.rsk.bitcoinj.script.*;
-import co.rsk.bitcoinj.store.BlockStore;
+import co.rsk.bitcoinj.store.BtcBlockStore;
 import co.rsk.bitcoinj.store.BlockStoreException;
 
 import co.rsk.bitcoinj.utils.MonetaryFormat;
@@ -60,7 +60,7 @@ public abstract class NetworkParameters {
 
     // TODO: Seed nodes should be here as well.
 
-    protected Block genesisBlock;
+    protected BtcBlock genesisBlock;
     protected BigInteger maxTarget;
     protected int port;
     protected long packetMagic;  // Indicates message origin network and is used to seek to the next message when stream state is unknown.
@@ -99,9 +99,9 @@ public abstract class NetworkParameters {
         genesisBlock = createGenesis(this);
     }
 
-    private static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS);
-        Transaction t = new Transaction(n);
+    private static BtcBlock createGenesis(NetworkParameters n) {
+        BtcBlock genesisBlock = new BtcBlock(n, BtcBlock.BLOCK_VERSION_GENESIS);
+        BtcTransaction t = new BtcTransaction(n);
         try {
             // A script containing the difficulty bits and the following message:
             //
@@ -241,7 +241,7 @@ public abstract class NetworkParameters {
      *
      * @throws VerificationException if the block's difficulty is not correct.
      */
-    public abstract void checkDifficultyTransitions(StoredBlock storedPrev, Block next, final BlockStore blockStore) throws VerificationException, BlockStoreException;
+    public abstract void checkDifficultyTransitions(StoredBlock storedPrev, BtcBlock next, final BtcBlockStore blockStore) throws VerificationException, BlockStoreException;
 
     /**
      * Returns true if the block height is either not a checkpoint, or is a checkpoint and the hash matches.
@@ -284,7 +284,7 @@ public abstract class NetworkParameters {
      * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
      * bailout for banks"</i>.</p>
      */
-    public Block getGenesisBlock() {
+    public BtcBlock getGenesisBlock() {
         return genesisBlock;
     }
 

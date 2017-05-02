@@ -62,7 +62,7 @@ public class Script {
         P2SH
     }
 
-    /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}.
+    /** Flags to pass to {@link Script#correctlySpends(BtcTransaction, long, Script, Set)}.
      * Note currently only P2SH, DERSIG and NULLDUMMY are actually supported.
      */
     public enum VerifyFlag {
@@ -363,7 +363,7 @@ public class Script {
         else if (isPayToScriptHash())
             return Address.fromP2SHScript(params, this);
         else if (forcePayToPubKey && isSentToRawPubKey())
-            return ECKey.fromPublicOnly(getPubKey()).toAddress(params);
+            return BtcECKey.fromPublicOnly(getPubKey()).toAddress(params);
         else
             throw new ScriptException("Cannot cast this script to a pay-to-address type");
     }
@@ -393,7 +393,7 @@ public class Script {
     }
 
     /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
-    public static byte[] createMultiSigOutputScript(int threshold, List<ECKey> pubkeys) {
+    public static byte[] createMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0);
         checkArgument(threshold <= pubkeys.size());
         checkArgument(pubkeys.size() <= 16);  // That's the max we can represent with a single opcode.
@@ -403,7 +403,7 @@ public class Script {
         try {
             ByteArrayOutputStream bits = new ByteArrayOutputStream();
             bits.write(encodeToOpN(threshold));
-            for (ECKey key : pubkeys) {
+            for (BtcECKey key : pubkeys) {
                 writeBytes(bits, key.getPubKey());
             }
             bits.write(encodeToOpN(pubkeys.size()));
@@ -443,7 +443,7 @@ public class Script {
      * Having incomplete input script allows to pass around partially signed tx.
      * It is expected that this program later on will be updated with proper signatures.
      */
-    public Script createEmptyInputScript(@Nullable ECKey key, @Nullable Script redeemScript) {
+    public Script createEmptyInputScript(@Nullable BtcECKey key, @Nullable Script redeemScript) {
         if (isSentToAddress()) {
             checkArgument(key != null, "Key required to create pay-to-address input script");
             return ScriptBuilder.createInputScript(null, key);
@@ -479,7 +479,7 @@ public class Script {
      * Returns the index where a signature by the key should be inserted.  Only applicable to
      * a P2SH scriptSig.
      */
-    public int getSigInsertionIndex(Sha256Hash hash, ECKey signingKey) {
+    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
         // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
         // and any placeholder OP_0 sigs.
         List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
@@ -502,7 +502,7 @@ public class Script {
         return sigCount;
     }
 
-    private int findKeyInRedeem(ECKey key) {
+    private int findKeyInRedeem(BtcECKey key) {
         checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         for (int i = 0 ; i < numKeys ; i++) {
@@ -519,14 +519,14 @@ public class Script {
      *
      * @throws ScriptException if the script type is not understood or is pay to address or is P2SH (run this method on the "Redeem script" instead).
      */
-    public List<ECKey> getPubKeys() {
+    public List<BtcECKey> getPubKeys() {
         if (!isSentToMultiSig())
             throw new ScriptException("Only usable for multisig scripts.");
 
-        ArrayList<ECKey> result = Lists.newArrayList();
+        ArrayList<BtcECKey> result = Lists.newArrayList();
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         for (int i = 0 ; i < numKeys ; i++)
-            result.add(ECKey.fromPublicOnly(chunks.get(1 + i).data));
+            result.add(BtcECKey.fromPublicOnly(chunks.get(1 + i).data));
         return result;
     }
 
@@ -535,7 +535,7 @@ public class Script {
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true);
         for (int i = 0 ; i < numKeys ; i++) {
-            if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
+            if (BtcECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
                 return i;
             }
         }
@@ -647,7 +647,7 @@ public class Script {
      * Returns number of bytes required to spend this script. It accepts optional ECKey and redeemScript that may
      * be required for certain types of script to estimate target size.
      */
-    public int getNumberOfBytesRequiredToSpend(@Nullable ECKey pubKey, @Nullable Script redeemScript) {
+    public int getNumberOfBytesRequiredToSpend(@Nullable BtcECKey pubKey, @Nullable Script redeemScript) {
         if (isPayToScriptHash()) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
             checkArgument(redeemScript != null, "P2SH script requires redeemScript to be spent");
@@ -835,15 +835,15 @@ public class Script {
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
      * {@link co.rsk.bitcoinj.core.TransactionInput#verify(co.rsk.bitcoinj.core.TransactionOutput)} or
-     * {@link co.rsk.bitcoinj.script.Script#correctlySpends(co.rsk.bitcoinj.core.Transaction, long, Script)}. This method
+     * {@link co.rsk.bitcoinj.script.Script#correctlySpends(BtcTransaction, long, Script)}. This method
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
      *
-     * @deprecated Use {@link #executeScript(co.rsk.bitcoinj.core.Transaction, long, co.rsk.bitcoinj.script.Script, java.util.LinkedList, java.util.Set)}
+     * @deprecated Use {@link #executeScript(BtcTransaction, long, co.rsk.bitcoinj.script.Script, java.util.LinkedList, java.util.Set)}
      * instead.
      */
     @Deprecated
-    public static void executeScript(@Nullable Transaction txContainingThis, long index,
+    public static void executeScript(@Nullable BtcTransaction txContainingThis, long index,
                                      Script script, LinkedList<byte[]> stack, boolean enforceNullDummy) throws ScriptException {
         final EnumSet<VerifyFlag> flags = enforceNullDummy
             ? EnumSet.of(VerifyFlag.NULLDUMMY)
@@ -855,11 +855,11 @@ public class Script {
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
      * {@link co.rsk.bitcoinj.core.TransactionInput#verify(co.rsk.bitcoinj.core.TransactionOutput)} or
-     * {@link co.rsk.bitcoinj.script.Script#correctlySpends(co.rsk.bitcoinj.core.Transaction, long, Script)}. This method
+     * {@link co.rsk.bitcoinj.script.Script#correctlySpends(BtcTransaction, long, Script)}. This method
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
      */
-    public static void executeScript(@Nullable Transaction txContainingThis, long index,
+    public static void executeScript(@Nullable BtcTransaction txContainingThis, long index,
                                      Script script, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
         int opCount = 0;
         int lastCodeSepLocation = 0;
@@ -1383,9 +1383,9 @@ public class Script {
     }
 
     // This is more or less a direct translation of the code in Bitcoin Core
-    private static void executeCheckLockTimeVerify(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
-                                        int lastCodeSepLocation, int opcode,
-                                        Set<VerifyFlag> verifyFlags) throws ScriptException {
+    private static void executeCheckLockTimeVerify(BtcTransaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
+                                                   int lastCodeSepLocation, int opcode,
+                                                   Set<VerifyFlag> verifyFlags) throws ScriptException {
         if (stack.size() < 1)
             throw new ScriptException("Attempted OP_CHECKLOCKTIMEVERIFY on a stack with size < 1");
 
@@ -1398,8 +1398,8 @@ public class Script {
 
         // There are two kinds of nLockTime, need to ensure we're comparing apples-to-apples
         if (!(
-            ((txContainingThis.getLockTime() <  Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) < 0) ||
-            ((txContainingThis.getLockTime() >= Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) >= 0))
+            ((txContainingThis.getLockTime() <  BtcTransaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(BtcTransaction.LOCKTIME_THRESHOLD_BIG)) < 0) ||
+            ((txContainingThis.getLockTime() >= BtcTransaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(BtcTransaction.LOCKTIME_THRESHOLD_BIG)) >= 0))
         )
             throw new ScriptException("Locktime requirement type mismatch");
 
@@ -1422,8 +1422,8 @@ public class Script {
             throw new ScriptException("Transaction contains a final transaction input for a CHECKLOCKTIMEVERIFY script.");
     }
 
-    private static void executeCheckSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
-                                        int lastCodeSepLocation, int opcode, 
+    private static void executeCheckSig(BtcTransaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
+                                        int lastCodeSepLocation, int opcode,
                                         Set<VerifyFlag> verifyFlags) throws ScriptException {
         final boolean requireCanonical = verifyFlags.contains(VerifyFlag.STRICTENC)
             || verifyFlags.contains(VerifyFlag.DERSIG)
@@ -1452,7 +1452,7 @@ public class Script {
 
             // TODO: Should check hash type is known
             Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
-            sigValid = ECKey.verify(hash.getBytes(), sig, pubKey);
+            sigValid = BtcECKey.verify(hash.getBytes(), sig, pubKey);
         } catch (Exception e1) {
             // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
             // Because I can't verify there aren't more, we use a very generic Exception catch
@@ -1470,8 +1470,8 @@ public class Script {
                 throw new ScriptException("Script failed OP_CHECKSIGVERIFY");
     }
 
-    private static int executeMultiSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
-                                       int opCount, int lastCodeSepLocation, int opcode, 
+    private static int executeMultiSig(BtcTransaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
+                                       int opCount, int lastCodeSepLocation, int opcode,
                                        Set<VerifyFlag> verifyFlags) throws ScriptException {
         final boolean requireCanonical = verifyFlags.contains(VerifyFlag.STRICTENC)
             || verifyFlags.contains(VerifyFlag.DERSIG)
@@ -1526,7 +1526,7 @@ public class Script {
             try {
                 TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst(), requireCanonical);
                 Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
-                if (ECKey.verify(hash.getBytes(), sig, pubKey))
+                if (BtcECKey.verify(hash.getBytes(), sig, pubKey))
                     sigs.pollFirst();
             } catch (Exception e) {
                 // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
@@ -1560,12 +1560,12 @@ public class Script {
      *                         Accessing txContainingThis from another thread while this method runs results in undefined behavior.
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
-     * @deprecated Use {@link #correctlySpends(co.rsk.bitcoinj.core.Transaction, long, co.rsk.bitcoinj.script.Script, java.util.Set)}
+     * @deprecated Use {@link #correctlySpends(BtcTransaction, long, co.rsk.bitcoinj.script.Script, java.util.Set)}
      * instead so that verification flags do not change as new verification options
      * are added.
      */
     @Deprecated
-    public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey)
+    public void correctlySpends(BtcTransaction txContainingThis, long scriptSigIndex, Script scriptPubKey)
             throws ScriptException {
         correctlySpends(txContainingThis, scriptSigIndex, scriptPubKey, ALL_VERIFY_FLAGS);
     }
@@ -1576,10 +1576,10 @@ public class Script {
      *                         Accessing txContainingThis from another thread while this method runs results in undefined behavior.
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
-     * @param verifyFlags Each flag enables one validation rule. If in doubt, use {@link #correctlySpends(Transaction, long, Script)}
+     * @param verifyFlags Each flag enables one validation rule. If in doubt, use {@link #correctlySpends(BtcTransaction, long, Script)}
      *                    which sets all flags.
      */
-    public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
+    public void correctlySpends(BtcTransaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
                                 Set<VerifyFlag> verifyFlags) throws ScriptException {
         // Clone the transaction because executing the script involves editing it, and if we die, we'll leave
         // the tx half broken (also it's not so thread safe to work on it directly.

@@ -26,9 +26,9 @@ import java.util.Date;
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.Coin;
 import co.rsk.bitcoinj.core.Context;
-import co.rsk.bitcoinj.core.ECKey;
+import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.NetworkParameters;
-import co.rsk.bitcoinj.core.Transaction;
+import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.core.TransactionOutput;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
@@ -58,7 +58,7 @@ public class SendRequest {
      * key, otherwise the behavior of {@link Wallet#completeTx(Wallet.SendRequest)} is undefined (likely
      * RuntimeException).</p>
      */
-    public Transaction tx;
+    public BtcTransaction tx;
 
     /**
      * When emptyWallet is set, all coins selected by the coin selector are sent to the first output in tx
@@ -95,7 +95,7 @@ public class SendRequest {
      *
      * <p>Note that this does not enforce certain fee rules that only apply to transactions which are larger than
      * 26,000 bytes. If you get a transaction which is that large, you should set a feePerKb of at least
-     * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
+     * {@link BtcTransaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
      */
     public boolean ensureMinRequiredFee = Context.get().isEnsureMinRequiredFee();
 
@@ -152,14 +152,14 @@ public class SendRequest {
     /**
      * <p>Creates a new SendRequest to the given address for the given value.</p>
      *
-     * <p>Be very careful when value is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} as the transaction will
+     * <p>Be very careful when value is smaller than {@link BtcTransaction#MIN_NONDUST_OUTPUT} as the transaction will
      * likely be rejected by the network in this case.</p>
      */
     public static SendRequest to(Address destination, Coin value) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = destination.getParameters();
         checkNotNull(parameters, "Address is for an unknown network");
-        req.tx = new Transaction(parameters);
+        req.tx = new BtcTransaction(parameters);
         req.tx.addOutput(value, destination);
         return req;
     }
@@ -172,15 +172,15 @@ public class SendRequest {
      * rejected by the network. Note that using {@link SendRequest#to(Address, Coin)} will result
      * in a smaller output, and thus the ability to use a smaller output value without rejection.</p>
      */
-    public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
+    public static SendRequest to(NetworkParameters params, BtcECKey destination, Coin value) {
         SendRequest req = new SendRequest();
-        req.tx = new Transaction(params);
+        req.tx = new BtcTransaction(params);
         req.tx.addOutput(value, destination);
         return req;
     }
 
     /** Simply wraps a pre-built incomplete transaction provided by you. */
-    public static SendRequest forTx(Transaction tx) {
+    public static SendRequest forTx(BtcTransaction tx) {
         SendRequest req = new SendRequest();
         req.tx = tx;
         return req;
@@ -190,27 +190,27 @@ public class SendRequest {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = destination.getParameters();
         checkNotNull(parameters, "Address is for an unknown network");
-        req.tx = new Transaction(parameters);
+        req.tx = new BtcTransaction(parameters);
         req.tx.addOutput(Coin.ZERO, destination);
         req.emptyWallet = true;
         return req;
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value) {
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, BtcECKey from, BtcECKey to, Coin value) {
         long time = releaseTime.getTime() / 1000L;
-        checkArgument(time >= Transaction.LOCKTIME_THRESHOLD, "Release time was too small");
+        checkArgument(time >= BtcTransaction.LOCKTIME_THRESHOLD, "Release time was too small");
         return toCLTVPaymentChannel(params, BigInteger.valueOf(time), from, to, value);
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, int releaseBlock, ECKey from, ECKey to, Coin value) {
-        checkArgument(0 <= releaseBlock && releaseBlock < Transaction.LOCKTIME_THRESHOLD, "Block number was too large");
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, int releaseBlock, BtcECKey from, BtcECKey to, Coin value) {
+        checkArgument(0 <= releaseBlock && releaseBlock < BtcTransaction.LOCKTIME_THRESHOLD, "Block number was too large");
         return toCLTVPaymentChannel(params, BigInteger.valueOf(releaseBlock), from, to, value);
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value) {
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, BtcECKey from, BtcECKey to, Coin value) {
         SendRequest req = new SendRequest();
         Script output = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
-        req.tx = new Transaction(params);
+        req.tx = new BtcTransaction(params);
         req.tx.addOutput(value, output);
         return req;
     }

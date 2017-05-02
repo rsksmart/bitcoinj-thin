@@ -31,7 +31,7 @@ public class UTXOTest {
 
     @Test
     public void testJavaSerialization() throws Exception {
-        ECKey key = new ECKey();
+        BtcECKey key = new BtcECKey();
         UTXO utxo = new UTXO(Sha256Hash.of(new byte[]{1,2,3}), 1, Coin.COIN, 10, true, ScriptBuilder.createOutputScript(key));
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(utxo);

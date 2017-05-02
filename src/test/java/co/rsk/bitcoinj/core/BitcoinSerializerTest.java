@@ -21,7 +21,6 @@ import co.rsk.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.net.InetAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -60,7 +59,7 @@ public class BitcoinSerializerTest {
         MessageSerializer serializer = MainNetParams.get().getSerializer(true);
         
         // first try writing to a fields to ensure uncaching and children are not affected
-        Transaction transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
+        BtcTransaction transaction = (BtcTransaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
         assertNotNull(transaction);
         assertTrue(transaction.isCached());
 
@@ -75,7 +74,7 @@ public class BitcoinSerializerTest {
         assertFalse(Arrays.equals(TRANSACTION_MESSAGE_BYTES, bos.toByteArray()));
 
         // now try writing to a child to ensure uncaching is propagated up to parent but not to siblings
-        transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
+        transaction = (BtcTransaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
         assertNotNull(transaction);
         assertTrue(transaction.isCached());
 
@@ -90,7 +89,7 @@ public class BitcoinSerializerTest {
         assertFalse(Arrays.equals(TRANSACTION_MESSAGE_BYTES, bos.toByteArray()));
 
         // deserialize/reserialize to check for equals.
-        transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
+        transaction = (BtcTransaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
         assertNotNull(transaction);
         assertTrue(transaction.isCached());
         bos = new ByteArrayOutputStream();
@@ -98,7 +97,7 @@ public class BitcoinSerializerTest {
         assertTrue(Arrays.equals(TRANSACTION_MESSAGE_BYTES, bos.toByteArray()));
 
         // deserialize/reserialize to check for equals.  Set a field to it's existing value to trigger uncache
-        transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
+        transaction = (BtcTransaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
         assertNotNull(transaction);
         assertTrue(transaction.isCached());
 

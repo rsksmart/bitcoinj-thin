@@ -16,7 +16,7 @@
 
 package co.rsk.bitcoinj.core;
 
-import co.rsk.bitcoinj.store.BlockStore;
+import co.rsk.bitcoinj.store.BtcBlockStore;
 import co.rsk.bitcoinj.store.BlockStoreException;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
@@ -53,7 +53,7 @@ import static com.google.common.base.Preconditions.*;
  *    headers from the genesis block.</li>
  * </ol>
  *
- * <p>Checkpoints are used by the SPV {@link BlockChain} to initialize fresh
+ * <p>Checkpoints are used by the SPV {@link BtcBlockChain} to initialize fresh
  * {@link org.bitcoinj.store.SPVBlockStore}s. They are not used by fully validating mode, which instead has a
  * different concept of checkpoints that are used to hard-code the validity of blocks that violate BIP30 (duplicate
  * coinbase transactions). Those "checkpoints" can be found in NetworkParameters.</p>
@@ -194,7 +194,7 @@ public class CheckpointManager {
             // This is thread safe because the map never changes after creation.
             Map.Entry<Long, StoredBlock> entry = checkpoints.floorEntry(time);
             if (entry != null) return entry.getValue();
-            Block genesis = params.getGenesisBlock().cloneAsHeader();
+            BtcBlock genesis = params.getGenesisBlock().cloneAsHeader();
             return new StoredBlock(genesis, genesis.getWork(), 0);
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
@@ -218,7 +218,7 @@ public class CheckpointManager {
      *
      * <p>Note that time is adjusted backwards by a week to account for possible clock drift in the block headers.</p>
      */
-    public static void checkpoint(NetworkParameters params, InputStream checkpoints, BlockStore store, long time)
+    public static void checkpoint(NetworkParameters params, InputStream checkpoints, BtcBlockStore store, long time)
             throws IOException, BlockStoreException {
         checkNotNull(params);
         checkNotNull(store);

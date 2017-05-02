@@ -19,7 +19,7 @@ package co.rsk.bitcoinj.utils;
 import java.util.Stack;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.StoredBlock;
-import co.rsk.bitcoinj.store.BlockStore;
+import co.rsk.bitcoinj.store.BtcBlockStore;
 import co.rsk.bitcoinj.store.BlockStoreException;
 
 /**
@@ -96,7 +96,7 @@ public class VersionTally {
      * @param blockStore block store to load blocks from.
      * @param chainHead current chain tip.
      */
-    public void initialize(final BlockStore blockStore, final StoredBlock chainHead)
+    public void initialize(final BtcBlockStore blockStore, final StoredBlock chainHead)
         throws BlockStoreException {
         StoredBlock versionBlock = chainHead;
         final Stack<Long> versions = new Stack<Long>();

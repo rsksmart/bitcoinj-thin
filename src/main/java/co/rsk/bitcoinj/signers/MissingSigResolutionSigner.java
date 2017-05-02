@@ -16,7 +16,7 @@
 
 package co.rsk.bitcoinj.signers;
 
-import co.rsk.bitcoinj.core.ECKey;
+import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.TransactionInput;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.script.Script;
@@ -82,7 +82,7 @@ public class MissingSigResolutionSigner extends StatelessTransactionSigner {
             } else {
                 if (inputScript.getChunks().get(0).equalsOpCode(0)) {
                     if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
-                        throw new ECKey.MissingPrivateKeyException();
+                        throw new BtcECKey.MissingPrivateKeyException();
                     } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
                         txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, 0));
                     }

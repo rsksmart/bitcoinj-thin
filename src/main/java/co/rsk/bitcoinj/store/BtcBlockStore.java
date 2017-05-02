@@ -16,6 +16,7 @@
 
 package co.rsk.bitcoinj.store;
 
+import co.rsk.bitcoinj.core.BtcBlockChain;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.StoredBlock;
@@ -30,7 +31,7 @@ import co.rsk.bitcoinj.core.StoredBlock;
  *
  * BlockStores are thread safe.
  */
-public interface BlockStore {
+public interface BtcBlockStore {
     /**
      * Saves the given block header+extra data. The key isn't specified explicitly as it can be calculated from the
      * StoredBlock directly. Can throw if there is a problem with the underlying storage layer such as running out of
@@ -46,8 +47,8 @@ public interface BlockStore {
 
     /**
      * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work. Note that this
-     * can be arbitrarily expensive, you probably should use {@link co.rsk.bitcoinj.core.BlockChain#getChainHead()}
-     * or perhaps {@link co.rsk.bitcoinj.core.BlockChain#getBestChainHeight()} which will run in constant time and
+     * can be arbitrarily expensive, you probably should use {@link BtcBlockChain#getChainHead()}
+     * or perhaps {@link BtcBlockChain#getBestChainHeight()} which will run in constant time and
      * not take any heavyweight locks.
      */
     StoredBlock getChainHead() throws BlockStoreException;

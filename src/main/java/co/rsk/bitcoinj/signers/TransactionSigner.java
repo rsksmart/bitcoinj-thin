@@ -16,13 +16,8 @@
 
 package co.rsk.bitcoinj.signers;
 
-import co.rsk.bitcoinj.core.Transaction;
-import co.rsk.bitcoinj.script.Script;
+import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.wallet.KeyBag;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * <p>Implementations of this interface are intended to sign inputs of the given transaction. Given transaction may already
@@ -40,9 +35,9 @@ public interface TransactionSigner {
      */
     class ProposedTransaction {
 
-        public final Transaction partialTx;
+        public final BtcTransaction partialTx;
 
-        public ProposedTransaction(Transaction partialTx) {
+        public ProposedTransaction(BtcTransaction partialTx) {
             this.partialTx = partialTx;
         }
     }

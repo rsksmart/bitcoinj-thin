@@ -25,7 +25,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedBytes;
-import co.rsk.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.*;
@@ -88,14 +87,14 @@ import static com.google.common.base.Preconditions.*;
  * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
  * can usually ignore the compressed/uncompressed distinction.</p>
  */
-public class ECKey {
-    private static final Logger log = LoggerFactory.getLogger(ECKey.class);
+public class BtcECKey {
+    private static final Logger log = LoggerFactory.getLogger(BtcECKey.class);
 
     /** Sorts oldest keys first, newest last. */
-    public static final Comparator<ECKey> AGE_COMPARATOR = new Comparator<ECKey>() {
+    public static final Comparator<BtcECKey> AGE_COMPARATOR = new Comparator<BtcECKey>() {
 
         @Override
-        public int compare(ECKey k1, ECKey k2) {
+        public int compare(BtcECKey k1, BtcECKey k2) {
             if (k1.creationTimeSeconds == k2.creationTimeSeconds)
                 return 0;
             else
@@ -104,11 +103,11 @@ public class ECKey {
     };
 
     /** Compares pub key bytes using {@link com.google.common.primitives.UnsignedBytes#lexicographicalComparator()} */
-    public static final Comparator<ECKey> PUBKEY_COMPARATOR = new Comparator<ECKey>() {
+    public static final Comparator<BtcECKey> PUBKEY_COMPARATOR = new Comparator<BtcECKey>() {
         private Comparator<byte[]> comparator = UnsignedBytes.lexicographicalComparator();
 
         @Override
-        public int compare(ECKey k1, ECKey k2) {
+        public int compare(BtcECKey k1, BtcECKey k2) {
             return comparator.compare(k1.getPubKey(), k2.getPubKey());
         }
     };
@@ -157,7 +156,7 @@ public class ECKey {
      * Generates an entirely new keypair. Point compression is used so the resulting public key will be 33 bytes
      * (32 for the co-ordinate and 1 byte to represent the y bit).
      */
-    public ECKey() {
+    public BtcECKey() {
         this(secureRandom);
     }
 
@@ -165,7 +164,7 @@ public class ECKey {
      * Generates an entirely new keypair with the given {@link SecureRandom} object. Point compression is used so the
      * resulting public key will be 33 bytes (32 for the co-ordinate and 1 byte to represent the y bit).
      */
-    public ECKey(SecureRandom secureRandom) {
+    public BtcECKey(SecureRandom secureRandom) {
         ECKeyPairGenerator generator = new ECKeyPairGenerator();
         ECKeyGenerationParameters keygenParams = new ECKeyGenerationParameters(CURVE, secureRandom);
         generator.init(keygenParams);
@@ -177,7 +176,7 @@ public class ECKey {
         creationTimeSeconds = Utils.currentTimeSeconds();
     }
 
-    protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
+    protected BtcECKey(@Nullable BigInteger priv, ECPoint pub) {
         if (priv != null) {
             // Try and catch buggy callers or bad key imports, etc. Zero and one are special because these are often
             // used as sentinel values and because scripting languages have a habit of auto-casting true and false to
@@ -189,7 +188,7 @@ public class ECKey {
         this.pub = new LazyECPoint(checkNotNull(pub));
     }
 
-    protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
+    protected BtcECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         this.priv = priv;
         this.pub = checkNotNull(pub);
     }
@@ -231,7 +230,7 @@ public class ECKey {
      * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by Bitcoin
      * Core in its wallet. Note that this is slow because it requires an EC point multiply.
      */
-    public static ECKey fromASN1(byte[] asn1privkey) {
+    public static BtcECKey fromASN1(byte[] asn1privkey) {
         return extractKeyFromASN1(asn1privkey);
     }
 
@@ -239,7 +238,7 @@ public class ECKey {
      * Creates an ECKey given the private key only. The public key is calculated from it (this is slow). The resulting
      * public key is compressed.
      */
-    public static ECKey fromPrivate(BigInteger privKey) {
+    public static BtcECKey fromPrivate(BigInteger privKey) {
         return fromPrivate(privKey, true);
     }
 
@@ -247,16 +246,16 @@ public class ECKey {
      * Creates an ECKey given the private key only. The public key is calculated from it (this is slow), either
      * compressed or not.
      */
-    public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
+    public static BtcECKey fromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicPointFromPrivate(privKey);
-        return new ECKey(privKey, getPointWithCompression(point, compressed));
+        return new BtcECKey(privKey, getPointWithCompression(point, compressed));
     }
 
     /**
      * Creates an ECKey given the private key only. The public key is calculated from it (this is slow). The resulting
      * public key is compressed.
      */
-    public static ECKey fromPrivate(byte[] privKeyBytes) {
+    public static BtcECKey fromPrivate(byte[] privKeyBytes) {
         return fromPrivate(new BigInteger(1, privKeyBytes));
     }
 
@@ -264,7 +263,7 @@ public class ECKey {
      * Creates an ECKey given the private key only. The public key is calculated from it (this is slow), either
      * compressed or not.
      */
-    public static ECKey fromPrivate(byte[] privKeyBytes, boolean compressed) {
+    public static BtcECKey fromPrivate(byte[] privKeyBytes, boolean compressed) {
         return fromPrivate(new BigInteger(1, privKeyBytes), compressed);
     }
 
@@ -273,8 +272,8 @@ public class ECKey {
      * generator point by the private key. This is used to speed things up when you know you have the right values
      * already. The compression state of pub will be preserved.
      */
-    public static ECKey fromPrivateAndPrecalculatedPublic(BigInteger priv, ECPoint pub) {
-        return new ECKey(priv, pub);
+    public static BtcECKey fromPrivateAndPrecalculatedPublic(BigInteger priv, ECPoint pub) {
+        return new BtcECKey(priv, pub);
     }
 
     /**
@@ -282,37 +281,37 @@ public class ECKey {
      * generator point by the private key. This is used to speed things up when you know you have the right values
      * already. The compression state of the point will be preserved.
      */
-    public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
+    public static BtcECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
         checkNotNull(priv);
         checkNotNull(pub);
-        return new ECKey(new BigInteger(1, priv), CURVE.getCurve().decodePoint(pub));
+        return new BtcECKey(new BigInteger(1, priv), CURVE.getCurve().decodePoint(pub));
     }
 
     /**
      * Creates an ECKey that cannot be used for signing, only verifying signatures, from the given point. The
      * compression state of pub will be preserved.
      */
-    public static ECKey fromPublicOnly(ECPoint pub) {
-        return new ECKey(null, pub);
+    public static BtcECKey fromPublicOnly(ECPoint pub) {
+        return new BtcECKey(null, pub);
     }
 
     /**
      * Creates an ECKey that cannot be used for signing, only verifying signatures, from the given encoded point.
      * The compression state of pub will be preserved.
      */
-    public static ECKey fromPublicOnly(byte[] pub) {
-        return new ECKey(null, CURVE.getCurve().decodePoint(pub));
+    public static BtcECKey fromPublicOnly(byte[] pub) {
+        return new BtcECKey(null, CURVE.getCurve().decodePoint(pub));
     }
 
     /**
      * Returns a copy of this key, but with the public point represented in uncompressed form. Normally you would
      * never need this: it's for specialised scenarios or when backwards compatibility in encoded form is necessary.
      */
-    public ECKey decompress() {
+    public BtcECKey decompress() {
         if (!pub.isCompressed())
             return this;
         else
-            return new ECKey(priv, decompressPoint(pub.get()));
+            return new BtcECKey(priv, decompressPoint(pub.get()));
     }
 
     /**
@@ -321,7 +320,7 @@ public class ECKey {
      * from the private key.
      */
     @Deprecated
-    public ECKey(@Nullable byte[] privKeyBytes, @Nullable byte[] pubKey) {
+    public BtcECKey(@Nullable byte[] privKeyBytes, @Nullable byte[] pubKey) {
         this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
     }
 
@@ -333,7 +332,7 @@ public class ECKey {
      * @param compressed If set to true and pubKey is null, the derived public key will be in compressed form.
      */
     @Deprecated
-    public ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey, boolean compressed) {
+    public BtcECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey, boolean compressed) {
         if (privKey == null && pubKey == null)
             throw new IllegalArgumentException("ECKey requires at least private or public key");
         this.priv = privKey;
@@ -357,7 +356,7 @@ public class ECKey {
      * be used for signing.
      */
     @Deprecated
-    private ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey) {
+    private BtcECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey) {
         this(privKey, pubKey, false);
     }
 
@@ -385,7 +384,7 @@ public class ECKey {
     /**
      * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by Bitcoin Core
      * in its wallet storage format.
-     * @throws co.rsk.bitcoinj.core.ECKey.MissingPrivateKeyException if the private key is missing or encrypted.
+     * @throws BtcECKey.MissingPrivateKeyException if the private key is missing or encrypted.
      */
     public byte[] toASN1() {
         try {
@@ -499,7 +498,7 @@ public class ECKey {
         }
 
         /**
-         * Returns true if the S component is "low", that means it is below {@link ECKey#HALF_CURVE_ORDER}. See <a
+         * Returns true if the S component is "low", that means it is below {@link BtcECKey#HALF_CURVE_ORDER}. See <a
          * href="https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Low_S_values_in_signatures">BIP62</a>.
          */
         public boolean isCanonical() {
@@ -590,7 +589,7 @@ public class ECKey {
 
     /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using ASN.1 format, so you want {@link co.rsk.bitcoinj.core.ECKey.ECDSASignature#toASN1()}
+     * usually encoded using ASN.1 format, so you want {@link BtcECKey.ECDSASignature#toASN1()}
      * instead. However sometimes the independent components can be useful, for instance, if you're going to do
      * further EC maths on them.
      */
@@ -664,14 +663,14 @@ public class ECKey {
      * @param signature ASN.1 encoded signature.
      */
     public boolean verify(byte[] hash, byte[] signature) {
-        return ECKey.verify(hash, signature, getPubKey());
+        return BtcECKey.verify(hash, signature, getPubKey());
     }
 
     /**
      * Verifies the given R/S pair (signature) against a hash using the public key.
      */
     public boolean verify(Sha256Hash sigHash, ECDSASignature signature) {
-        return ECKey.verify(sigHash.getBytes(), signature, getPubKey());
+        return BtcECKey.verify(sigHash.getBytes(), signature, getPubKey());
     }
 
     /**
@@ -690,7 +689,7 @@ public class ECKey {
      * @throws java.security.SignatureException if the signature does not match.
      */
     public void verifyOrThrow(Sha256Hash sigHash, ECDSASignature signature) throws SignatureException {
-        if (!ECKey.verify(sigHash.getBytes(), signature, getPubKey()))
+        if (!BtcECKey.verify(sigHash.getBytes(), signature, getPubKey()))
             throw new SignatureException();
     }
 
@@ -713,7 +712,7 @@ public class ECKey {
         return true;
     }
 
-    private static ECKey extractKeyFromASN1(byte[] asn1privkey) {
+    private static BtcECKey extractKeyFromASN1(byte[] asn1privkey) {
         // To understand this code, see the definition of the ASN.1 format for EC private keys in the OpenSSL source
         // code in ec_asn1.c:
         //
@@ -748,7 +747,7 @@ public class ECKey {
 
             // Now sanity check to ensure the pubkey bytes match the privkey.
             boolean compressed = (pubbits.length == 33);
-            ECKey key = new ECKey(privkey, null, compressed);
+            BtcECKey key = new BtcECKey(privkey, null, compressed);
             if (!Arrays.equals(key.getPubKey(), pubbits))
                 throw new IllegalArgumentException("Public key in ASN.1 structure does not match private key.");
             return key;
@@ -770,7 +769,7 @@ public class ECKey {
         // Now we have to work backwards to figure out the recId needed to recover the signature.
         int recId = -1;
         for (int i = 0; i < 4; i++) {
-            ECKey k = ECKey.recoverFromSignature(i, sig, hash, isCompressed());
+            BtcECKey k = BtcECKey.recoverFromSignature(i, sig, hash, isCompressed());
             if (k != null && k.pub.equals(pub)) {
                 recId = i;
                 break;
@@ -797,7 +796,7 @@ public class ECKey {
      * @param signatureBase64 The Bitcoin-format message signature in base64
      * @throws SignatureException If the public key could not be recovered or if there was a signature format error.
      */
-    public static ECKey signedMessageToKey(String message, String signatureBase64) throws SignatureException {
+    public static BtcECKey signedMessageToKey(String message, String signatureBase64) throws SignatureException {
         byte[] signatureEncoded;
         try {
             signatureEncoded = Base64.decode(signatureBase64);
@@ -826,18 +825,18 @@ public class ECKey {
             header -= 4;
         }
         int recId = header - 27;
-        ECKey key = ECKey.recoverFromSignature(recId, sig, messageHash, compressed);
+        BtcECKey key = BtcECKey.recoverFromSignature(recId, sig, messageHash, compressed);
         if (key == null)
             throw new SignatureException("Could not recover public key from signature");
         return key;
     }
 
     /**
-     * Convenience wrapper around {@link ECKey#signedMessageToKey(String, String)}. If the key derived from the
+     * Convenience wrapper around {@link BtcECKey#signedMessageToKey(String, String)}. If the key derived from the
      * signature is not the same as this one, throws a SignatureException.
      */
     public void verifyMessage(String message, String signatureBase64) throws SignatureException {
-        ECKey key = ECKey.signedMessageToKey(message, signatureBase64);
+        BtcECKey key = BtcECKey.signedMessageToKey(message, signatureBase64);
         if (!key.pub.equals(pub))
             throw new SignatureException("Signature did not match for message");
     }
@@ -863,7 +862,7 @@ public class ECKey {
      * @return An ECKey containing only the public part, or null if recovery wasn't possible.
      */
     @Nullable
-    public static ECKey recoverFromSignature(int recId, ECDSASignature sig, Sha256Hash message, boolean compressed) {
+    public static BtcECKey recoverFromSignature(int recId, ECDSASignature sig, Sha256Hash message, boolean compressed) {
         Preconditions.checkArgument(recId >= 0, "recId must be positive");
         Preconditions.checkArgument(sig.r.signum() >= 0, "r must be positive");
         Preconditions.checkArgument(sig.s.signum() >= 0, "s must be positive");
@@ -909,7 +908,7 @@ public class ECKey {
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
         ECPoint q = ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
-        return ECKey.fromPublicOnly(q.getEncoded(compressed));
+        return BtcECKey.fromPublicOnly(q.getEncoded(compressed));
     }
 
     /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
@@ -922,7 +921,7 @@ public class ECKey {
 
     /**
      * Returns a 32 byte array containing the private key.
-     * @throws co.rsk.bitcoinj.core.ECKey.MissingPrivateKeyException if the private key bytes are missing/encrypted.
+     * @throws BtcECKey.MissingPrivateKeyException if the private key bytes are missing/encrypted.
      */
     public byte[] getPrivKeyBytes() {
         return Utils.bigIntegerToBytes(getPrivKey(), 32);
@@ -967,8 +966,8 @@ public class ECKey {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || !(o instanceof ECKey)) return false;
-        ECKey other = (ECKey) o;
+        if (o == null || !(o instanceof BtcECKey)) return false;
+        BtcECKey other = (BtcECKey) o;
         return Objects.equal(this.priv, other.priv)
                 && Objects.equal(this.pub, other.pub)
                 && Objects.equal(this.creationTimeSeconds, other.creationTimeSeconds);

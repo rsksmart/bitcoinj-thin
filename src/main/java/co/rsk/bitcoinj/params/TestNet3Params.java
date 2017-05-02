@@ -20,12 +20,12 @@ package co.rsk.bitcoinj.params;
 import java.math.BigInteger;
 import java.util.Date;
 
-import co.rsk.bitcoinj.core.Block;
+import co.rsk.bitcoinj.core.BtcBlock;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.StoredBlock;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
-import co.rsk.bitcoinj.store.BlockStore;
+import co.rsk.bitcoinj.store.BtcBlockStore;
 import co.rsk.bitcoinj.store.BlockStoreException;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -88,10 +88,10 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
     private static final Date testnetDiffDate = new Date(1329264000000L);
 
     @Override
-    public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
-        final BlockStore blockStore) throws VerificationException, BlockStoreException {
+    public void checkDifficultyTransitions(final StoredBlock storedPrev, final BtcBlock nextBlock,
+        final BtcBlockStore blockStore) throws VerificationException, BlockStoreException {
         if (!isDifficultyTransitionPoint(storedPrev) && nextBlock.getTime().after(testnetDiffDate)) {
-            Block prev = storedPrev.getHeader();
+            BtcBlock prev = storedPrev.getHeader();
 
             // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy

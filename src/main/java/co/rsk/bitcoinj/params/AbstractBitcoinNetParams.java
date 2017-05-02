@@ -20,15 +20,15 @@ package co.rsk.bitcoinj.params;
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 
-import co.rsk.bitcoinj.core.Block;
+import co.rsk.bitcoinj.core.BtcBlock;
 import co.rsk.bitcoinj.core.Coin;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.StoredBlock;
-import co.rsk.bitcoinj.core.Transaction;
+import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.utils.MonetaryFormat;
 import co.rsk.bitcoinj.core.VerificationException;
-import co.rsk.bitcoinj.store.BlockStore;
+import co.rsk.bitcoinj.store.BtcBlockStore;
 import co.rsk.bitcoinj.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +62,9 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     }
 
     @Override
-    public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
-    	final BlockStore blockStore) throws VerificationException, BlockStoreException {
-        Block prev = storedPrev.getHeader();
+    public void checkDifficultyTransitions(final StoredBlock storedPrev, final BtcBlock nextBlock,
+    	final BtcBlockStore blockStore) throws VerificationException, BlockStoreException {
+        BtcBlock prev = storedPrev.getHeader();
 
         // Is this supposed to be a difficulty transition point?
         if (!isDifficultyTransitionPoint(storedPrev)) {
@@ -93,7 +93,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         if (watch.elapsed(TimeUnit.MILLISECONDS) > 50)
             log.info("Difficulty transition traversal took {}", watch);
 
-        Block blockIntervalAgo = cursor.getHeader();
+        BtcBlock blockIntervalAgo = cursor.getHeader();
         int timespan = (int) (prev.getTimeSeconds() - blockIntervalAgo.getTimeSeconds());
         // Limit the adjustment step.
         final int targetTimespan = this.getTargetTimespan();
@@ -131,7 +131,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
 
     @Override
     public Coin getMinNonDustOutput() {
-        return Transaction.MIN_NONDUST_OUTPUT;
+        return BtcTransaction.MIN_NONDUST_OUTPUT;
     }
 
     @Override

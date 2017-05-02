@@ -16,9 +16,10 @@
 
 package co.rsk.bitcoinj.script;
 
+import co.rsk.bitcoinj.core.BtcTransaction;
 import com.google.common.collect.Lists;
 import co.rsk.bitcoinj.core.Address;
-import co.rsk.bitcoinj.core.ECKey;
+import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 
@@ -36,7 +37,7 @@ import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 
 /**
  * <p>Tools for the construction of commonly used script types. You don't normally need this as it's hidden behind
- * convenience methods on {@link co.rsk.bitcoinj.core.Transaction}, but they are useful when working with the
+ * convenience methods on {@link BtcTransaction}, but they are useful when working with the
  * protocol at a lower level.</p>
  */
 public class ScriptBuilder {
@@ -236,7 +237,7 @@ public class ScriptBuilder {
     }
 
     /** Creates a scriptPubKey that encodes payment to the given raw public key. */
-    public static Script createOutputScript(ECKey key) {
+    public static Script createOutputScript(BtcECKey key) {
         return new ScriptBuilder().data(key.getPubKey()).op(OP_CHECKSIG).build();
     }
 
@@ -244,7 +245,7 @@ public class ScriptBuilder {
      * Creates a scriptSig that can redeem a pay-to-address output.
      * If given signature is null, incomplete scriptSig will be created with OP_0 instead of signature
      */
-    public static Script createInputScript(@Nullable TransactionSignature signature, ECKey pubKey) {
+    public static Script createInputScript(@Nullable TransactionSignature signature, BtcECKey pubKey) {
         byte[] pubkeyBytes = pubKey.getPubKey();
         byte[] sigBytes = signature != null ? signature.encodeToBitcoin() : new byte[]{};
         return new ScriptBuilder().data(sigBytes).data(pubkeyBytes).build();
@@ -260,13 +261,13 @@ public class ScriptBuilder {
     }
 
     /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
-    public static Script createMultiSigOutputScript(int threshold, List<ECKey> pubkeys) {
+    public static Script createMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0);
         checkArgument(threshold <= pubkeys.size());
         checkArgument(pubkeys.size() <= 16);  // That's the max we can represent with a single opcode.
         ScriptBuilder builder = new ScriptBuilder();
         builder.smallNum(threshold);
-        for (ECKey key : pubkeys) {
+        for (BtcECKey key : pubkeys) {
             builder.data(key.getPubKey());
         }
         builder.smallNum(pubkeys.size());
@@ -412,7 +413,7 @@ public class ScriptBuilder {
      * Creates a P2SH output script with given public keys and threshold. Given public keys will be placed in
      * redeem script in the lexicographical sorting order.
      */
-    public static Script createP2SHOutputScript(int threshold, List<ECKey> pubkeys) {
+    public static Script createP2SHOutputScript(int threshold, List<BtcECKey> pubkeys) {
         Script redeemScript = createRedeemScript(threshold, pubkeys);
         return createP2SHOutputScript(redeemScript);
     }
@@ -421,9 +422,9 @@ public class ScriptBuilder {
      * Creates redeem script with given public keys and threshold. Given public keys will be placed in
      * redeem script in the lexicographical sorting order.
      */
-    public static Script createRedeemScript(int threshold, List<ECKey> pubkeys) {
-        pubkeys = new ArrayList<ECKey>(pubkeys);
-        Collections.sort(pubkeys, ECKey.PUBKEY_COMPARATOR);
+    public static Script createRedeemScript(int threshold, List<BtcECKey> pubkeys) {
+        pubkeys = new ArrayList<BtcECKey>(pubkeys);
+        Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
     }
 
@@ -437,7 +438,7 @@ public class ScriptBuilder {
         return new ScriptBuilder().op(OP_RETURN).data(data).build();
     }
 
-    public static Script createCLTVPaymentChannelOutput(BigInteger time, ECKey from, ECKey to) {
+    public static Script createCLTVPaymentChannelOutput(BigInteger time, BtcECKey from, BtcECKey to) {
         byte[] timeBytes = Utils.reverseBytes(Utils.encodeMPI(time, false));
         if (timeBytes.length > 5) {
             throw new RuntimeException("Time too large to encode as 5-byte int");

@@ -41,12 +41,12 @@ public class TransactionOutPoint extends ChildMessage {
     private long index;
 
     // This is not part of bitcoin serialization. It points to the connected transaction.
-    Transaction fromTx;
+    BtcTransaction fromTx;
 
     // The connected output.
     TransactionOutput connectedOutput;
 
-    public TransactionOutPoint(NetworkParameters params, long index, @Nullable Transaction fromTx) {
+    public TransactionOutPoint(NetworkParameters params, long index, @Nullable BtcTransaction fromTx) {
         super(params);
         this.index = index;
         if (fromTx != null) {
@@ -137,7 +137,7 @@ public class TransactionOutPoint extends ChildMessage {
      * @return an ECKey or null if the connected key cannot be found in the wallet.
      */
     @Nullable
-    public ECKey getConnectedKey(KeyBag keyBag) throws ScriptException {
+    public BtcECKey getConnectedKey(KeyBag keyBag) throws ScriptException {
         TransactionOutput connectedOutput = getConnectedOutput();
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();

@@ -25,7 +25,6 @@ import co.rsk.bitcoinj.signers.TransactionSigner;
 import co.rsk.bitcoinj.wallet.Wallet;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,14 +54,14 @@ import java.math.BigInteger;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Transaction extends ChildMessage {
+public class BtcTransaction extends ChildMessage {
     /**
      * A comparator that can be used to sort transactions by their updateTime field. The ordering goes from most recent
      * into the past.
      */
-    public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = new Comparator<Transaction>() {
+    public static final Comparator<BtcTransaction> SORT_TX_BY_UPDATE_TIME = new Comparator<BtcTransaction>() {
         @Override
-        public int compare(final Transaction tx1, final Transaction tx2) {
+        public int compare(final BtcTransaction tx1, final BtcTransaction tx2) {
             final long time1 = tx1.getUpdateTime().getTime();
             final long time2 = tx2.getUpdateTime().getTime();
             final int updateTimeComparison = -(Longs.compare(time1, time2));
@@ -70,7 +69,7 @@ public class Transaction extends ChildMessage {
             return updateTimeComparison != 0 ? updateTimeComparison : tx1.getHash().compareTo(tx2.getHash());
         }
     };
-    private static final Logger log = LoggerFactory.getLogger(Transaction.class);
+    private static final Logger log = LoggerFactory.getLogger(BtcTransaction.class);
 
     /** Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp. **/
     public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
@@ -162,7 +161,7 @@ public class Transaction extends ChildMessage {
     @Nullable
     private String memo;
 
-    public Transaction(NetworkParameters params) {
+    public BtcTransaction(NetworkParameters params) {
         super(params);
         version = 1;
         inputs = new ArrayList<TransactionInput>();
@@ -174,14 +173,14 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
-    public Transaction(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
+    public BtcTransaction(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
     }
 
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
+    public BtcTransaction(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
         // inputs/outputs will be created in parse()
     }
@@ -198,7 +197,7 @@ public class Transaction extends ChildMessage {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, MessageSerializer setSerializer, int length)
+    public BtcTransaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, MessageSerializer setSerializer, int length)
             throws ProtocolException {
         super(params, payload, offset, parent, setSerializer, length);
     }
@@ -206,7 +205,7 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
+    public BtcTransaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
             throws ProtocolException {
         super(params, payload, 0, parent, setSerializer, length);
     }
@@ -354,7 +353,7 @@ public class Transaction extends ChildMessage {
     @Nullable private TransactionBag cachedForBag;
 
     /**
-     * Returns the difference of {@link Transaction#getValueSentToMe(TransactionBag)} and {@link Transaction#getValueSentFromMe(TransactionBag)}.
+     * Returns the difference of {@link BtcTransaction#getValueSentToMe(TransactionBag)} and {@link BtcTransaction#getValueSentFromMe(TransactionBag)}.
      */
 // Oscar comment: comment out until we implement a UTXOProvider compliant solution
 //    public Coin getValue(TransactionBag wallet) throws ScriptException {
@@ -583,7 +582,7 @@ public class Transaction extends ChildMessage {
      * A human readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
      * @param chain If provided, will be used to estimate lock times (if set). Can be null.
      */
-    public String toString(@Nullable AbstractBlockChain chain) {
+    public String toString(@Nullable BtcAbstractBlockChain chain) {
         StringBuilder s = new StringBuilder();
         s.append("  ").append(getHashAsString()).append('\n');
         if (updatedAt != null)
@@ -739,14 +738,14 @@ public class Transaction extends ChildMessage {
      *
      * @throws ScriptException if the scriptPubKey is not a pay to address or pay to pubkey script.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
+    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, BtcECKey sigKey,
                                            SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
         // Verify the API user didn't try to do operations out of order.
         checkState(!outputs.isEmpty(), "Attempting to sign tx without outputs.");
         TransactionInput input = new TransactionInput(params, this, new byte[]{}, prevOut);
         addInput(input);
         Sha256Hash hash = hashForSignature(inputs.size() - 1, scriptPubKey, sigHash, anyoneCanPay);
-        ECKey.ECDSASignature ecSig = sigKey.sign(hash);
+        BtcECKey.ECDSASignature ecSig = sigKey.sign(hash);
         TransactionSignature txSig = new TransactionSignature(ecSig, sigHash, anyoneCanPay);
         if (scriptPubKey.isSentToRawPubKey())
             input.setScriptSig(ScriptBuilder.createInputScript(txSig));
@@ -758,10 +757,10 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * Same as {@link #addSignedInput(TransactionOutPoint, co.rsk.bitcoinj.script.Script, ECKey, co.rsk.bitcoinj.core.Transaction.SigHash, boolean)}
+     * Same as {@link #addSignedInput(TransactionOutPoint, co.rsk.bitcoinj.script.Script, BtcECKey, BtcTransaction.SigHash, boolean)}
      * but defaults to {@link SigHash#ALL} and "false" for the anyoneCanPay flag. This is normally what you want.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
+    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, BtcECKey sigKey) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, sigKey, SigHash.ALL, false);
     }
 
@@ -769,7 +768,7 @@ public class Transaction extends ChildMessage {
      * Adds an input that points to the given output and contains a valid signature for it, calculated using the
      * signing key.
      */
-    public TransactionInput addSignedInput(TransactionOutput output, ECKey signingKey) {
+    public TransactionInput addSignedInput(TransactionOutput output, BtcECKey signingKey) {
         return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey);
     }
 
@@ -777,7 +776,7 @@ public class Transaction extends ChildMessage {
      * Adds an input that points to the given output and contains a valid signature for it, calculated using the
      * signing key.
      */
-    public TransactionInput addSignedInput(TransactionOutput output, ECKey signingKey, SigHash sigHash, boolean anyoneCanPay) {
+    public TransactionInput addSignedInput(TransactionOutput output, BtcECKey signingKey, SigHash sigHash, boolean anyoneCanPay) {
         return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey, sigHash, anyoneCanPay);
     }
 
@@ -817,7 +816,7 @@ public class Transaction extends ChildMessage {
      * Creates an output that pays to the given pubkey directly (no address) with the given value, adds it to this
      * transaction, and returns the new output.
      */
-    public TransactionOutput addOutput(Coin value, ECKey pubkey) {
+    public TransactionOutput addOutput(Coin value, BtcECKey pubkey) {
         return addOutput(new TransactionOutput(params, this, value, pubkey));
     }
 
@@ -832,8 +831,8 @@ public class Transaction extends ChildMessage {
 
     /**
      * Calculates a signature that is valid for being inserted into the input at the given position. This is simply
-     * a wrapper around calling {@link Transaction#hashForSignature(int, byte[], co.rsk.bitcoinj.core.Transaction.SigHash, boolean)}
-     * followed by {@link ECKey#sign(Sha256Hash)} and then returning a new {@link TransactionSignature}. The key
+     * a wrapper around calling {@link BtcTransaction#hashForSignature(int, byte[], BtcTransaction.SigHash, boolean)}
+     * followed by {@link BtcECKey#sign(Sha256Hash)} and then returning a new {@link TransactionSignature}. The key
      * must be usable for signing as-is: if the key is encrypted it must be decrypted first external to this method.
      *
      * @param inputIndex Which input to calculate the signature for, as an index.
@@ -843,7 +842,7 @@ public class Transaction extends ChildMessage {
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public TransactionSignature calculateSignature(int inputIndex, ECKey key,
+    public TransactionSignature calculateSignature(int inputIndex, BtcECKey key,
                                                                 byte[] redeemScript,
                                                                 SigHash hashType, boolean anyoneCanPay) {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript, hashType, anyoneCanPay);
@@ -852,8 +851,8 @@ public class Transaction extends ChildMessage {
 
     /**
      * Calculates a signature that is valid for being inserted into the input at the given position. This is simply
-     * a wrapper around calling {@link Transaction#hashForSignature(int, byte[], co.rsk.bitcoinj.core.Transaction.SigHash, boolean)}
-     * followed by {@link ECKey#sign(Sha256Hash)} and then returning a new {@link TransactionSignature}.
+     * a wrapper around calling {@link BtcTransaction#hashForSignature(int, byte[], BtcTransaction.SigHash, boolean)}
+     * followed by {@link BtcECKey#sign(Sha256Hash)} and then returning a new {@link TransactionSignature}.
      *
      * @param inputIndex Which input to calculate the signature for, as an index.
      * @param key The private key used to calculate the signature.
@@ -862,7 +861,7 @@ public class Transaction extends ChildMessage {
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public TransactionSignature calculateSignature(int inputIndex, ECKey key,
+    public TransactionSignature calculateSignature(int inputIndex, BtcECKey key,
                                                                  Script redeemScript,
                                                                  SigHash hashType, boolean anyoneCanPay) {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
@@ -922,7 +921,7 @@ public class Transaction extends ChildMessage {
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = this.params.getDefaultSerializer().makeTransaction(this.bitcoinSerialize());
+            BtcTransaction tx = this.params.getDefaultSerializer().makeTransaction(this.bitcoinSerialize());
 
             // Clear input scripts in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
@@ -1101,7 +1100,7 @@ public class Transaction extends ChildMessage {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return getHash().equals(((Transaction)o).getHash());
+        return getHash().equals(((BtcTransaction)o).getHash());
     }
 
     @Override
@@ -1127,7 +1126,7 @@ public class Transaction extends ChildMessage {
      */
     public void checkCoinBaseHeight(final int height)
             throws VerificationException {
-        checkArgument(height >= Block.BLOCK_HEIGHT_GENESIS);
+        checkArgument(height >= BtcBlock.BLOCK_HEIGHT_GENESIS);
         checkState(isCoinBase());
 
         // Check block height is in coinbase input script
@@ -1165,7 +1164,7 @@ public class Transaction extends ChildMessage {
     public void verify() throws VerificationException {
         if (inputs.size() == 0 || outputs.size() == 0)
             throw new VerificationException.EmptyInputsOrOutputs();
-        if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
+        if (this.getMessageSize() > BtcBlock.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
         Coin valueOut = Coin.ZERO;
@@ -1202,7 +1201,7 @@ public class Transaction extends ChildMessage {
     /**
      * <p>A transaction is time locked if at least one of its inputs is non-final and it has a lock time</p>
      *
-     * <p>To check if this transaction is final at a given height and time, see {@link Transaction#isFinal(int, long)}
+     * <p>To check if this transaction is final at a given height and time, see {@link BtcTransaction#isFinal(int, long)}
      * </p>
      */
     public boolean isTimeLocked() {
@@ -1243,7 +1242,7 @@ public class Transaction extends ChildMessage {
      * Returns either the lock time as a date, if it was specified in seconds, or an estimate based on the time in
      * the current head block if it was specified as a block time.
      */
-    public Date estimateLockTime(AbstractBlockChain chain) {
+    public Date estimateLockTime(BtcAbstractBlockChain chain) {
         if (lockTime < LOCKTIME_THRESHOLD)
             return chain.estimateBlockTime((int)getLockTime());
         else

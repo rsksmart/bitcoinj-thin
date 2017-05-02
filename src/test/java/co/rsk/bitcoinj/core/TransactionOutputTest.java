@@ -15,14 +15,9 @@
 package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.params.UnitTestParams;
-import com.google.common.collect.ImmutableList;
 import co.rsk.bitcoinj.params.MainNetParams;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
-import co.rsk.bitcoinj.wallet.SendRequest;
-import org.hamcrest.CoreMatchers;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -36,14 +31,14 @@ public class TransactionOutputTest {
         String P2SHAddressString = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
         Address P2SHAddress = Address.fromBase58(MainNetParams.get(), P2SHAddressString);
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
-        Transaction tx = new Transaction(MainNetParams.get());
+        BtcTransaction tx = new BtcTransaction(MainNetParams.get());
         tx.addOutput(Coin.COIN, script);
         assertEquals(P2SHAddressString, tx.getOutput(0).getAddressFromP2SH(MainNetParams.get()).toString());
     }
 
     @Test
     public void getAddressTests() throws Exception {
-        Transaction tx = new Transaction(MainNetParams.get());
+        BtcTransaction tx = new BtcTransaction(MainNetParams.get());
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         assertNull(tx.getOutput(0).getAddressFromP2SH(PARAMS));
         assertNull(tx.getOutput(0).getAddressFromP2PKHScript(PARAMS));
@@ -51,7 +46,7 @@ public class TransactionOutputTest {
 
     @Test
     public void getMinNonDustValue() throws Exception {
-        TransactionOutput payToAddressOutput = new TransactionOutput(PARAMS, null, Coin.COIN, new ECKey().toAddress(PARAMS));
-        assertEquals(Transaction.MIN_NONDUST_OUTPUT, payToAddressOutput.getMinNonDustValue());
+        TransactionOutput payToAddressOutput = new TransactionOutput(PARAMS, null, Coin.COIN, new BtcECKey().toAddress(PARAMS));
+        assertEquals(BtcTransaction.MIN_NONDUST_OUTPUT, payToAddressOutput.getMinNonDustValue());
     }
 }

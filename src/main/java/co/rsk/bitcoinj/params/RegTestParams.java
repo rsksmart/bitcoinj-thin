@@ -16,7 +16,7 @@
 
 package co.rsk.bitcoinj.params;
 
-import co.rsk.bitcoinj.core.Block;
+import co.rsk.bitcoinj.core.BtcBlock;
 
 import java.math.BigInteger;
 
@@ -48,10 +48,10 @@ public class RegTestParams extends TestNet2Params {
         return true;
     }
 
-    private static Block genesis;
+    private static BtcBlock genesis;
 
     @Override
-    public Block getGenesisBlock() {
+    public BtcBlock getGenesisBlock() {
         synchronized (RegTestParams.class) {
             if (genesis == null) {
                 genesis = super.getGenesisBlock();

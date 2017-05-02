@@ -37,11 +37,11 @@ import static org.junit.Assert.*;
  * The verify method is also exercised by the full block chain tests, but it can also be used by API users alone,
  * so we make sure to cover it here as well.
  */
-public class TransactionTest {
+public class BtcTransactionTest {
     private static final NetworkParameters PARAMS = UnitTestParams.get();
-    private static final Address ADDRESS = new ECKey().toAddress(PARAMS);
+    private static final Address ADDRESS = new BtcECKey().toAddress(PARAMS);
 
-    private Transaction tx;
+    private BtcTransaction tx;
 
     @Before
     public void setUp() throws Exception {
@@ -63,7 +63,7 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.LargerThanMaxBlockSize.class)
     public void tooHuge() throws Exception {
-        tx.getInput(0).setScriptBytes(new byte[Block.MAX_BLOCK_SIZE]);
+        tx.getInput(0).setScriptBytes(new byte[BtcBlock.MAX_BLOCK_SIZE]);
         tx.verify();
     }
 
@@ -115,10 +115,10 @@ public class TransactionTest {
         int TEST_LOCK_TIME = 20;
         Date now = Calendar.getInstance().getTime();
 
-        BlockChain mockBlockChain = createMock(BlockChain.class);
+        BtcBlockChain mockBlockChain = createMock(BtcBlockChain.class);
         EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
 
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        BtcTransaction tx = FakeTxBuilder.createFakeTx(PARAMS);
         tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million
 
         replay(mockBlockChain);
@@ -128,7 +128,7 @@ public class TransactionTest {
 
     @Test
     public void testOptimalEncodingMessageSize() {
-        Transaction tx = new Transaction(PARAMS);
+        BtcTransaction tx = new BtcTransaction(PARAMS);
 
         int length = tx.length;
 
@@ -153,19 +153,19 @@ public class TransactionTest {
     public void testCLTVPaymentChannelTransactionSpending() {
         BigInteger time = BigInteger.valueOf(20);
 
-        ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
+        BtcECKey from = new BtcECKey(), to = new BtcECKey(), incorrect = new BtcECKey();
         Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
-        Transaction tx = new Transaction(PARAMS);
+        BtcTransaction tx = new BtcTransaction(PARAMS);
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.subtract(BigInteger.ONE).longValue());
         TransactionSignature fromSig =
-                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(0, from, outputScript, BtcTransaction.SigHash.SINGLE, false);
         TransactionSignature toSig =
-                tx.calculateSignature(0, to, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(0, to, outputScript, BtcTransaction.SigHash.SINGLE, false);
         TransactionSignature incorrectSig =
-                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(0, incorrect, outputScript, BtcTransaction.SigHash.SINGLE, false);
         Script scriptSig =
                 ScriptBuilder.createCLTVPaymentChannelInput(fromSig, toSig);
         Script refundSig =
@@ -200,17 +200,17 @@ public class TransactionTest {
     public void testCLTVPaymentChannelTransactionRefund() {
         BigInteger time = BigInteger.valueOf(20);
 
-        ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
+        BtcECKey from = new BtcECKey(), to = new BtcECKey(), incorrect = new BtcECKey();
         Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
-        Transaction tx = new Transaction(PARAMS);
+        BtcTransaction tx = new BtcTransaction(PARAMS);
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.add(BigInteger.ONE).longValue());
         TransactionSignature fromSig =
-                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(0, from, outputScript, BtcTransaction.SigHash.SINGLE, false);
         TransactionSignature incorrectSig =
-                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(0, incorrect, outputScript, BtcTransaction.SigHash.SINGLE, false);
         Script scriptSig =
                 ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
         Script invalidScriptSig =
@@ -231,7 +231,7 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        BtcTransaction tx = FakeTxBuilder.createFakeTx(PARAMS);
         TransactionInput input = tx.getInput(0);
         input.setSequenceNumber(42);
 
@@ -242,7 +242,7 @@ public class TransactionTest {
         cal.set(2085, 10, 4, 17, 53, 21);
         cal.set(Calendar.MILLISECOND, 0);
 
-        BlockChain mockBlockChain = createMock(BlockChain.class);
+        BtcBlockChain mockBlockChain = createMock(BtcBlockChain.class);
         EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(cal.getTime());
 
         replay(mockBlockChain);
@@ -255,7 +255,7 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        BtcTransaction tx = FakeTxBuilder.createFakeTx(PARAMS);
         TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) {
             @Override
             public Script getScriptSig() throws ScriptException {
@@ -269,17 +269,17 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenThereAreZeroInputs() {
-        Transaction tx = new Transaction(PARAMS);
+        BtcTransaction tx = new BtcTransaction(PARAMS);
         assertEquals(tx.toString().contains("No inputs!"), true);
     }
 
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
-        ECKey key = new ECKey();
+        BtcECKey key = new BtcECKey();
         Address addr = key.toAddress(PARAMS);
-        Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
+        BtcTransaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
 
-        Transaction tx = new Transaction(PARAMS);
+        BtcTransaction tx = new BtcTransaction(PARAMS);
         tx.addOutput(fakeTx.getOutput(0));
 
         Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
@@ -289,7 +289,7 @@ public class TransactionTest {
 
     @Test
     public void testPrioSizeCalc() throws Exception {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, ADDRESS);
+        BtcTransaction tx1 = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, ADDRESS);
         int size1 = tx1.getMessageSize();
         int size2 = tx1.getMessageSizeForPriorityCalc();
         assertEquals(113, size1 - size2);
@@ -306,7 +306,7 @@ public class TransactionTest {
         // Coinbase transaction from block 300,000
         final byte[] transactionBytes = HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
         final int height = 300000;
-        final Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
+        final BtcTransaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
 
@@ -324,14 +324,14 @@ public class TransactionTest {
             + "1eeeed88ffffffff01e0587597000000001976a91421c0d001728b3feaf11551"
             + "5b7c135e779e9f442f88ac00000000");
         final int height = 224430;
-        final Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
+        final BtcTransaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
 
     @Test
     public void optInFullRBF() {
         // a standard transaction as wallets would create
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        BtcTransaction tx = FakeTxBuilder.createFakeTx(PARAMS);
         assertFalse(tx.isOptInFullRBF());
 
         tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
@@ -343,20 +343,20 @@ public class TransactionTest {
      */
     @Test
     public void testHashForSignatureThreadSafety() {
-        Block genesis = UnitTestParams.get().getGenesisBlock();
-        Block block1 = genesis.createNextBlock(new ECKey().toAddress(UnitTestParams.get()),
+        BtcBlock genesis = UnitTestParams.get().getGenesisBlock();
+        BtcBlock block1 = genesis.createNextBlock(new BtcECKey().toAddress(UnitTestParams.get()),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
 
-        final Transaction tx = block1.getTransactions().get(1);
+        final BtcTransaction tx = block1.getTransactions().get(1);
         final String txHash = tx.getHashAsString();
-        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString();
+        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], BtcTransaction.SigHash.ALL.byteValue()).toString();
 
         for (int i = 0; i < 100; i++) {
             // ensure the transaction object itself was not modified; if it was, the hash will change
             assertEquals(txHash, tx.getHashAsString());
             new Thread(){
                 public void run() {
-                    assertEquals(txNormalizedHash, tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString());
+                    assertEquals(txNormalizedHash, tx.hashForSignature(0, new byte[0], BtcTransaction.SigHash.ALL.byteValue()).toString());
                 }
             };
         }

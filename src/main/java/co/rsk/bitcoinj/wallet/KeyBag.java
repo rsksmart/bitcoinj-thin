@@ -16,7 +16,7 @@
 
 package co.rsk.bitcoinj.wallet;
 
-import co.rsk.bitcoinj.core.ECKey;
+import co.rsk.bitcoinj.core.BtcECKey;
 
 import javax.annotation.Nullable;
 
@@ -32,7 +32,7 @@ public interface KeyBag {
      * @return ECKey object or null if no such key was found.
      */
     @Nullable
-    ECKey findKeyFromPubHash(byte[] pubkeyHash);
+    BtcECKey findKeyFromPubHash(byte[] pubkeyHash);
 
     /**
      * Locates a keypair from the keychain given the raw public key bytes.
@@ -40,7 +40,7 @@ public interface KeyBag {
      * @return ECKey or null if no such key was found.
      */
     @Nullable
-    ECKey findKeyFromPubKey(byte[] pubkey);
+    BtcECKey findKeyFromPubKey(byte[] pubkey);
 
     /**
      * Locates a redeem data (redeem script and keys) from the keychain given the hash of the script.

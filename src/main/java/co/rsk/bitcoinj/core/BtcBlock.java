@@ -33,17 +33,17 @@ import static co.rsk.bitcoinj.core.Sha256Hash.*;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
- * It records a set of {@link Transaction}s together with some data that links it into a place in the global block
+ * It records a set of {@link BtcTransaction}s together with some data that links it into a place in the global block
  * chain, and proves that a difficult calculation was done over its contents. See
  * <a href="http://www.bitcoin.org/bitcoin.pdf">the Bitcoin technical paper</a> for
  * more detail on blocks. <p/>
  *
  * <p>To get a block, you can either build one from the raw bytes you can get from another implementation, or request one
- * specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.</p>
+ * specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BtcBlockChain}.</p>
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Block extends Message {
+public class BtcBlock extends Message {
     /**
      * Flags used to control which elements of block validation are done on
      * received blocks.
@@ -53,7 +53,7 @@ public class Block extends Message {
         HEIGHT_IN_COINBASE
     }
 
-    private static final Logger log = LoggerFactory.getLogger(Block.class);
+    private static final Logger log = LoggerFactory.getLogger(BtcBlock.class);
 
     /** How many bytes are required to represent a block header WITHOUT the trailing 00 length byte. */
     public static final int HEADER_SIZE = 80;
@@ -99,7 +99,7 @@ public class Block extends Message {
 
     // TODO: Get rid of all the direct accesses to this field. It's a long-since unnecessary holdover from the Dalvik days.
     /** If null, it means this object holds only the headers. */
-    @Nullable List<Transaction> transactions;
+    @Nullable List<BtcTransaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
@@ -113,7 +113,7 @@ public class Block extends Message {
     protected int optimalEncodingMessageSize;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
-    Block(NetworkParameters params, long setVersion) {
+    BtcBlock(NetworkParameters params, long setVersion) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
@@ -129,7 +129,7 @@ public class Block extends Message {
      * @deprecated Use {@link BitcoinSerializer#makeBlock(byte[])} instead.
      */
     @Deprecated
-    public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
+    public BtcBlock(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0, params.getDefaultSerializer(), payloadBytes.length);
     }
 
@@ -142,7 +142,7 @@ public class Block extends Message {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, MessageSerializer serializer, int length)
+    public BtcBlock(NetworkParameters params, byte[] payloadBytes, MessageSerializer serializer, int length)
             throws ProtocolException {
         super(params, payloadBytes, 0, serializer, length);
     }
@@ -157,7 +157,7 @@ public class Block extends Message {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, int offset, MessageSerializer serializer, int length)
+    public BtcBlock(NetworkParameters params, byte[] payloadBytes, int offset, MessageSerializer serializer, int length)
             throws ProtocolException {
         super(params, payloadBytes, offset, serializer, length);
     }
@@ -175,7 +175,7 @@ public class Block extends Message {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent, MessageSerializer serializer, int length)
+    public BtcBlock(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent, MessageSerializer serializer, int length)
             throws ProtocolException {
         // TODO: Keep the parent
         super(params, payloadBytes, offset, serializer, length);
@@ -192,8 +192,8 @@ public class Block extends Message {
      * @param nonce Arbitrary number to make the block hash lower than the target.
      * @param transactions List of transactions including the coinbase.
      */
-    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
-                 long difficultyTarget, long nonce, List<Transaction> transactions) {
+    public BtcBlock(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
+                    long difficultyTarget, long nonce, List<BtcTransaction> transactions) {
         super(params);
         this.version = version;
         this.prevBlockHash = prevBlockHash;
@@ -201,7 +201,7 @@ public class Block extends Message {
         this.time = time;
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
-        this.transactions = new LinkedList<Transaction>();
+        this.transactions = new LinkedList<BtcTransaction>();
         this.transactions.addAll(transactions);
     }
 
@@ -237,9 +237,9 @@ public class Block extends Message {
 
         int numTransactions = (int) readVarInt();
         optimalEncodingMessageSize += VarInt.sizeOf(numTransactions);
-        transactions = new ArrayList<Transaction>(numTransactions);
+        transactions = new ArrayList<BtcTransaction>(numTransactions);
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH);
+            BtcTransaction tx = new BtcTransaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH);
             transactions.add(tx);
             cursor += tx.getMessageSize();
             optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();
@@ -303,7 +303,7 @@ public class Block extends Message {
 
         if (transactions != null) {
             stream.write(new VarInt(transactions.size()).encode());
-            for (Transaction tx : transactions) {
+            for (BtcTransaction tx : transactions) {
                 tx.bitcoinSerialize(stream);
             }
         }
@@ -363,7 +363,7 @@ public class Block extends Message {
         if (transactions == null)
             return 0;
         int len = VarInt.sizeOf(transactions.size());
-        for (Transaction tx : transactions) {
+        for (BtcTransaction tx : transactions) {
             // 255 is just a guess at an average tx length
             len += tx.length == UNKNOWN_LENGTH ? 255 : tx.length;
         }
@@ -450,14 +450,14 @@ public class Block extends Message {
     }
 
     /** Returns a copy of the block, but without any transactions. */
-    public Block cloneAsHeader() {
-        Block block = new Block(params, BLOCK_VERSION_GENESIS);
+    public BtcBlock cloneAsHeader() {
+        BtcBlock block = new BtcBlock(params, BLOCK_VERSION_GENESIS);
         copyBitcoinHeaderTo(block);
         return block;
     }
 
     /** Copy the block without transactions into the provided empty block. */
-    protected final void copyBitcoinHeaderTo(final Block block) {
+    protected final void copyBitcoinHeaderTo(final BtcBlock block) {
         block.nonce = nonce;
         block.prevBlockHash = prevBlockHash;
         block.merkleRoot = getMerkleRoot();
@@ -490,7 +490,7 @@ public class Block extends Message {
         s.append("   nonce: ").append(nonce).append("\n");
         if (transactions != null && transactions.size() > 0) {
             s.append("   with ").append(transactions.size()).append(" transaction(s):\n");
-            for (Transaction tx : transactions) {
+            for (BtcTransaction tx : transactions) {
                 s.append(tx);
             }
         }
@@ -565,7 +565,7 @@ public class Block extends Message {
         // Check there aren't too many signature verifications in the block. This is an anti-DoS measure, see the
         // comments for MAX_BLOCK_SIGOPS.
         int sigOps = 0;
-        for (Transaction tx : transactions) {
+        for (BtcTransaction tx : transactions) {
             sigOps += tx.getSigOpCount();
         }
         if (sigOps > MAX_BLOCK_SIGOPS)
@@ -618,7 +618,7 @@ public class Block extends Message {
         // t1 t2 t3 t4 t5 t5
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
         // Start by adding all the hashes of the transactions as leaves of the tree.
-        for (Transaction t : transactions) {
+        for (BtcTransaction t : transactions) {
             tree.add(t.getHash().getBytes());
         }
         int levelOffset = 0; // Offset in the list where the currently processed level starts.
@@ -651,7 +651,7 @@ public class Block extends Message {
         // The first transaction in a block must always be a coinbase transaction.
         if (!transactions.get(0).isCoinBase())
             throw new VerificationException("First tx is not coinbase");
-        if (flags.contains(Block.VerifyFlag.HEIGHT_IN_COINBASE) && height >= BLOCK_HEIGHT_GENESIS) {
+        if (flags.contains(BtcBlock.VerifyFlag.HEIGHT_IN_COINBASE) && height >= BLOCK_HEIGHT_GENESIS) {
             transactions.get(0).checkCoinBaseHeight(height);
         }
         // The rest must not be.
@@ -701,7 +701,7 @@ public class Block extends Message {
         checkTransactions(height, flags);
         checkMerkleRoot();
         checkSigOps();
-        for (Transaction transaction : transactions)
+        for (BtcTransaction transaction : transactions)
             transaction.verify();
         }
 
@@ -722,7 +722,7 @@ public class Block extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return getHash().equals(((Block)o).getHash());
+        return getHash().equals(((BtcBlock)o).getHash());
     }
 
     @Override
@@ -750,15 +750,15 @@ public class Block extends Message {
     }
 
     /** Adds a transaction to this block. The nonce and merkle root are invalid after this. */
-    public void addTransaction(Transaction t) {
+    public void addTransaction(BtcTransaction t) {
         addTransaction(t, true);
     }
 
     /** Adds a transaction to this block, with or without checking the sanity of doing so */
-    void addTransaction(Transaction t, boolean runSanityChecks) {
+    void addTransaction(BtcTransaction t, boolean runSanityChecks) {
         unCacheTransactions();
         if (transactions == null) {
-            transactions = new ArrayList<Transaction>();
+            transactions = new ArrayList<BtcTransaction>();
         }
         t.setParent(this);
         if (runSanityChecks && transactions.size() == 0 && !t.isCoinBase())
@@ -813,9 +813,9 @@ public class Block extends Message {
 
     /**
      * Returns the difficulty of the proof of work that this block should meet encoded <b>in compact form</b>. The {@link
-     * BlockChain} verifies that this is not too easy by looking at the length of the chain when the block is added.
+     * BtcBlockChain} verifies that this is not too easy by looking at the length of the chain when the block is added.
      * To find the actual value the hash should be compared against, use
-     * {@link co.rsk.bitcoinj.core.Block#getDifficultyTargetAsInteger()}. Note that this is <b>not</b> the same as
+     * {@link BtcBlock#getDifficultyTargetAsInteger()}. Note that this is <b>not</b> the same as
      * the difficulty value reported by the Bitcoin "getdifficulty" RPC that you may see on various block explorers.
      * That number is the result of applying a formula to the underlying difficulty to normalize the minimum to 1.
      * Calculating the difficulty that way is currently unsupported.
@@ -848,7 +848,7 @@ public class Block extends Message {
 
     /** Returns an immutable list of transactions held in this block, or null if this object represents just a header. */
     @Nullable
-    public List<Transaction> getTransactions() {
+    public List<BtcTransaction> getTransactions() {
         return transactions == null ? null : ImmutableList.copyOf(transactions);
     }
 
@@ -865,11 +865,11 @@ public class Block extends Message {
     @VisibleForTesting
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
-        transactions = new ArrayList<Transaction>();
-        Transaction coinbase = new Transaction(params);
+        transactions = new ArrayList<BtcTransaction>();
+        BtcTransaction coinbase = new BtcTransaction(params);
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
-        if (height >= Block.BLOCK_HEIGHT_GENESIS) {
+        if (height >= BtcBlock.BLOCK_HEIGHT_GENESIS) {
             inputBuilder.number(height);
         }
         inputBuilder.data(new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)});
@@ -882,7 +882,7 @@ public class Block extends Message {
         coinbase.addInput(new TransactionInput(params, coinbase,
                 inputBuilder.build().getProgram()));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
-                ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+                ScriptBuilder.createOutputScript(BtcECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
         coinbase.setParent(this);
         coinbase.length = coinbase.unsafeBitcoinSerialize().length;
@@ -892,13 +892,13 @@ public class Block extends Message {
     static final byte[] EMPTY_BYTES = new byte[32];
 
     // It's pretty weak to have this around at runtime: fix later.
-    private static final byte[] pubkeyForTesting = new ECKey().getPubKey();
+    private static final byte[] pubkeyForTesting = new BtcECKey().getPubKey();
 
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     @VisibleForTesting
-    public Block createNextBlock(Address to, long version, long time, int blockHeight) {
+    public BtcBlock createNextBlock(Address to, long version, long time, int blockHeight) {
         return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, blockHeight);
     }
 
@@ -908,17 +908,17 @@ public class Block extends Message {
      * 
      * @param height block height, if known, or -1 otherwise.
      */
-    Block createNextBlock(@Nullable final Address to, final long version,
-                          @Nullable TransactionOutPoint prevOut, final long time,
-                          final byte[] pubKey, final Coin coinbaseValue,
-                          final int height) {
-        Block b = new Block(params, version);
+    BtcBlock createNextBlock(@Nullable final Address to, final long version,
+                             @Nullable TransactionOutPoint prevOut, final long time,
+                             final byte[] pubKey, final Coin coinbaseValue,
+                             final int height) {
+        BtcBlock b = new BtcBlock(params, version);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
-            Transaction t = new Transaction(params);
+            BtcTransaction t = new BtcTransaction(params);
             t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, to));
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
@@ -956,22 +956,22 @@ public class Block extends Message {
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
+    public BtcBlock createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, Coin value) {
+    public BtcBlock createNextBlock(@Nullable Address to, Coin value) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeSeconds() + 5, pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to) {
+    public BtcBlock createNextBlock(@Nullable Address to) {
         return createNextBlock(to, FIFTY_COINS);
     }
 
     @VisibleForTesting
-    public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height) {
+    public BtcBlock createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
                                Utils.currentTimeSeconds(), pubKey, coinbaseValue, height);
     }
@@ -981,7 +981,7 @@ public class Block extends Message {
      * This method is intended for test use only.
      */
     @VisibleForTesting
-    Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
+    BtcBlock createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
                                Utils.currentTimeSeconds(), pubKey, FIFTY_COINS, height);
     }
