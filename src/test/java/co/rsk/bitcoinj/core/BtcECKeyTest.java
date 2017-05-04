@@ -18,7 +18,6 @@
 package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.core.BtcECKey.ECDSASignature;
-import co.rsk.bitcoinj.crypto.KeyCrypter;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.MainNetParams;
 import com.google.common.collect.Lists;
@@ -46,8 +45,6 @@ import static org.junit.Assert.*;
 
 public class BtcECKeyTest {
     private static final Logger log = LoggerFactory.getLogger(BtcECKeyTest.class);
-
-    private KeyCrypter keyCrypter;
 
     private static CharSequence PASSWORD1 = "my hovercraft has eels";
     private static CharSequence WRONG_PASSWORD = "it is a snowy day today";
