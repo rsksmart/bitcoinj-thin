@@ -288,9 +288,8 @@ public abstract class BtcAbstractBlockChain {
             if (shouldVerifyTransactions() && block.transactions == null)
                 throw new VerificationException("Got a block header while running in full-block mode");
 
-            // Check for already-seen block, but only for full pruned mode, where the DB is
-            // more likely able to handle these queries quickly.
-            if (shouldVerifyTransactions() && blockStore.get(block.getHash()) != null) {
+            // Check for already-seen block.
+            if (blockStore.get(block.getHash()) != null) {
                 result.setSuccess(Boolean.TRUE);
                 return result;
             }
