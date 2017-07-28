@@ -596,6 +596,33 @@ public class BtcTransaction extends ChildMessage {
     }
 
 
+    /**
+     * Nasty hack to be able to deserialize txs without inputs (incomplete txs).
+     * Segwit serialization added a marker "0x00" where the number of inputs was.
+     * Since a tx without inputs is invalid in the bitcoin network, there are no consensus issues.
+     * But txs without inputs are reasonable in the process of building a tx.
+     * So we implemented this alternative parse method to indicate we are parsing a tx without inputs.
+     * See https://groups.google.com/forum/#!topic/bitcoinj/6TM0dy3StlU
+     * @param noInputsPayload
+     * @throws ProtocolException
+     */
+    public void parseNoInputs(byte[] noInputsPayload) throws ProtocolException {
+        payload = noInputsPayload;
+        offset = 0;
+        protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
+
+        cursor = offset;
+        version = readUint32();
+        optimalEncodingMessageSize = 4;
+        readInputs();
+        readOutputs();
+        lockTime = readUint32();
+        optimalEncodingMessageSize += 4;
+        length = cursor - offset;
+        witnesses = new ArrayList<TransactionWitness>();
+    }
+
+
     private void readWitness() {
         witnesses = new ArrayList<TransactionWitness>(inputs.size());
         for (int i = 0; i < inputs.size(); i++) {
