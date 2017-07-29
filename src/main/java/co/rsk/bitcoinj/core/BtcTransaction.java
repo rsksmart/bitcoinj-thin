@@ -101,6 +101,8 @@ public class BtcTransaction extends ChildMessage {
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
+    private ArrayList<TransactionWitness> witnesses;
+
 
     private long lockTime;
 
@@ -166,6 +168,7 @@ public class BtcTransaction extends ChildMessage {
         version = 1;
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
+        witnesses = new ArrayList<TransactionWitness>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         length = 8; // 8 for std fields
     }
@@ -349,6 +352,57 @@ public class BtcTransaction extends ChildMessage {
         return totalOut;
     }
 
+    /**
+     * Get the transaction witness of an input
+     * @return the witness of the input
+     * @throws java.lang.IndexOutOfBoundsException
+     */
+    public TransactionWitness getWitness(int inputIndex) {
+        if (!(0 <= inputIndex && inputIndex < inputs.size()))
+            throw new java.lang.IndexOutOfBoundsException();
+        if (inputIndex >= witnesses.size())
+            return TransactionWitness.getEmpty();
+        return witnesses.get(inputIndex);
+    }
+
+    /**
+     * Set the transaction witness of an input
+     * @throws java.lang.IndexOutOfBoundsException
+     */
+    public void setWitness(int inputIndex, TransactionWitness witness) {
+        if (!(0 <= inputIndex && inputIndex < inputs.size()))
+            throw new java.lang.IndexOutOfBoundsException();
+        witness = witness == null ? TransactionWitness.getEmpty() : witness;
+        while (inputIndex >= witnesses.size()) {
+            witnesses.add(TransactionWitness.getEmpty());
+        }
+        witnesses.set(inputIndex, witness);
+    }
+
+    /**
+     * Returns true if the transaction has witnesses
+     * @return true if the transaction has witnesses
+     */
+    public boolean hasWitness() {
+        for (int i = 0; i < inputs.size(); i++) {
+            if (i >= Math.min(inputs.size(), witnesses.size()))
+                break;
+            if (witnesses.get(i).getPushCount() != 0)
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Count witnesses in this transaction.
+     *
+     * @return number of witnesses
+     */
+    public int countWitnesses() {
+        if (witnesses == null) return 0;
+        else return witnesses.size();
+    }
+
     @Nullable private Coin cachedValue;
     @Nullable private TransactionBag cachedForBag;
 
@@ -512,18 +566,81 @@ public class BtcTransaction extends ChildMessage {
         version = readUint32();
         optimalEncodingMessageSize = 4;
 
-        // First come the inputs.
-        long numInputs = readVarInt();
-        optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
-        inputs = new ArrayList<TransactionInput>((int) numInputs);
-        for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
-            inputs.add(input);
-            long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
-            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
-            cursor += scriptLen + 4;
+        readInputs();
+        byte flags = 0;
+        if (inputs.size() == 0) {
+            flags = readBytes(1)[0];
+            optimalEncodingMessageSize += 1;
+            if (flags != 0) {
+                readInputs();
+                readOutputs();
+            } else {
+                outputs = new ArrayList<TransactionOutput>(0);
+            }
+        } else {
+            readOutputs();
         }
-        // Now the outputs
+        if (((flags & 1) != 0)) {
+            flags ^= 1;
+            readWitness();
+        }
+        if (flags != 0) {
+            throw new ProtocolException("Unknown transaction optional data");
+        }
+
+        lockTime = readUint32();
+        optimalEncodingMessageSize += 4;
+        length = cursor - offset;
+
+        witnesses = witnesses == null ? new ArrayList<TransactionWitness>() : witnesses;
+    }
+
+
+    /**
+     * Nasty hack to be able to deserialize txs without inputs (incomplete txs).
+     * Segwit serialization added a marker "0x00" where the number of inputs was.
+     * Since a tx without inputs is invalid in the bitcoin network, there are no consensus issues.
+     * But txs without inputs are reasonable in the process of building a tx.
+     * So we implemented this alternative parse method to indicate we are parsing a tx without inputs.
+     * See https://groups.google.com/forum/#!topic/bitcoinj/6TM0dy3StlU
+     * @param noInputsPayload
+     * @throws ProtocolException
+     */
+    public void parseNoInputs(byte[] noInputsPayload) throws ProtocolException {
+        payload = noInputsPayload;
+        offset = 0;
+        protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
+
+        cursor = offset;
+        version = readUint32();
+        optimalEncodingMessageSize = 4;
+        readInputs();
+        readOutputs();
+        lockTime = readUint32();
+        optimalEncodingMessageSize += 4;
+        length = cursor - offset;
+        witnesses = new ArrayList<TransactionWitness>();
+    }
+
+
+    private void readWitness() {
+        witnesses = new ArrayList<TransactionWitness>(inputs.size());
+        for (int i = 0; i < inputs.size(); i++) {
+            long pushCount = readVarInt();
+            TransactionWitness witness = new TransactionWitness((int) pushCount);
+            setWitness(i, witness);
+            optimalEncodingMessageSize += VarInt.sizeOf(pushCount);
+            for (int y = 0; y < pushCount; y++) {
+                long pushSize = readVarInt();
+                optimalEncodingMessageSize += VarInt.sizeOf(pushSize) + pushSize;
+                byte[] push = readBytes((int) pushSize);
+                witness.setPush(y, push);
+            }
+        }
+    }
+
+
+    private void readOutputs() {
         long numOutputs = readVarInt();
         optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
         outputs = new ArrayList<TransactionOutput>((int) numOutputs);
@@ -534,9 +651,19 @@ public class BtcTransaction extends ChildMessage {
             optimalEncodingMessageSize += 8 + VarInt.sizeOf(scriptLen) + scriptLen;
             cursor += scriptLen;
         }
-        lockTime = readUint32();
-        optimalEncodingMessageSize += 4;
-        length = cursor - offset;
+    }
+
+    private void readInputs() {
+        long numInputs = readVarInt();
+        optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
+        inputs = new ArrayList<TransactionInput>((int) numInputs);
+        for (long i = 0; i < numInputs; i++) {
+            TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
+            inputs.add(input);
+            long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
+            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
+            cursor += scriptLen + 4;
+        }
     }
 
     public int getOptimalEncodingMessageSize() {
@@ -1000,13 +1127,28 @@ public class BtcTransaction extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+        boolean serializeWit = hasWitness();
         uint32ToByteStreamLE(version, stream);
+        if (serializeWit) {
+            stream.write(new byte[]{0, 1});
+        }
         stream.write(new VarInt(inputs.size()).encode());
         for (TransactionInput in : inputs)
             in.bitcoinSerialize(stream);
         stream.write(new VarInt(outputs.size()).encode());
         for (TransactionOutput out : outputs)
             out.bitcoinSerialize(stream);
+        if (serializeWit) {
+            for (int i = 0; i < inputs.size(); i++) {
+                TransactionWitness witness = getWitness(i);
+                stream.write(new VarInt(witness.getPushCount()).encode());
+                for (int y = 0; y < witness.getPushCount(); y++) {
+                    byte[] push = witness.getPush(y);
+                    stream.write(new VarInt(push.length).encode());
+                    stream.write(push);
+                }
+            }
+        }
         uint32ToByteStreamLE(lockTime, stream);
     }
 
