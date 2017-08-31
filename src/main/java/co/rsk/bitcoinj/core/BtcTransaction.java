@@ -1154,7 +1154,7 @@ public class BtcTransaction extends ChildMessage {
     }
 
     protected void bitcoinSerializeToStream(OutputStream stream, boolean serializeWitRequested) throws IOException {
-        boolean serializeWit = hasWitness() && serializeWitRequested;
+        boolean serializeWit = serializeWitRequested && hasWitness();
         uint32ToByteStreamLE(version, stream);
         if (serializeWit) {
             stream.write(new byte[]{0, 1});
