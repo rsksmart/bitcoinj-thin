@@ -223,26 +223,28 @@ public class BtcTransaction extends ChildMessage {
 
     public Sha256Hash getHash(boolean segwit) {
         if (segwit) {
-            if (isCoinBase()) return Sha256Hash.ZERO_HASH;
-            ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
-            try {
-                bitcoinSerializeToStream(stream, true);
-            } catch (IOException e) {
-                // Cannot happen, we are serializing to a memory stream.
+            if (isCoinBase()) {
+                return Sha256Hash.ZERO_HASH;
             }
-            byte[] bits = stream.toByteArray();
-            return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bits));
-        } else if (hash == null) {
-            ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
-            try {
-                bitcoinSerializeToStream(stream, false);
-            } catch (IOException e) {
-                // Cannot happen, we are serializing to a memory stream.
-            }
-            byte[] bits = stream.toByteArray();
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bits));
+            // there is no need to store hash in cache when segwit == true
+            return this.getSha256Hash(segwit);
+        } else if (this.hash == null) {
+            this.hash = this.getSha256Hash(segwit);
         }
-        return hash;
+
+        return this.hash;
+    }
+
+    private Sha256Hash getSha256Hash(boolean segwit) {
+        ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
+        try {
+            bitcoinSerializeToStream(stream, segwit);
+        } catch (IOException e) {
+            // Cannot happen, we are serializing to a memory stream.
+        }
+        byte[] bits = stream.toByteArray();
+
+        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bits));
     }
 
     /**
