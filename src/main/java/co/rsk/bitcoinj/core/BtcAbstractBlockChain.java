@@ -143,7 +143,7 @@ public abstract class BtcAbstractBlockChain {
                                  BtcBlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
-        log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
+        log.debug("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
         this.params = context.getParams();
 
         this.versionTally = new VersionTally(context.getParams());

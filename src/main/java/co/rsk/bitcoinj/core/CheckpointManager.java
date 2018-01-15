@@ -140,7 +140,7 @@ public class CheckpointManager {
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
             Sha256Hash dataHash = Sha256Hash.wrap(digest.digest());
-            log.info("Read {} checkpoints, hash is {}", checkpoints.size(), dataHash);
+            log.debug("Read {} checkpoints, hash is {}", checkpoints.size(), dataHash);
             return dataHash;
         } catch (ProtocolException e) {
             throw new IOException(e);
