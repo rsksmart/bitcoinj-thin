@@ -56,6 +56,13 @@ public class Utils {
 
     private static final Joiner SPACE_JOINER = Joiner.on(" ");
 
+    /**
+     * Max initial size of variable length arrays or ArrayLists.
+     * Avoids this attack: Attacker sends a msg indicating it will contain a huge number (eg 2 billion) elements (eg transaction inputs) and
+     * forces bitcoinj to try to allocate a huge piece of the memory resulting in OutOfMemoryError
+     */
+    public static final int MAX_INITIAL_ARRAY_LENGTH = 20;
+
     private static BlockingQueue<Boolean> mockSleepQueue;
 
     /**

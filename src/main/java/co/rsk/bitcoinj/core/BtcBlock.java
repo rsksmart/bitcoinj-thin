@@ -237,7 +237,7 @@ public class BtcBlock extends Message {
 
         int numTransactions = (int) readVarInt();
         optimalEncodingMessageSize += VarInt.sizeOf(numTransactions);
-        transactions = new ArrayList<BtcTransaction>(numTransactions);
+        transactions = new ArrayList<BtcTransaction>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
             BtcTransaction tx = new BtcTransaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH);
             transactions.add(tx);
