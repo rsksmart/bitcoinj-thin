@@ -207,6 +207,7 @@ public class PartialMerkleTree extends Message {
             } else {
                 right = left;
             }
+            checkNotAValid64ByteTransaction(left, right);
             // and combine them before returning
             return combineLeftRight(left, right);
         }
@@ -217,6 +218,94 @@ public class PartialMerkleTree extends Message {
             reverseBytes(left), 0, 32,
             reverseBytes(right), 0, 32));
     }
+
+    /**
+     * Checks supplied bytes DO NOT represent a valid bitcoin transaction.
+     * Fixes attack described on https://bitslog.wordpress.com/2018/06/09/leaf-node-weakness-in-bitcoin-merkle-tree-design/
+     * @throws VerificationException if bytes DO represent a valid bitcoin transaction.
+     */
+    private void checkNotAValid64ByteTransaction(byte[] left, byte[] right) throws VerificationException {
+        byte[] leftAndRight = new byte[left.length + right.length];
+        System.arraycopy(left, 0, leftAndRight, 0, 32);
+        System.arraycopy(right, 0, leftAndRight, 32, 32);
+        try {
+            int _offset = 0;
+
+            // Skip version
+            _offset += 4;
+
+            // Check inputs count
+            byte inputCount = leftAndRight[_offset];
+            _offset += 1;
+            if (inputCount != 1) {
+                // Only 1 input fits in 64 bytes
+                return;
+            }
+
+            // Skip input 0 outpoint hash
+            _offset += 32;
+            // Skip input 0 outpoint index
+            _offset += 4;
+
+            // Check input 0 script length
+            byte input0ScriptLength = leftAndRight[_offset];
+            _offset += 1;
+            if (input0ScriptLength < 0 || input0ScriptLength > 4) {
+                // Script length should be 0 to 4 to create a valid 64 byte tx
+                return;
+            }
+
+            // Skip input 0 script
+            _offset += input0ScriptLength;
+
+            // Skip input 0 sequence
+            _offset += 4;
+
+            // Check output count
+            byte outputCount = leftAndRight[_offset];
+            _offset += 1;
+            if (outputCount != 1) {
+                // Only 1 output fits in 64 bytes
+                return;
+            }
+
+            // check output 0 value
+            long output0Value = Utils.readInt64(leftAndRight, _offset);
+            _offset += 8;
+            long maxNumberOfSatoshis = 21000000l * 100000000l;
+            if (output0Value < 1 || output0Value > maxNumberOfSatoshis) {
+                //  0 < value < 21 millions (expressed in satoshis) validation failed
+                return;
+            }
+
+            // check output 0 script length
+            byte output0ScriptLength = leftAndRight[_offset];
+            _offset += 1;
+            if (output0ScriptLength < 0 || output0ScriptLength > 4) {
+                // Script length should be 0 to 4 to create a valid 64 byte tx
+                return;
+            }
+
+            // check input 0 script length + output 0 script length
+            if ((input0ScriptLength + output0ScriptLength) != 4) {
+                // Script length should be 0 to 4
+                return;
+            }
+
+            // Skip output 0 script
+            _offset += output0ScriptLength;
+
+            // Skip lock time
+            _offset += 4;
+
+            // If code reaches here, it means "left + right" represent a a valid btc transaction
+            throw new VerificationException("Supplied nodes form a valid btc transaction");
+        } catch (Exception e) {
+            // do-nothing, exception expected
+        }
+    }
+
+
 
     /**
      * Extracts tx hashes that are in this merkle tree
