@@ -292,11 +292,13 @@ public class PartialMerkleTree extends Message {
             return;
         }
 
-        // Skip output 0 script
-        _offset += output0ScriptLength;
+        // Skip output 0 script.
+        // Commented out _offset increment because _offset is never read again
+        //_offset += output0ScriptLength;
 
         // Skip lock time
-        _offset += 4;
+        // Commented out _offset increment because _offset is never read again
+        //_offset += 4;
 
         // If code reaches here, it means "left + right" represent a a valid btc transaction
         throw new VerificationException("Supplied nodes form a valid btc transaction");
