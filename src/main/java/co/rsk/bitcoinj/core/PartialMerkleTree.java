@@ -64,6 +64,9 @@ public class PartialMerkleTree extends Message {
 
     // txids and internal hashes
     private List<Sha256Hash> hashes;
+
+    // coinbase to check is part of a valid 64 byte tx 
+    private static long COINBASE_CHECKED = Utils.readUint32(new byte[]{(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF}, 0);
     
     public PartialMerkleTree(NetworkParameters params, byte[] payloadBytes, int offset) throws ProtocolException {
         super(params, payloadBytes, offset);
@@ -244,8 +247,15 @@ public class PartialMerkleTree extends Message {
 
         // Skip input 0 outpoint hash
         _offset += 32;
-        // Skip input 0 outpoint index
+
+        // Check output 0 index
+        long output0Index = Utils.readUint32(leftAndRight, _offset);
         _offset += 4;
+        if (output0Index > 1000000 && output0Index != COINBASE_CHECKED){
+            // this value is capped by max btc tx size
+            // and should check also is not a valid coinbase expressed in a byte array
+            return;
+        }
 
         // Check input 0 script length
         byte input0ScriptLength = leftAndRight[_offset];
