@@ -35,6 +35,7 @@ public class RegTestParams extends TestNet2Params {
         interval = Integer.MAX_VALUE;
         maxTarget = MAX_TARGET;
         subsidyDecreaseBlockCount = 150;
+        segwitAddressHrp = "tb";
         port = 18444;
         id = ID_REGTEST;
 

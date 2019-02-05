@@ -67,6 +67,7 @@ public abstract class NetworkParameters {
     protected int addressHeader;
     protected int p2shHeader;
     protected int dumpedPrivateKeyHeader;
+    protected String segwitAddressHrp;
     protected int interval;
     protected int targetTimespan;
     protected int bip32HeaderPub;
@@ -299,7 +300,7 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * First byte of a base58 encoded address. See {@link co.rsk.bitcoinj.core.Address}. This is the same as acceptableAddressCodes[0] and
+     * First byte of a base58 encoded address. See {@link LegacyAddress}. This is the same as acceptableAddressCodes[0] and
      * is the one used for "normal" addresses. Other types of address may be encountered with version codes found in
      * the acceptableAddressCodes array.
      */
@@ -317,6 +318,11 @@ public abstract class NetworkParameters {
     /** First byte of a base58 encoded dumped private key. See {@link co.rsk.bitcoinj.core.DumpedPrivateKey}. */
     public int getDumpedPrivateKeyHeader() {
         return dumpedPrivateKeyHeader;
+    }
+
+    /** Human readable part of bech32 encoded segwit address. */
+    public String getSegwitAddressHrp() {
+        return segwitAddressHrp;
     }
 
     /**

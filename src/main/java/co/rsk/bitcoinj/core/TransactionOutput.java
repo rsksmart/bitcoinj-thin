@@ -95,7 +95,7 @@ public class TransactionOutput extends ChildMessage {
      * {@link BtcTransaction#addOutput(Coin, BtcECKey)} instead of creating an output directly.
      */
     public TransactionOutput(NetworkParameters params, @Nullable BtcTransaction parent, Coin value, BtcECKey to) {
-        this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
+        this(params, parent, value, ScriptBuilder.createOutputScript(to.toAddress(params)).getProgram());
     }
 
     public TransactionOutput(NetworkParameters params, @Nullable BtcTransaction parent, Coin value, byte[] scriptBytes) {

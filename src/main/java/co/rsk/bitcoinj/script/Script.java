@@ -59,7 +59,9 @@ public class Script {
         NO_TYPE,
         P2PKH,
         PUB_KEY,
-        P2SH
+        P2SH,
+        P2WPKH,
+        P2WSH
     }
 
     /** Flags to pass to {@link Script#correctlySpends(BtcTransaction, long, Script, Set)}.
@@ -241,7 +243,7 @@ public class Script {
         return chunks.size() == 5 &&
                chunks.get(0).equalsOpCode(OP_DUP) &&
                chunks.get(1).equalsOpCode(OP_HASH160) &&
-               chunks.get(2).data.length == Address.LENGTH &&
+               chunks.get(2).data.length == LegacyAddress.LENGTH &&
                chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
@@ -339,8 +341,8 @@ public class Script {
      * transaction can actually receive coins on it. This method may be removed in future.
      */
     @Deprecated
-    public Address getFromAddress(NetworkParameters params) throws ScriptException {
-        return new Address(params, Utils.sha256hash160(getPubKey()));
+    public LegacyAddress getFromAddress(NetworkParameters params) throws ScriptException {
+        return new LegacyAddress(params, Utils.sha256hash160(getPubKey()));
     }
 
     /**
@@ -359,9 +361,9 @@ public class Script {
      */
     public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
         if (isSentToAddress())
-            return new Address(params, getPubKeyHash());
+            return new LegacyAddress(params, getPubKeyHash());
         else if (isPayToScriptHash())
-            return Address.fromP2SHScript(params, this);
+            return LegacyAddress.fromP2SHScript(params, this);
         else if (forcePayToPubKey && isSentToRawPubKey())
             return BtcECKey.fromPublicOnly(getPubKey()).toAddress(params);
         else
@@ -583,7 +585,7 @@ public class Script {
             return opcode + 1 - OP_1;
     }
 
-    static int encodeToOpN(int value) {
+    public static int encodeToOpN(int value) {
         checkArgument(value >= -1 && value <= 16, "encodeToOpN called for " + value + " which we cannot encode in an opcode.");
         if (value == 0)
             return OP_0;
@@ -665,6 +667,16 @@ public class Script {
         } else {
             throw new IllegalStateException("Unsupported script type");
         }
+    }
+
+    /**
+     * Get the type of output script that will be used for sending to the address. This is either
+     * {@link ScriptType#P2PKH} or {@link ScriptType#P2SH}.
+     *
+     * @return type of output script
+     */
+    public ScriptType getOutputScriptType() {
+        return isPayToScriptHash() ? ScriptType.P2SH : ScriptType.P2PKH;
     }
 
     /**
@@ -799,7 +811,7 @@ public class Script {
         }
         return false;
     }
-    
+
     /**
      * Cast a script chunk to a BigInteger.
      *

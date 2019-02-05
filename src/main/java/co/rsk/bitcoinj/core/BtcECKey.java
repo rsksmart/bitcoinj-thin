@@ -473,7 +473,7 @@ public class BtcECKey {
      * the RIPEMD-160 hash of the public key and is not the public key itself (which is too large to be convenient).
      */
     public Address toAddress(NetworkParameters params) {
-        return new Address(params, getPubKeyHash());
+        return LegacyAddress.fromKey(params, this);
     }
 
     /**
@@ -1018,7 +1018,7 @@ public class BtcECKey {
     }
 
     public void formatKeyWithAddress(boolean includePrivateKeys, StringBuilder builder, NetworkParameters params) {
-        final Address address = toAddress(params);
+        final Address address = LegacyAddress.fromKey(params, this);
         builder.append("  addr:");
         builder.append(address.toString());
         builder.append("  hash160:");

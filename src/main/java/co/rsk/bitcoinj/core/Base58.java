@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +25,7 @@ import java.util.Arrays;
  * <p>
  * Note that this is not the same base58 as used by Flickr, which you may find referenced around the Internet.
  * <p>
- * You may want to consider working with {@link VersionedChecksummedBytes} instead, which
+ * You may want to consider working with {@link PrefixedChecksummedBytes} instead, which
  * adds support for testing the prefix and suffix bytes commonly found in addresses.
  * <p>
  * Satoshi explains: why base-58 instead of standard base-64 encoding?
@@ -63,7 +64,7 @@ public class Base58 {
     public static String encode(byte[] input) {
         if (input.length == 0) {
             return "";
-        }       
+        }
         // Count leading zeros.
         int zeros = 0;
         while (zeros < input.length && input[zeros] == 0) {
@@ -91,6 +92,27 @@ public class Base58 {
     }
 
     /**
+     * Encodes the given version and bytes as a base58 string. A checksum is appended.
+     *
+     * @param version the version to encode
+     * @param payload the bytes to encode, e.g. pubkey hash
+     * @return the base58-encoded string
+     */
+    public static String encodeChecked(int version, byte[] payload) {
+        if (version < 0 || version > 255)
+            throw new IllegalArgumentException("Version not in range.");
+
+        // A stringified buffer is:
+        // 1 byte version + data bytes + 4 bytes check code (a truncated hash)
+        byte[] addressBytes = new byte[1 + payload.length + 4];
+        addressBytes[0] = (byte) version;
+        System.arraycopy(payload, 0, addressBytes, 1, payload.length);
+        byte[] checksum = Sha256Hash.hashTwice(addressBytes, 0, payload.length + 1);
+        System.arraycopy(checksum, 0, addressBytes, payload.length + 1, 4);
+        return Base58.encode(addressBytes);
+    }
+
+    /**
      * Decodes the given base58 string into the original data bytes.
      *
      * @param input the base58-encoded string to decode
@@ -107,7 +129,7 @@ public class Base58 {
             char c = input.charAt(i);
             int digit = c < 128 ? INDEXES[c] : -1;
             if (digit < 0) {
-                throw new AddressFormatException("Illegal character " + c + " at position " + i);
+                throw new AddressFormatException.InvalidCharacter(c, i);
             }
             input58[i] = (byte) digit;
         }
@@ -132,7 +154,7 @@ public class Base58 {
         // Return decoded data (including original number of leading zeros).
         return Arrays.copyOfRange(decoded, outputStart - zeros, decoded.length);
     }
-    
+
     public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
         return new BigInteger(1, decode(input));
     }
@@ -148,12 +170,12 @@ public class Base58 {
     public static byte[] decodeChecked(String input) throws AddressFormatException {
         byte[] decoded  = decode(input);
         if (decoded.length < 4)
-            throw new AddressFormatException("Input too short");
+            throw new AddressFormatException.InvalidDataLength("Input too short: " + decoded.length);
         byte[] data = Arrays.copyOfRange(decoded, 0, decoded.length - 4);
         byte[] checksum = Arrays.copyOfRange(decoded, decoded.length - 4, decoded.length);
         byte[] actualChecksum = Arrays.copyOfRange(Sha256Hash.hashTwice(data), 0, 4);
         if (!Arrays.equals(checksum, actualChecksum))
-            throw new AddressFormatException("Checksum does not validate");
+            throw new AddressFormatException.InvalidChecksum();
         return data;
     }
 
@@ -180,5 +202,4 @@ public class Base58 {
         }
         return (byte) remainder;
     }
-
 }

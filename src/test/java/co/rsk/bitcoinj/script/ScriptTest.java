@@ -70,7 +70,7 @@ public class ScriptTest {
         Script script = new Script(sigProgBytes);
         // Test we can extract the from address.
         byte[] hash160 = Utils.sha256hash160(script.getPubKey());
-        Address a = new Address(PARAMS, hash160);
+        LegacyAddress a = new LegacyAddress(PARAMS, hash160);
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", a.toString());
     }
 
@@ -80,7 +80,7 @@ public class ScriptTest {
         byte[] pubkeyBytes = HEX.decode(pubkeyProg);
         Script pubkey = new Script(pubkeyBytes);
         assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
-        Address toAddr = new Address(PARAMS, pubkey.getPubKeyHash());
+        LegacyAddress toAddr = new LegacyAddress(PARAMS, pubkey.getPubKeyHash());
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
     }
 
@@ -93,7 +93,7 @@ public class ScriptTest {
         List<BtcECKey> pubkeys = new ArrayList<BtcECKey>(3);
         for (BtcECKey key : keys) pubkeys.add(BtcECKey.fromPublicOnly(key.getPubKeyPoint()));
         assertEquals(script.getPubKeys(), pubkeys);
-        assertFalse(ScriptBuilder.createOutputScript(new BtcECKey()).isSentToMultiSig());
+        assertFalse(ScriptBuilder.createP2PKOutputScript(new BtcECKey()).isSentToMultiSig());
         try {
             // Fail if we ask for more signatures than keys.
             Script.createMultiSigOutputScript(4, keys);
@@ -112,7 +112,7 @@ public class ScriptTest {
 
     @Test
     public void testP2SHOutputScript() throws Exception {
-        Address p2shAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        LegacyAddress p2shAddress = LegacyAddress.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertTrue(ScriptBuilder.createOutputScript(p2shAddress).isPayToScriptHash());
     }
 
@@ -122,7 +122,7 @@ public class ScriptTest {
         Script s = new Script(bytes);
         assertTrue(s.isSentToRawPubKey());
     }
-    
+
     @Test
     public void testCreateMultiSigInputScript() {
         // Setup transaction and signatures
@@ -134,7 +134,7 @@ public class ScriptTest {
         BtcTransaction transaction = PARAMS.getDefaultSerializer().makeTransaction(bytes);
         TransactionOutput output = transaction.getOutput(1);
         BtcTransaction spendTx = new BtcTransaction(PARAMS);
-        Address address = Address.fromBase58(PARAMS, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
+        LegacyAddress address = LegacyAddress.fromBase58(PARAMS, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
         Script outputScript = ScriptBuilder.createOutputScript(address);
         spendTx.addOutput(output.getValue(), outputScript);
         spendTx.addInput(output);
@@ -235,7 +235,7 @@ public class ScriptTest {
 
     private Script parseScriptString(String string) throws IOException {
         String[] words = string.split("[ \\t\\n]");
-        
+
         UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
 
         for(String w : words) {
@@ -263,9 +263,9 @@ public class ScriptTest {
                 out.write(ScriptOpCodes.getOpCode(w.substring(3)));
             } else {
                 throw new RuntimeException("Invalid Data");
-            }                        
+            }
         }
-        
+
         return new Script(out.toByteArray());
     }
 
@@ -282,7 +282,7 @@ public class ScriptTest {
         }
         return flags;
     }
-    
+
     @Test
     public void dataDrivenValidScripts() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
@@ -300,7 +300,7 @@ public class ScriptTest {
             }
         }
     }
-    
+
     @Test
     public void dataDrivenInvalidScripts() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
@@ -319,7 +319,7 @@ public class ScriptTest {
             }
         }
     }
-    
+
     private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
         Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
         for (JsonNode input : inputs) {
@@ -417,18 +417,18 @@ public class ScriptTest {
         // pay to pubkey
         BtcECKey toKey = new BtcECKey();
         Address toAddress = toKey.toAddress(PARAMS);
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toKey).getToAddress(PARAMS, true));
+        assertEquals(toAddress, ScriptBuilder.createP2PKOutputScript(toKey).getToAddress(PARAMS, true));
         // pay to pubkey hash
         assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(PARAMS, true));
         // pay to script hash
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
-        Address scriptAddress = Address.fromP2SHScript(PARAMS, p2shScript);
+        LegacyAddress scriptAddress = LegacyAddress.fromP2SHScript(PARAMS, p2shScript);
         assertEquals(scriptAddress, p2shScript.getToAddress(PARAMS, true));
     }
 
     @Test(expected = ScriptException.class)
     public void getToAddressNoPubKey() throws Exception {
-        ScriptBuilder.createOutputScript(new BtcECKey()).getToAddress(PARAMS, false);
+        ScriptBuilder.createP2PKOutputScript(new BtcECKey()).getToAddress(PARAMS, false);
     }
 
     /** Test encoding of zero, which should result in an opcode */

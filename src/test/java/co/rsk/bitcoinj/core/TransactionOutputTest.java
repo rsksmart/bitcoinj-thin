@@ -29,7 +29,7 @@ public class TransactionOutputTest {
     @Test
     public void testP2SHOutputScript() throws Exception {
         String P2SHAddressString = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
-        Address P2SHAddress = Address.fromBase58(MainNetParams.get(), P2SHAddressString);
+        LegacyAddress P2SHAddress = LegacyAddress.fromBase58(MainNetParams.get(), P2SHAddressString);
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
         BtcTransaction tx = new BtcTransaction(MainNetParams.get());
         tx.addOutput(Coin.COIN, script);
