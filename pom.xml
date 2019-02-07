@@ -20,7 +20,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>co.rsk.bitcoinj</groupId>
-    <version>0.14.4-rsk-6</version>
+    <version>segwit-address</version>
 
     <artifactId>bitcoinj-thin</artifactId>
 
@@ -96,6 +96,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
+			    <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
                             <excludes>
                                 <exclude>**/core/PeerTest.java</exclude>
                                 <exclude>**/core/TransactionBroadcastTest.java</exclude>

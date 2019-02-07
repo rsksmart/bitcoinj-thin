@@ -20,6 +20,10 @@ To perform a full build use
 ```
 mvn clean package
 ```
+If you are using ubuntu an run into a maven-surfire-plugin error use
+```
+_JAVA_OPTIONS=-Djdk.net.URLClassPath.disableClassPathURLCheck=true mvn clean package
+```
 
 The outputs are under the `target` directory.
 
