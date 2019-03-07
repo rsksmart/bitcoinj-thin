@@ -6,3 +6,7 @@ target
 *.iml
 *.chain
 *.spvchain
+
+# Gradle
+.gradle
+build
