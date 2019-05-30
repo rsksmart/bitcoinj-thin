@@ -20,7 +20,6 @@ package co.rsk.bitcoinj.core;
 import co.rsk.bitcoinj.store.BlockStoreException;
 import co.rsk.bitcoinj.store.BtcBlockStore;
 import co.rsk.bitcoinj.wallet.Wallet;
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,29 +95,6 @@ public abstract class BtcAbstractBlockChain {
     private final Object chainHeadLock = new Object();
 
     protected final NetworkParameters params;
-
-    // Holds a block header and, optionally, a list of tx hashes or block's transactions
-    class OrphanBlock {
-        final BtcBlock block;
-        final FilteredBlock filteredBlock;
-        final List<Sha256Hash> filteredTxHashes;
-        final Map<Sha256Hash, BtcTransaction> filteredTxn;
-        OrphanBlock(BtcBlock block, @Nullable List<Sha256Hash> filteredTxHashes, @Nullable Map<Sha256Hash, BtcTransaction> filteredTxn, FilteredBlock filteredBlock) {
-            final boolean filtered = filteredTxHashes != null && filteredTxn != null;
-            Preconditions.checkArgument((block.transactions == null && filtered)
-                                        || (block.transactions != null && !filtered));
-            this.block = block;
-            this.filteredTxHashes = filteredTxHashes;
-            this.filteredTxn = filteredTxn;
-            this.filteredBlock = filteredBlock;
-        }
-        public Boolean hasFilteredBlock() {
-            return filteredBlock != null;
-        }
-    }
-    // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
-    // were downloading the block chain.
-    private final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<Sha256Hash, OrphanBlock>();
 
     /** False positive estimation uses a double exponential moving average. */
     public static final double FP_ESTIMATOR_ALPHA = 0.0001;
@@ -216,7 +192,7 @@ public abstract class BtcAbstractBlockChain {
      * of blocks added during the execution of the add process.
      */
     public BlockchainAddResult addBlock(BtcBlock block) throws VerificationException {
-        return runAddProcces(block, true, null, null, null);
+        return runAddProcces(block, null, null, null);
     }
     
     /**
@@ -224,13 +200,13 @@ public abstract class BtcAbstractBlockChain {
      * of blocks added during the execution of the add process.
      */
     public BlockchainAddResult addBlock(FilteredBlock block) throws VerificationException  {
-        return runAddProcces(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions(), block);
+        return runAddProcces(block.getBlockHeader(), block.getTransactionHashes(), block.getAssociatedTransactions(), block);
     }
     
     /**
      * This code was duplicated on add(Block) and in add(FilteredBlock), as the original comment says. The way to handle exceptions should be improved
      */
-    private BlockchainAddResult runAddProcces(BtcBlock block, boolean tryConnecting,
+    private BlockchainAddResult runAddProcces(BtcBlock block,
                                               @Nullable List<Sha256Hash> filteredTxHashList, @Nullable Map<Sha256Hash, BtcTransaction> filteredTxn, FilteredBlock filteredBlock) throws VerificationException{
         try {
             // The block has a list of hashes of transactions that matched the Bloom filter, and a list of associated
@@ -240,7 +216,7 @@ public abstract class BtcAbstractBlockChain {
             // a false positive, as expected in any Bloom filtering scheme). The filteredTxn list here will usually
             // only be full of data when we are catching up to the head of the chain and thus haven't witnessed any
             // of the transactions.
-            return add(block, tryConnecting, filteredTxHashList, filteredTxn, filteredBlock);
+            return add(block, filteredTxHashList, filteredTxn, filteredBlock);
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
@@ -263,20 +239,15 @@ public abstract class BtcAbstractBlockChain {
     
 
     // filteredTxHashList contains all transactions, filteredTxn just a subset
-    private BlockchainAddResult add(BtcBlock block, boolean tryConnecting,
+    private BlockchainAddResult add(BtcBlock block,
                                     @Nullable List<Sha256Hash> filteredTxHashList, @Nullable Map<Sha256Hash, BtcTransaction> filteredTxn, FilteredBlock filteredBlock)
             throws BlockStoreException, VerificationException {
         // TODO: Use read/write locks to ensure that during chain download properties are still low latency.
         BlockchainAddResult result = new BlockchainAddResult();
         try {
-            // Quick check for duplicates to avoid an expensive check further down (in findSplit). This can happen a lot
-            // when connecting orphan transactions due to the dumb brute force algorithm we use.
+            // Quick check for duplicates to avoid an expensive check further down (in findSplit).
             if (block.equals(getChainHead().getHeader())) {
                 result.setSuccess(Boolean.TRUE);
-                return result;
-            }
-            if (tryConnecting && orphanBlocks.containsKey(block.getHash())) {
-                result.setSuccess(Boolean.FALSE);
                 return result;
             }
 
@@ -308,12 +279,7 @@ public abstract class BtcAbstractBlockChain {
             // Try linking it to a place in the currently known blocks.
 
             if (storedPrev == null) {
-                // We can't find the previous block. Probably we are still in the process of downloading the chain and a
-                // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
-                // have more blocks.
-                checkState(tryConnecting, "bug in tryConnectingOrphans");
                 log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
-                orphanBlocks.put(block.getHash(), new OrphanBlock(block, filteredTxHashList, filteredTxn, filteredBlock));
                 result.setSuccess(Boolean.FALSE);
                 return result;
             } else {
@@ -321,31 +287,9 @@ public abstract class BtcAbstractBlockChain {
                 params.checkDifficultyTransitions(storedPrev, block, blockStore);
                 connectBlock(block, storedPrev, shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
             }
-            
-            if (tryConnecting) {
-                List<OrphanBlock> orphans = tryConnectingOrphans();
-                for(OrphanBlock ob : orphans) {
-                    result.addConnectedOrphan(ob.block);
-                    if(ob.hasFilteredBlock())
-                        result.addConnectedFilteredOrphan(ob.filteredBlock);
-                }
-            }
+
             result.setSuccess(Boolean.TRUE);
             return result;
-        } finally {
-        }
-    }
-
-    /**
-     * Returns the hashes of the currently stored orphan blocks and then deletes them from this objects storage.
-     * Used by Peer when a filter exhaustion event has occurred and thus any orphan blocks that have been downloaded
-     * might be inaccurate/incomplete.
-     */
-    public Set<Sha256Hash> drainOrphanBlocks() {
-        try {
-            Set<Sha256Hash> hashes = new HashSet<Sha256Hash>(orphanBlocks.keySet());
-            orphanBlocks.clear();
-            return hashes;
         } finally {
         }
     }
@@ -530,82 +474,12 @@ public abstract class BtcAbstractBlockChain {
     }
 
     /**
-     * For each block in orphanBlocks, see if we can now fit it on top of the chain and if so, do so.
-     */
-    private List<OrphanBlock> tryConnectingOrphans() throws VerificationException, BlockStoreException {
-        // For each block in our orphan list, try and fit it onto the head of the chain. If we succeed remove it
-        // from the list and keep going. If we changed the head of the list at the end of the round try again until
-        // we can't fit anything else on the top.
-        //
-        // This algorithm is kind of crappy, we should do a topo-sort then just connect them in order, but for small
-        // numbers of orphan blocks it does OK.
-        List<OrphanBlock> orphansAdded = new ArrayList<OrphanBlock>();
-        int blocksConnectedThisRound;
-        do {
-            blocksConnectedThisRound = 0;
-            Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
-            while (iter.hasNext()) {
-                OrphanBlock orphanBlock = iter.next();
-                // Look up the blocks previous.
-                StoredBlock prev = getStoredBlockInCurrentScope(orphanBlock.block.getPrevBlockHash());
-                if (prev == null) {
-                    // This is still an unconnected/orphan block.
-                    log.debug("Orphan block {} is not connectable right now", orphanBlock.block.getHash());
-                    continue;
-                }
-                // Otherwise we can connect it now.
-                // False here ensures we don't recurse infinitely downwards when connecting huge chains.
-                log.info("Connected orphan {}", orphanBlock.block.getHash());
-                add(orphanBlock.block, false, orphanBlock.filteredTxHashes, orphanBlock.filteredTxn, orphanBlock.filteredBlock);
-                orphansAdded.add(orphanBlock);
-                iter.remove();
-                blocksConnectedThisRound++;
-            }
-            if (blocksConnectedThisRound > 0) {
-                log.info("Connected {} orphan blocks.", blocksConnectedThisRound);
-            }
-        } while (blocksConnectedThisRound > 0);
-        return orphansAdded;
-    }
-
-    /**
      * Returns the block at the head of the current best chain. This is the block which represents the greatest
      * amount of cumulative work done.
      */
     public StoredBlock getChainHead() {
         synchronized (chainHeadLock) {
             return chainHead;
-        }
-    }
-
-    /**
-     * An orphan block is one that does not connect to the chain anywhere (ie we can't find its parent, therefore
-     * it's an orphan). Typically this occurs when we are downloading the chain and didn't reach the head yet, and/or
-     * if a block is solved whilst we are downloading. It's possible that we see a small amount of orphan blocks which
-     * chain together, this method tries walking backwards through the known orphan blocks to find the bottom-most.
-     *
-     * @return from or one of froms parents, or null if "from" does not identify an orphan block
-     */
-    @Nullable
-    public BtcBlock getOrphanRoot(Sha256Hash from) {
-        try {
-            OrphanBlock cursor = orphanBlocks.get(from);
-            if (cursor == null)
-                return null;
-            OrphanBlock tmp;
-            while ((tmp = orphanBlocks.get(cursor.block.getPrevBlockHash())) != null) {
-                cursor = tmp;
-            }
-            return cursor.block;
-        } finally {
-        }
-    }
-
-    /** Returns true if the given block is currently in the orphan blocks list. */
-    public boolean isOrphan(Sha256Hash block) {
-        try {
-            return orphanBlocks.containsKey(block);
-        } finally {
         }
     }
 
