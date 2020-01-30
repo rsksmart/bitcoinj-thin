@@ -21,10 +21,12 @@ import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
 import co.rsk.bitcoinj.script.ScriptOpCodes;
+import co.rsk.bitcoinj.script.ScriptPattern;
 import co.rsk.bitcoinj.signers.TransactionSigner;
 import co.rsk.bitcoinj.wallet.Wallet;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1314,6 +1316,17 @@ public class BtcTransaction extends ChildMessage {
                 throw new VerificationException.CoinbaseHeightMismatch("Block height mismatch in coinbase.");
             }
         }
+    }
+
+    /** Loops the outputs of a coinbase transaction to locate the witness commitment. */
+    public Sha256Hash findWitnessCommitment() {
+        checkState(isCoinBase());
+        for (TransactionOutput out : Lists.reverse(outputs)) {
+            Script scriptPubKey = out.getScriptPubKey();
+            if (ScriptPattern.isWitnessCommitment(scriptPubKey))
+                return ScriptPattern.extractWitnessCommitmentHash(scriptPubKey);
+        }
+        return null;
     }
 
     /**
