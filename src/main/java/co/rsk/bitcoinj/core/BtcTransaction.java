@@ -223,9 +223,11 @@ public class BtcTransaction extends ChildMessage {
 
     public Sha256Hash getHash(boolean segwit) {
         if (segwit) {
-            if (isCoinBase()) {
-                return Sha256Hash.ZERO_HASH;
-            }
+// Comment out since bitcoinj upstream (and bitcoin core) return a non-zero value for coinbase tx in Transaction.getWTxId().
+// When building the witness merkle tree bitcoinj upstream (and bitcoin core) use the harcoded value 0x0000...0000 as wtxid for the coinbase tx instead of calling Transaction.getWTxId().
+//            if (isCoinBase()) {
+//                return Sha256Hash.ZERO_HASH;
+//            }
             // there is no need to store hash in cache when segwit == true
             return this.getSha256Hash(segwit);
         } else if (this.hash == null) {
