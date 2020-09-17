@@ -18,6 +18,7 @@
 package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.script.Script;
+import co.rsk.bitcoinj.script.ScriptException;
 import co.rsk.bitcoinj.wallet.KeyBag;
 import co.rsk.bitcoinj.wallet.RedeemData;
 
@@ -174,20 +175,6 @@ public class TransactionInput extends ChildMessage {
         this.scriptSig = new WeakReference<Script>(checkNotNull(scriptSig));
         // TODO: This should all be cleaned up so we have a consistent internal representation.
         setScriptBytes(scriptSig.getProgram());
-    }
-
-    /**
-     * Convenience method that returns the from address of this input by parsing the scriptSig. The concept of a
-     * "from address" is not well defined in Bitcoin and you should not assume that senders of a transaction can
-     * actually receive coins on the same address they used to sign (e.g. this is not true for shared wallets).
-     */
-    @Deprecated
-    public Address getFromAddress() throws ScriptException {
-        if (isCoinBase()) {
-            throw new ScriptException(
-                    "This is a coinbase transaction which generates new coins. It does not have a from address.");
-        }
-        return getScriptSig().getFromAddress(params);
     }
 
     /**

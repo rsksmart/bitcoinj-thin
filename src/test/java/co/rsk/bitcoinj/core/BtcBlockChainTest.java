@@ -23,10 +23,18 @@ public class BtcBlockChainTest {
 
     @Test
     public void orphanBlockNotStored() {
+        int nonce = 0;
         BtcBlock block = new BtcBlock(
+            PARAMS, 2l, Sha256Hash.of(HEX.decode("0011")),
+            Sha256Hash.ZERO_HASH, PARAMS.genesisBlock.getTime().getTime() + 1, PARAMS.genesisBlock.getDifficultyTarget(),
+            nonce, new ArrayList<BtcTransaction>());
+        while (!block.checkProofOfWork(false)) {
+            nonce++;
+            block = new BtcBlock(
                 PARAMS, 2l, Sha256Hash.of(HEX.decode("0011")),
                 Sha256Hash.ZERO_HASH, PARAMS.genesisBlock.getTime().getTime() + 1, PARAMS.genesisBlock.getDifficultyTarget(),
-                0, new ArrayList<BtcTransaction>());
+                nonce, new ArrayList<BtcTransaction>());
+        }
         assertFalse(blockchain.add(block.cloneAsHeader()));
     }
 

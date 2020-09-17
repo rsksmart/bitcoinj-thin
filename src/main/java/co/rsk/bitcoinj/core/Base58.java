@@ -91,6 +91,27 @@ public class Base58 {
     }
 
     /**
+     * Encodes the given version and bytes as a base58 string. A checksum is appended.
+     *
+     * @param version the version to encode
+     * @param payload the bytes to encode, e.g. pubkey hash
+     * @return the base58-encoded string
+     */
+    public static String encodeChecked(int version, byte[] payload) {
+        if (version < 0 || version > 255)
+            throw new IllegalArgumentException("Version not in range.");
+
+        // A stringified buffer is:
+        // 1 byte version + data bytes + 4 bytes check code (a truncated hash)
+        byte[] addressBytes = new byte[1 + payload.length + 4];
+        addressBytes[0] = (byte) version;
+        System.arraycopy(payload, 0, addressBytes, 1, payload.length);
+        byte[] checksum = Sha256Hash.hashTwice(addressBytes, 0, payload.length + 1);
+        System.arraycopy(checksum, 0, addressBytes, payload.length + 1, 4);
+        return Base58.encode(addressBytes);
+    }
+
+    /**
      * Decodes the given base58 string into the original data bytes.
      *
      * @param input the base58-encoded string to decode

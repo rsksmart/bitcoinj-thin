@@ -20,6 +20,7 @@ package co.rsk.bitcoinj.core;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
+import co.rsk.bitcoinj.script.ScriptException;
 import co.rsk.bitcoinj.script.ScriptOpCodes;
 import co.rsk.bitcoinj.script.ScriptPattern;
 import co.rsk.bitcoinj.signers.TransactionSigner;

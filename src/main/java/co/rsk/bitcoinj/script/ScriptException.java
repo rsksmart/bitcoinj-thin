@@ -14,16 +14,31 @@
  * limitations under the License.
  */
 
-package co.rsk.bitcoinj.core;
+package co.rsk.bitcoinj.script;
+
+import co.rsk.bitcoinj.core.VerificationException;
 
 @SuppressWarnings("serial")
 public class ScriptException extends VerificationException {
 
+    private final ScriptError err;
+
     public ScriptException(String msg) {
         super(msg);
+        this.err = ScriptError.SCRIPT_ERR_UNKNOWN_ERROR;
     }
 
-    public ScriptException(String msg, Exception e) {
+    public ScriptException(ScriptError err, String msg) {
+        super(msg);
+        this.err = err;
+    }
+
+    public ScriptException(ScriptError err, String msg, Exception e) {
         super(msg, e);
+        this.err = err;
+    }
+
+    public ScriptError getError() {
+        return err;
     }
 }

@@ -27,7 +27,7 @@ import co.rsk.bitcoinj.core.Context;
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.InsufficientMoneyException;
 import co.rsk.bitcoinj.core.NetworkParameters;
-import co.rsk.bitcoinj.core.ScriptException;
+import co.rsk.bitcoinj.script.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.core.TransactionBag;

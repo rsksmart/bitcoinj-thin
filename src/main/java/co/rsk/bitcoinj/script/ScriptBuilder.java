@@ -17,6 +17,9 @@
 package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcTransaction;
+import co.rsk.bitcoinj.core.LegacyAddress;
+import co.rsk.bitcoinj.core.SegwitAddress;
+import co.rsk.bitcoinj.script.Script.ScriptType;
 import com.google.common.collect.Lists;
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -136,7 +139,7 @@ public class ScriptBuilder {
      * Adds the given number as a OP_N opcode to the end of the program.
      * Only handles values 0-16 inclusive.
      * 
-     * @see #number(int)
+     * @see #number(long) 
      */
     public ScriptBuilder smallNum(int num) {
         return smallNum(chunks.size(), num);
@@ -147,7 +150,7 @@ public class ScriptBuilder {
      * it will accept numbers in the range 0-16 inclusive, the encoding would be
      * considered non-standard.
      * 
-     * @see #number(int)
+     * @see #number(long) 
      */
     protected ScriptBuilder bigNum(long num) {
         return bigNum(chunks.size(), num);
@@ -157,7 +160,7 @@ public class ScriptBuilder {
      * Adds the given number as a OP_N opcode to the given index in the program.
      * Only handles values 0-16 inclusive.
      * 
-     * @see #number(int)
+     * @see #number(long) 
      */
     public ScriptBuilder smallNum(int index, int num) {
         checkArgument(num >= 0, "Cannot encode negative numbers with smallNum");
@@ -171,7 +174,7 @@ public class ScriptBuilder {
      * it will accept numbers in the range 0-16 inclusive, the encoding would be
      * considered non-standard.
      * 
-     * @see #number(int)
+     * @see #number(long) 
      */
     protected ScriptBuilder bigNum(int index, long num) {
         final byte[] data;
@@ -217,22 +220,23 @@ public class ScriptBuilder {
 
     /** Creates a scriptPubKey that encodes payment to the given address. */
     public static Script createOutputScript(Address to) {
-        if (to.isP2SHAddress()) {
-            // OP_HASH160 <scriptHash> OP_EQUAL
-            return new ScriptBuilder()
-                .op(OP_HASH160)
-                .data(to.getHash160())
-                .op(OP_EQUAL)
-                .build();
+        if (to instanceof LegacyAddress) {
+            ScriptType scriptType = to.getOutputScriptType();
+            if (scriptType == ScriptType.P2PKH)
+                return createP2PKHOutputScript(to.getHash());
+            else if (scriptType == ScriptType.P2SH)
+                return createP2SHOutputScript(to.getHash());
+            else
+                throw new IllegalStateException("Cannot handle " + scriptType);
+        } else if (to instanceof SegwitAddress) {
+            ScriptBuilder builder = new ScriptBuilder();
+            // OP_0 <pubKeyHash|scriptHash>
+            SegwitAddress toSegwit = (SegwitAddress) to;
+            builder.smallNum(toSegwit.getWitnessVersion());
+            builder.data(toSegwit.getWitnessProgram());
+            return builder.build();
         } else {
-            // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-            return new ScriptBuilder()
-                .op(OP_DUP)
-                .op(OP_HASH160)
-                .data(to.getHash160())
-                .op(OP_EQUALVERIFY)
-                .op(OP_CHECKSIG)
-                .build();
+            throw new IllegalStateException("Cannot handle " + to);
         }
     }
 
@@ -407,6 +411,20 @@ public class ScriptBuilder {
     public static Script createP2SHOutputScript(Script redeemScript) {
         byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
         return ScriptBuilder.createP2SHOutputScript(hash);
+    }
+
+    /**
+     * Creates a scriptPubKey that sends to the given public key hash.
+     */
+    public static Script createP2PKHOutputScript(byte[] hash) {
+        checkArgument(hash.length == LegacyAddress.LENGTH);
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.op(OP_DUP);
+        builder.op(OP_HASH160);
+        builder.data(hash);
+        builder.op(OP_EQUALVERIFY);
+        builder.op(OP_CHECKSIG);
+        return builder.build();
     }
 
     /**

@@ -473,7 +473,7 @@ public class BtcECKey {
      * the RIPEMD-160 hash of the public key and is not the public key itself (which is too large to be convenient).
      */
     public Address toAddress(NetworkParameters params) {
-        return new Address(params, getPubKeyHash());
+        return new LegacyAddress(params, getPubKeyHash());
     }
 
     /**
@@ -616,7 +616,7 @@ public class BtcECKey {
 
     /**
      * <p>Verifies the given ECDSA signature against the message bytes using the public key bytes.</p>
-     * 
+     *
      * <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
      * larger than 520 bytes.</p>
      *
