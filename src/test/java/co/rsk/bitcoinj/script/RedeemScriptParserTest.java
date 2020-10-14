@@ -288,31 +288,31 @@ public class RedeemScriptParserTest {
 
         Script standardRedeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
 
-        RedeemScriptParser ms = new RedeemScriptParser(fastBridgeRedeemScript.getChunks());
-        Script obtainedRedeemScript = ms.extractRedeemScriptFromMultiSigFastBridgeRedeemScript(
+        Script obtainedRedeemScript = RedeemScriptParser.extractRedeemScriptFromMultiSigFastBridgeRedeemScript(
             fastBridgeRedeemScript);
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
     }
 
-    @Test(expected = VerificationException.class)
+    @Test
     public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_std_redeem_script() {
         Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
-        RedeemScriptParser ms = new RedeemScriptParser(redeemScript.getChunks());
-        ms.extractRedeemScriptFromMultiSigFastBridgeRedeemScript(redeemScript);
+        Script obtainedRedeemScript =
+            RedeemScriptParser.extractRedeemScriptFromMultiSigFastBridgeRedeemScript(redeemScript);
+
+        Assert.assertEquals(redeemScript, obtainedRedeemScript);
     }
 
     @Test
     public void createMultiSigFastBridgeRedeemScript_valid_parameters() {
         Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        RedeemScriptParser ms = new RedeemScriptParser(redeemScript.getChunks());
 
         Script expectedFastBridgeRedeemScript = RedeemScriptUtil.createFastBridgeRedeemScript(
             derivationArgumentsHash.getBytes(), btcECKeyList);
 
         Assert.assertEquals(expectedFastBridgeRedeemScript,
-            ms.createMultiSigFastBridgeRedeemScript(redeemScript, derivationArgumentsHash));
+            RedeemScriptParser.createMultiSigFastBridgeRedeemScript(redeemScript, derivationArgumentsHash));
     }
 
     @Test(expected = VerificationException.class)
@@ -321,8 +321,7 @@ public class RedeemScriptParserTest {
         Script fastBridgeRedeemScript = RedeemScriptUtil.createFastBridgeRedeemScript(
             data.getBytes(), btcECKeyList);
 
-        RedeemScriptParser ms = new RedeemScriptParser(fastBridgeRedeemScript.getChunks());
-        ms.createMultiSigFastBridgeRedeemScript(fastBridgeRedeemScript, data);
+        RedeemScriptParser.createMultiSigFastBridgeRedeemScript(fastBridgeRedeemScript, data);
     }
 
     @Test(expected = VerificationException.class)

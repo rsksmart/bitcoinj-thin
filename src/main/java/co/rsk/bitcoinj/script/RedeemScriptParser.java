@@ -241,24 +241,25 @@ public class RedeemScriptParser {
                 + Utils.HEX.encode(signatureBytes));
     }
 
-    public Script extractRedeemScriptFromMultiSigFastBridgeRedeemScript(Script redeemScript) {
-        if (internalIsFastBridgeMultiSig(redeemScript.getChunks())) {
-            return ScriptBuilder.createRedeemScript(
-                redeemScript.getNumberOfSignaturesRequiredToSpend(),
-                redeemScript.getPubKeys()
-            );
-        } else {
-            String message = String.format("Provided redeem script is not a fast bridge type: %s",
-                redeemScript.toString());
-
-            logger.debug(message);
-            throw new VerificationException(message);
-        }
+    public static Script extractRedeemScriptFromMultiSigFastBridgeRedeemScript(Script redeemScript) {
+        return ScriptBuilder.createRedeemScript(
+            redeemScript.getNumberOfSignaturesRequiredToSpend(),
+            redeemScript.getPubKeys()
+        );
     }
 
-    public Script createMultiSigFastBridgeRedeemScript(Script redeemScript,
+    public static Script createMultiSigFastBridgeRedeemScript(Script redeemScript,
         Sha256Hash derivationArgumentsHash) {
-        if (internalIsFastBridgeMultiSig(redeemScript.getChunks())) {
+        List<ScriptChunk> chunks = redeemScript.getChunks();
+        ScriptChunk firstChunk = chunks.get(0);
+        boolean hasFastBridgePrefix = false;
+
+        if (firstChunk.data != null) {
+            hasFastBridgePrefix = firstChunk.opcode == 32 && firstChunk.data.length == 32 &&
+                chunks.get(1).opcode == ScriptOpCodes.OP_DROP;
+        }
+
+        if (hasFastBridgePrefix) {
             String message = "Provided redeem script is already a fast bridge redeem script";
             logger.debug(message);
             throw new VerificationException(message);
