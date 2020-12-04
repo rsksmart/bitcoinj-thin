@@ -400,7 +400,11 @@ public abstract class BtcAbstractBlockChain {
         log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
         // Then build a list of all blocks in the old part of the chain and the new part.
         final LinkedList<StoredBlock> oldBlocks = getPartialChain(head, splitPoint, blockStore);
-        final LinkedList<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint, blockStore);
+        // Mark the blocks from the reorganized side chain as part of the main chain
+        for (StoredBlock newMainChainBlock:getPartialChain(newChainHead, splitPoint, blockStore)) {
+            blockStore.setMainChainBlock(newMainChainBlock.getHeight(), newMainChainBlock.getHeader().getHash());
+        }
+
         // Disconnect each transaction in the previous main chain that is no longer in the new main chain
         StoredBlock storedNewHead = splitPoint;
         if (shouldVerifyTransactions()) {

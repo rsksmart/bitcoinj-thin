@@ -22,7 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Keeps {@link org.bitcoinj.core.StoredBlock}s in memory. Used primarily for unit testing.
+ * Keeps {@link co.rsk.bitcoinj.core.StoredBlock}s in memory. Used primarily for unit testing.
  */
 public class BtcMemoryBlockStore implements BtcBlockStore {
     private LinkedHashMap<Sha256Hash, StoredBlock> blockMap = new LinkedHashMap<Sha256Hash, StoredBlock>() {
@@ -33,6 +33,12 @@ public class BtcMemoryBlockStore implements BtcBlockStore {
     };
     private StoredBlock chainHead;
     private NetworkParameters params;
+    private LinkedHashMap<Integer, Sha256Hash> blockHashMap = new LinkedHashMap<Integer, Sha256Hash>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Integer, Sha256Hash> eldest) {
+            return blockHashMap.size() > 5000;
+        }
+    };
 
     public BtcMemoryBlockStore(NetworkParameters params) {
         // Insert the genesis block.
@@ -72,11 +78,27 @@ public class BtcMemoryBlockStore implements BtcBlockStore {
     public final void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         this.chainHead = chainHead;
+        this.setMainChainBlock(chainHead.getHeight(), chainHead.getHeader().getHash());
     }
-    
+
+    @Override
+    public StoredBlock getInMainchain(int height) throws BlockStoreException {
+        if (blockHashMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
+        Sha256Hash blockHash = blockHashMap.get(height);
+
+        return get(blockHash);
+    }
+
+    @Override
+    public void setMainChainBlock(int height, Sha256Hash blockHash) throws BlockStoreException {
+        if (blockHashMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
+        blockHashMap.put(height, blockHash);
+    }
+
     @Override
     public void close() {
         blockMap = null;
+        blockHashMap = null;
     }
 
     @Override

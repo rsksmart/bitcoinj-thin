@@ -57,6 +57,10 @@ public interface BtcBlockStore {
      * Sets the {@link StoredBlock} that represents the top of the chain of greatest total work.
      */
     void setChainHead(StoredBlock chainHead) throws BlockStoreException;
+
+    StoredBlock getInMainchain(int height) throws BlockStoreException;
+
+    void setMainChainBlock(int height, Sha256Hash blockHash) throws BlockStoreException;
     
     /** Closes the store. */
     void close() throws BlockStoreException;
