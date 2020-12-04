@@ -34,37 +34,35 @@ public class RedeemScriptParser {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(RedeemScriptParser.class);
-    private final MultiSigType multiSigType;
+    private MultiSigType multiSigType;
     private ScriptType scriptType;
     private byte[] derivationArgumentsHash;
     protected List<ScriptChunk> chunks;
     protected List<ScriptChunk> internalScript;
 
     public RedeemScriptParser(List<ScriptChunk> chunks) {
+        this.multiSigType = MultiSigType.NO_MULTISIG_TYPE;
+        this.scriptType = null;
+        this.chunks = null;
+        this.derivationArgumentsHash = null;
+
         if (chunks.size() < 4) {
-            this.multiSigType = MultiSigType.NO_MULTISIG_TYPE;
-            this.scriptType = null;
-            this.chunks = null;
+            // A multisig redeem script must have at least 4 chunks (OP_M PUB1 OP_N CHECK_MULTISIG)
             return;
         }
 
         extractRedeemScriptFromChunks(chunks);
 
-        if (internalScript == null) {
-            this.multiSigType = MultiSigType.NO_MULTISIG_TYPE;
-            this.chunks = null;
+        if (this.internalScript == null) {
             return;
         }
 
-        if (internalIsFastBridgeMultiSig(internalScript)) {
-            this.derivationArgumentsHash = internalScript.get(0).data;
-            internalScript = internalScript.subList(2, internalScript.size());
+        if (internalIsFastBridgeMultiSig(this.internalScript)) {
+            this.derivationArgumentsHash = this.internalScript.get(0).data;
+            this.internalScript = this.internalScript.subList(2, this.internalScript.size());
             this.multiSigType = MultiSigType.FAST_BRIDGE_MULTISIG;
-        } else if (internalIsStandardMultiSig(internalScript)) {
-            this.derivationArgumentsHash = null;
+        } else if (internalIsStandardMultiSig(this.internalScript)) {
             this.multiSigType = MultiSigType.STANDARD_MULTISIG;
-        } else {
-            this.multiSigType = MultiSigType.NO_MULTISIG_TYPE;
         }
 
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
@@ -75,42 +73,22 @@ public class RedeemScriptParser {
         if (isRedeemLikeScript(chunks)) {
             this.scriptType = ScriptType.REDEEM_SCRIPT;
             this.internalScript = chunks;
-        } else {
-            if (lastChunk.data != null && lastChunk.data.length > 0) {
-                int lastByte = lastChunk.data[lastChunk.data.length - 1] & 0xff;
-                if (lastByte == OP_CHECKMULTISIG) {
-                    this.scriptType = ScriptType.P2SH;
-                    this.internalScript = new Script(lastChunk.data).getChunks();
-                    return;
+            return;
+        }
+        if (lastChunk.data != null && lastChunk.data.length > 0) {
+            int lastByte = lastChunk.data[lastChunk.data.length - 1] & 0xff;
+            if (lastByte == OP_CHECKMULTISIG || lastByte == OP_CHECKMULTISIGVERIFY) {
+                this.scriptType = ScriptType.P2SH;
+                ScriptParserResult result = ScriptParser.parseScriptProgram(lastChunk.data);
+                if (result.getException().isPresent()) {
+                    throw new ScriptException("Error trying to parse inner script", result.getException().get());
                 }
+                this.internalScript = result.getChunks();
+                return;
             }
-            this.scriptType = null;
-            this.internalScript = null;
         }
-    }
-
-    public byte[] getDerivationArgumentsHash() {
-        return derivationArgumentsHash;
-    }
-
-    private boolean internalIsFastBridgeMultiSig(List<ScriptChunk> chunks) {
-        if (!isRedeemLikeScript(chunks)) {
-            return false;
-        }
-
-        ScriptChunk firstChunk = chunks.get(0);
-
-        if (firstChunk.data == null) {
-            return false;
-        }
-
-        boolean hasFastBridgePrefix = firstChunk.opcode == 32 && firstChunk.data.length == 32 &&
-            chunks.get(1).opcode == ScriptOpCodes.OP_DROP;
-
-        if (!hasFastBridgePrefix) {
-            return false;
-        }
-        return hasRedeemScriptFormat(chunks.subList(2, chunks.size()));
+        this.scriptType = null;
+        this.internalScript = null;
     }
 
     private boolean isRedeemLikeScript(List<ScriptChunk> chunks) {
@@ -140,13 +118,39 @@ public class RedeemScriptParser {
         return true;
     }
 
+    private boolean internalIsFastBridgeMultiSig(List<ScriptChunk> chunks) {
+        if (!isRedeemLikeScript(chunks)) {
+            return false;
+        }
+
+        ScriptChunk firstChunk = chunks.get(0);
+
+        if (firstChunk.data == null) {
+            return false;
+        }
+
+        boolean hasFastBridgePrefix =
+            firstChunk.opcode == 32 && firstChunk.data.length == 32 &&
+            chunks.get(1).opcode == ScriptOpCodes.OP_DROP;
+
+        if (!hasFastBridgePrefix) {
+            return false;
+        }
+        return hasRedeemScriptFormat(chunks.subList(2, chunks.size()));
+    }
+
     private boolean internalIsStandardMultiSig(List<ScriptChunk> chunks) {
         return isRedeemLikeScript(chunks) && hasRedeemScriptFormat(chunks);
+    }
+
+    public byte[] getDerivationArgumentsHash() {
+        return derivationArgumentsHash;
     }
 
     public boolean isStandardMultiSig() {
         return this.multiSigType == MultiSigType.STANDARD_MULTISIG;
     }
+
     public boolean isFastBridgeMultiSig() {
         return this.multiSigType == MultiSigType.FAST_BRIDGE_MULTISIG;
     }
@@ -248,8 +252,10 @@ public class RedeemScriptParser {
         );
     }
 
-    public static Script createMultiSigFastBridgeRedeemScript(Script redeemScript,
-        Sha256Hash derivationArgumentsHash) {
+    public static Script createMultiSigFastBridgeRedeemScript(
+        Script redeemScript,
+        Sha256Hash derivationArgumentsHash
+    ) {
         List<ScriptChunk> chunks = redeemScript.getChunks();
         ScriptChunk firstChunk = chunks.get(0);
         boolean hasFastBridgePrefix = false;
