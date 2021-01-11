@@ -20,6 +20,7 @@ import co.rsk.bitcoinj.core.BtcBlockChain;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.StoredBlock;
+import java.util.Optional;
 
 /**
  * An implementor of BlockStore saves StoredBlock objects to disk. Different implementations store them in
@@ -58,7 +59,7 @@ public interface BtcBlockStore {
      */
     void setChainHead(StoredBlock chainHead) throws BlockStoreException;
 
-    StoredBlock getInMainchain(int height) throws BlockStoreException;
+    Optional<StoredBlock> getInMainchain(int height);
 
     void setMainChainBlock(int height, Sha256Hash blockHash) throws BlockStoreException;
     

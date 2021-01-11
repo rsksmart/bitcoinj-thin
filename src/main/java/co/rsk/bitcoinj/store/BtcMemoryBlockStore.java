@@ -20,6 +20,7 @@ import co.rsk.bitcoinj.core.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Keeps {@link co.rsk.bitcoinj.core.StoredBlock}s in memory. Used primarily for unit testing.
@@ -82,11 +83,18 @@ public class BtcMemoryBlockStore implements BtcBlockStore {
     }
 
     @Override
-    public StoredBlock getInMainchain(int height) throws BlockStoreException {
-        if (blockHashMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
-        Sha256Hash blockHash = blockHashMap.get(height);
+    public Optional<StoredBlock> getInMainchain(int height) {
+        if (blockHashMap == null) {
+            return Optional.empty();
+        }
 
-        return get(blockHash);
+        Sha256Hash blockHash = blockHashMap.get(height);
+        try {
+            StoredBlock block = get(blockHash);
+            return Optional.of(block);
+        } catch (BlockStoreException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
