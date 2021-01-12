@@ -12,8 +12,10 @@ public class RedeemScriptUtil {
         return ScriptBuilder.createRedeemScript(2, btcECKeyList);
     }
 
-    public static Script createFastBridgeRedeemScript(byte[] derivationArgumentsHashBytes,
-        List<BtcECKey> btcECKeyList) {
+    public static Script createFastBridgeRedeemScript(
+        byte[] derivationArgumentsHashBytes,
+        List<BtcECKey> btcECKeyList
+    ) {
         Script redeem = ScriptBuilder.createRedeemScript(2, btcECKeyList);
         byte[] program = redeem.getProgram();
         byte[] reed = Arrays.copyOf(program, program.length);
