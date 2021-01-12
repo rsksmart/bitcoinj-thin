@@ -33,7 +33,6 @@ import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import com.google.common.collect.Lists;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -120,7 +119,7 @@ public class Script {
     Script(List<ScriptChunk> chunks) {
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
         creationTimeSeconds = Utils.currentTimeSeconds();
-        redeemScriptParser = new RedeemScriptParser(this.chunks);
+        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
     }
 
     /**
@@ -132,7 +131,7 @@ public class Script {
         program = programBytes;
         parse(programBytes);
         creationTimeSeconds = 0;
-        redeemScriptParser = new RedeemScriptParser(this.chunks);
+        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
 
     }
 
@@ -140,7 +139,7 @@ public class Script {
         program = programBytes;
         parse(programBytes);
         this.creationTimeSeconds = creationTimeSeconds;
-        redeemScriptParser = new RedeemScriptParser(this.chunks);
+        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
     }
 
     public long getCreationTimeSeconds() {
