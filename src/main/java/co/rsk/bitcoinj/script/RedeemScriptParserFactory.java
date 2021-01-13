@@ -11,7 +11,7 @@ public class RedeemScriptParserFactory {
 
     public static RedeemScriptParser get(List<ScriptChunk> chunks) {
         if (chunks.size() < 4) {
-            // A multisig redeem script must have at least 4 chunks (OP_M PUB1 OP_N CHECK_MULTISIG)
+            // A multisig redeem script must have at least 4 chunks (OP_N [PUB1 ...] OP_N CHECK_MULTISIG)
             return new NoRedeemScriptParser();
         }
 
@@ -67,9 +67,9 @@ public class RedeemScriptParserFactory {
         try {
             // Second to last chunk must be an OP_N opcode and there should be
             // that many data chunks (keys).
-            ScriptChunk m = chunks.get(chunks.size() - 2);
-            if (!m.isOpCode()) return false;
-            int numKeys = Script.decodeFromOpN(m.opcode);
+            ScriptChunk n = chunks.get(chunks.size() - 2);
+            if (!n.isOpCode()) return false;
+            int numKeys = Script.decodeFromOpN(n.opcode);
             if (numKeys < 1 || chunks.size() != 3 + numKeys) return false;
             for (int i = 1; i < chunks.size() - 2; i++) {
                 if (chunks.get(i).isOpCode()) return false;

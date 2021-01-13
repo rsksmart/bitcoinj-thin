@@ -348,13 +348,13 @@ public class RedeemScriptParserTest {
             data, btcECKeyList);
 
         RedeemScriptParser ms = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
-        Assert.assertEquals(2, Script.decodeFromOpN(ms.getM()));
+        Assert.assertEquals(2, ms.getM());
     }
 
     @Test
     public void getM_from_multiSig_standard_redeem_script() {
         Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
         RedeemScriptParser ms = RedeemScriptParserFactory.get(redeemScript.getChunks());
-        Assert.assertEquals(2, Script.decodeFromOpN(ms.getM()));
+        Assert.assertEquals(2, ms.getM());
     }
 }
