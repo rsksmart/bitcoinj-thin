@@ -376,7 +376,7 @@ public class Script {
         }
     }
 
-    /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
+    /** Creates a program that requires at least M of the given keys to sign, using OP_CHECKMULTISIG. */
     public static byte[] createMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0);
         checkArgument(threshold <= pubkeys.size());
@@ -563,8 +563,8 @@ public class Script {
      */
     public int getNumberOfSignaturesRequiredToSpend() {
         if (this.isSentToMultiSig()) {
-            // for N of M CHECKMULTISIG script we will need N signatures to spend
-            return Script.decodeFromOpN(redeemScriptParser.getM());
+            // for M of N CHECKMULTISIG script we will need M signatures to spend
+            return redeemScriptParser.getM();
         } else if (isSentToAddress() || isSentToRawPubKey()) {
             // pay-to-address and pay-to-pubkey require single sig
             return 1;

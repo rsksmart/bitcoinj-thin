@@ -55,7 +55,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int getM() {
-        return redeemScript.get(0).opcode;
+        return Script.decodeFromOpN(redeemScript.get(0).opcode);
     }
 
     @Override
@@ -67,10 +67,10 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
         int sigCount = 0;
         int myIndex = redeemScript.findKeyInRedeem(signingKey);
-        Iterator var8 = existingChunks.iterator();
+        Iterator chunkIterator = existingChunks.iterator();
 
-        while(var8.hasNext()) {
-            ScriptChunk chunk = (ScriptChunk)var8.next();
+        while(chunkIterator.hasNext()) {
+            ScriptChunk chunk = (ScriptChunk)chunkIterator.next();
             if (chunk.opcode != 0) {
                 Preconditions.checkNotNull(chunk.data);
                 if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash)) {
