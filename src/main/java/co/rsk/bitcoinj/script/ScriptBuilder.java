@@ -64,6 +64,12 @@ public class ScriptBuilder {
         return this;
     }
 
+    /** Adds the given list of chunks to the end of the program */
+    public ScriptBuilder addChunks(List<ScriptChunk> chunks) {
+        chunks.forEach(chunk -> addChunk(chunk));
+        return this;
+    }
+
     /** Adds the given opcode to the end of the program. */
     public ScriptBuilder op(int opcode) {
         return op(chunks.size(), opcode);
