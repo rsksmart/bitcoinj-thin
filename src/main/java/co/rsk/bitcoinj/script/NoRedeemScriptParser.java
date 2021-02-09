@@ -18,6 +18,16 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
+    public boolean isErpFed() {
+        return false;
+    }
+
+    @Override
+    public boolean isFastBridgeErpFed() {
+        return false;
+    }
+
+    @Override
     public boolean isNotMultiSig() {
         return true;
     }

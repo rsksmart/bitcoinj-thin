@@ -33,6 +33,12 @@ public class RedeemScriptParserFactory {
                 result.internalScript,
                 chunks
             );
+        } else if (internalIsErpFed(result.internalScript)) {
+            return new ErpFederationRedeemScriptParser(
+                result.scriptType,
+                result.internalScript,
+                chunks
+            );
         }
         return new NoRedeemScriptParser();
     }
@@ -82,6 +88,14 @@ public class RedeemScriptParserFactory {
         return true;
     }
 
+    private static boolean internalIsErpFed(List<ScriptChunk> chunks) {
+        if (!isRedeemLikeScript(chunks)) {
+            return false;
+        }
+
+        return hasErpRedeemScriptStructure(chunks);
+    }
+
     private static boolean internalIsFastBridgeMultiSig(List<ScriptChunk> chunks) {
         if (!isRedeemLikeScript(chunks)) {
             return false;
@@ -105,6 +119,43 @@ public class RedeemScriptParserFactory {
 
     private static boolean internalIsStandardMultiSig(List<ScriptChunk> chunks) {
         return isRedeemLikeScript(chunks) && hasRedeemScriptFormat(chunks);
+    }
+
+    private static boolean hasErpRedeemScriptStructure(List<ScriptChunk> chunks) {
+        ScriptChunk firstChunk = chunks.get(0);
+
+        if (firstChunk.data == null) {
+            return false;
+        }
+
+        boolean hasErpPrefix = firstChunk.opcode == ScriptOpCodes.OP_NOTIF;
+        boolean hasEndIfOpcode = chunks.get(chunks.size() - 1).equalsOpCode(ScriptOpCodes.OP_ENDIF);
+
+        if (!hasErpPrefix || !hasEndIfOpcode) {
+            return false;
+        }
+
+        boolean hasErpStructure = false;
+        int elseOpcodeIndex = 0;
+
+        for (int i = 1; i < chunks.size(); i++) {
+            if (chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
+                elseOpcodeIndex = i;
+                ScriptChunk pushOpcode = chunks.get(i + 1);
+                if (pushOpcode.opcode >= ScriptOpCodes.OP_PUSHDATA1 &&
+                    pushOpcode.opcode <= ScriptOpCodes.OP_PUSHDATA4) {
+                    if (chunks.get(i + 2).equalsOpCode(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)) {
+                        if (chunks.get(i + 3).equalsOpCode(ScriptOpCodes.OP_DROP)) {
+                            hasErpStructure = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Validate both default and erp federations redeem scripts
+        return hasErpStructure && hasRedeemScriptFormat(chunks.subList(1, elseOpcodeIndex - 1)) &&
+            hasRedeemScriptFormat(chunks.subList(elseOpcodeIndex + 4, chunks.size() - 3));
     }
 
     private static class ParseResult {

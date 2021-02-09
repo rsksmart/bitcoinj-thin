@@ -10,6 +10,8 @@ public interface RedeemScriptParser {
         NO_MULTISIG_TYPE,
         STANDARD_MULTISIG,
         FAST_BRIDGE_MULTISIG,
+        ERP_FED,
+        FAST_BRIDGE_ERP_FED
     }
 
     enum ScriptType {
@@ -21,6 +23,10 @@ public interface RedeemScriptParser {
     boolean isStandardMultiSig();
 
     boolean isFastBridgeMultiSig();
+
+    boolean isErpFed();
+
+    boolean isFastBridgeErpFed();
 
     boolean isNotMultiSig();
 

@@ -44,6 +44,16 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
+    public boolean isErpFed() {
+        return this.multiSigType == MultiSigType.ERP_FED;
+    }
+
+    @Override
+    public boolean isFastBridgeErpFed() {
+        return this.multiSigType == MultiSigType.FAST_BRIDGE_ERP_FED;
+    }
+
+    @Override
     public boolean isNotMultiSig() {
         return false;
     }
