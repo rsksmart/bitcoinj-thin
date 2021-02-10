@@ -2,7 +2,6 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
-import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,43 +40,27 @@ public class FastBridgeRedeemScriptParser extends StandardRedeemScriptParser {
         Script redeemScript,
         Sha256Hash derivationArgumentsHash
     ) {
-        List<ScriptChunk> chunks = redeemScript.getChunks();
-        ScriptChunk firstChunk = chunks.get(0);
-        boolean hasFastBridgePrefix = false;
-
-        if (firstChunk.data != null) {
-            hasFastBridgePrefix = firstChunk.opcode == 32 && firstChunk.data.length == 32 &&
-                chunks.get(1).opcode == ScriptOpCodes.OP_DROP;
-        }
-
-        if (hasFastBridgePrefix) {
+        if (RedeemScriptValidator.hasFastBridgePrefix(redeemScript.getChunks())) {
             String message = "Provided redeem script is already a fast bridge redeem script";
-            logger.debug(message);
+            logger.debug("[createMultiSigFastBridgeRedeemScript] {}", message);
             throw new VerificationException(message);
         }
 
         if (derivationArgumentsHash == null || derivationArgumentsHash.equals(Sha256Hash.ZERO_HASH)) {
             String message = "Derivation arguments are not valid";
-            logger.debug(message);
+            logger.debug("[createMultiSigFastBridgeRedeemScript] {}", message);
             throw new VerificationException(message);
         }
 
-        byte[] program = redeemScript.getProgram();
-        byte[] reed = Arrays.copyOf(program, program.length);
-        byte[] prefix = new byte[33];
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        return scriptBuilder.data(derivationArgumentsHash.getBytes())
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(redeemScript.getChunks())
+            .build();
+    }
 
-        // Hash length
-        prefix[0] = 0x20;
-        System.arraycopy(derivationArgumentsHash.getBytes(), 0, prefix, 1,
-            derivationArgumentsHash.getBytes().length);
-
-        byte[] c = new byte[prefix.length + 1 + reed.length];
-        System.arraycopy(prefix, 0, c, 0, prefix.length);
-
-        // OP_DROP to ignore pushed hash
-        c[prefix.length] = 0x75;
-        System.arraycopy(reed, 0, c, prefix.length + 1, reed.length);
-
-        return new Script(c);
+    public static boolean isFastBridgeMultiSig(List<ScriptChunk> chunks) {
+        return RedeemScriptValidator.hasFastBridgePrefix(chunks) &&
+            RedeemScriptValidator.hasStandardRedeemScriptStructure(chunks.subList(2, chunks.size()));
     }
 }

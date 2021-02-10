@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
-    private static final Logger logger = LoggerFactory.getLogger(FastBridgeRedeemScriptParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
 
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
@@ -33,8 +33,14 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             chunksForRedeem.add(chunks.get(i));
             i ++;
         }
-
         chunksForRedeem.add(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null));
+
+        // Validate the obtained redeem script has a valid format
+        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
+            String message = "Standard redeem script obtained from ERP redeem script has an invalid structure";
+            logger.debug("[extractStandardRedeemScriptChunksFromErpRedeemScript] {}", message);
+            throw new VerificationException(message);
+        }
 
         return chunksForRedeem;
     }
@@ -42,15 +48,15 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     public static Script createErpRedeemScript(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
-        String csvValue
+        Long csvValue
     ) {
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
         return scriptBuilder.op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
-            .data(Hex.decode(csvValue))
-            .op(ScriptOpCodes.OP_CHECKLOCKTIMEVERIFY)
+            .data(Hex.decode(csvValue.toString()))
+            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
             .op(ScriptOpCodes.OP_ENDIF)
@@ -59,12 +65,17 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     }
 
     private static List<ScriptChunk> removeOpCheckMultisig(Script redeemScript) {
-        List<ScriptChunk> chunksWithoutCheckMultisig = new ArrayList<>();
-        chunksWithoutCheckMultisig.addAll(redeemScript.getChunks());
+        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks())) {
+            String message = "Redeem script has an invalid structure";
+            logger.debug("[removeOpCheckMultisig] {}", message);
+            throw new VerificationException(message);
+        }
 
-        // Remove the last element that represents CHECKMULTISIG op code
-        chunksWithoutCheckMultisig.remove(chunksWithoutCheckMultisig.size() - 1);
+        // Remove the last chunk, which has CHECKMULTISIG op code
+        return redeemScript.getChunks().subList(0, redeemScript.getChunks().size() - 1);
+    }
 
-        return chunksWithoutCheckMultisig;
+    public static boolean isErpFed(List<ScriptChunk> chunks) {
+        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
     }
 }

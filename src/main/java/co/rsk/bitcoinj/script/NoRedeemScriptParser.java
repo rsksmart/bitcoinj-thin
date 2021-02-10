@@ -8,28 +8,8 @@ import java.util.List;
 public class NoRedeemScriptParser implements RedeemScriptParser {
 
     @Override
-    public boolean isStandardMultiSig() {
-        return false;
-    }
-
-    @Override
-    public boolean isFastBridgeMultiSig() {
-        return false;
-    }
-
-    @Override
-    public boolean isErpFed() {
-        return false;
-    }
-
-    @Override
-    public boolean isFastBridgeErpFed() {
-        return false;
-    }
-
-    @Override
-    public boolean isNotMultiSig() {
-        return true;
+    public MultiSigType getMultiSigType() {
+        return MultiSigType.NO_MULTISIG_TYPE;
     }
 
     @Override
