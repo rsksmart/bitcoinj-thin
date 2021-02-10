@@ -39,6 +39,12 @@ public class RedeemScriptParserFactory {
                 result.internalScript,
                 chunks
             );
+        } else if (internalIsFastBridgeErpFed(result.internalScript)) {
+            return new FastBridgeErpRedeemScriptParser(
+                result.scriptType,
+                result.internalScript,
+                chunks
+            );
         }
         return new NoRedeemScriptParser();
     }
@@ -75,6 +81,7 @@ public class RedeemScriptParserFactory {
             // that many data chunks (keys).
             ScriptChunk n = chunks.get(chunks.size() - 2);
             if (!n.isOpCode()) return false;
+            if (n.opcode < ScriptOpCodes.OP_2 || n.opcode > ScriptOpCodes.OP_16) return false;
             int numKeys = Script.decodeFromOpN(n.opcode);
             if (numKeys < 1 || chunks.size() != 3 + numKeys) return false;
             for (int i = 1; i < chunks.size() - 2; i++) {
@@ -86,6 +93,17 @@ public class RedeemScriptParserFactory {
             return false;   // Not an OP_N opcode.
         }
         return true;
+    }
+
+    private static boolean internalIsFastBridgeErpFed(List<ScriptChunk> chunks) {
+        if (!isRedeemLikeScript(chunks)) {
+            return false;
+        }
+
+        boolean hasFastBridgePrefix = hasFastBridgePrefix(chunks);
+        boolean hasErpRedeemScriptStructure = hasErpRedeemScriptStructure(chunks.subList(2, chunks.size()));
+
+        return hasFastBridgePrefix && hasErpRedeemScriptStructure;
     }
 
     private static boolean internalIsErpFed(List<ScriptChunk> chunks) {
@@ -101,15 +119,7 @@ public class RedeemScriptParserFactory {
             return false;
         }
 
-        ScriptChunk firstChunk = chunks.get(0);
-
-        if (firstChunk.data == null) {
-            return false;
-        }
-
-        boolean hasFastBridgePrefix =
-            firstChunk.opcode == 32 && firstChunk.data.length == 32 &&
-                chunks.get(1).opcode == ScriptOpCodes.OP_DROP;
+        boolean hasFastBridgePrefix = hasFastBridgePrefix(chunks);
 
         if (!hasFastBridgePrefix) {
             return false;
@@ -124,12 +134,8 @@ public class RedeemScriptParserFactory {
     private static boolean hasErpRedeemScriptStructure(List<ScriptChunk> chunks) {
         ScriptChunk firstChunk = chunks.get(0);
 
-        if (firstChunk.data == null) {
-            return false;
-        }
-
         boolean hasErpPrefix = firstChunk.opcode == ScriptOpCodes.OP_NOTIF;
-        boolean hasEndIfOpcode = chunks.get(chunks.size() - 1).equalsOpCode(ScriptOpCodes.OP_ENDIF);
+        boolean hasEndIfOpcode = chunks.get(chunks.size() - 2).equalsOpCode(ScriptOpCodes.OP_ENDIF);
 
         if (!hasErpPrefix || !hasEndIfOpcode) {
             return false;
@@ -138,24 +144,50 @@ public class RedeemScriptParserFactory {
         boolean hasErpStructure = false;
         int elseOpcodeIndex = 0;
 
+        // Check existence of OP_ELSE opcode, followed by PUSH_BYTES, CSV and OP_DROP and
+        // get both default and ERP federations redeem scripts
         for (int i = 1; i < chunks.size(); i++) {
-            if (chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
+            if (chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE) && chunks.size() >= i + 3) {
                 elseOpcodeIndex = i;
-                ScriptChunk pushOpcode = chunks.get(i + 1);
-                if (pushOpcode.opcode >= ScriptOpCodes.OP_PUSHDATA1 &&
-                    pushOpcode.opcode <= ScriptOpCodes.OP_PUSHDATA4) {
-                    if (chunks.get(i + 2).equalsOpCode(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)) {
-                        if (chunks.get(i + 3).equalsOpCode(ScriptOpCodes.OP_DROP)) {
-                            hasErpStructure = true;
-                        }
-                    }
-                }
+                ScriptChunk pushBytesOpcode = chunks.get(elseOpcodeIndex + 1);
+                ScriptChunk csvOpcode = chunks.get(elseOpcodeIndex + 2);
+                ScriptChunk opDrop = chunks.get(elseOpcodeIndex + 3);
+
+                hasErpStructure = pushBytesOpcode.opcode == 2 &&
+                    csvOpcode.equalsOpCode(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY) &&
+                    opDrop.equalsOpCode(ScriptOpCodes.OP_DROP);
+
+                break;
             }
         }
 
-        // Validate both default and erp federations redeem scripts
-        return hasErpStructure && hasRedeemScriptFormat(chunks.subList(1, elseOpcodeIndex - 1)) &&
-            hasRedeemScriptFormat(chunks.subList(elseOpcodeIndex + 4, chunks.size() - 3));
+        // Validate both default and erp federations redeem scripts. For this, it is
+        // necessary to add opcode OP_CHECKMULTISIG at the end of the redeem scripts
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        List<ScriptChunk> defaultFedRedeemScriptChunks = chunks.subList(1, elseOpcodeIndex);
+        Script defaultFedRedeemScript = scriptBuilder.addChunks(defaultFedRedeemScriptChunks)
+            .addChunk(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null))
+            .build();
+
+        List<ScriptChunk> erpFedRedeemScriptChunks = chunks.subList(elseOpcodeIndex + 4, chunks.size() - 2);
+        scriptBuilder = new ScriptBuilder();
+        Script erpFedRedeemScript = scriptBuilder.addChunks(erpFedRedeemScriptChunks)
+            .addChunk(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null))
+            .build();
+
+        return hasErpStructure && hasRedeemScriptFormat(defaultFedRedeemScript.getChunks()) &&
+            hasRedeemScriptFormat(erpFedRedeemScript.getChunks());
+    }
+
+    private static boolean hasFastBridgePrefix(List<ScriptChunk> chunks) {
+        ScriptChunk firstChunk = chunks.get(0);
+
+        if (firstChunk.data == null) {
+            return false;
+        }
+
+        return firstChunk.opcode == 32 && firstChunk.data.length == 32 &&
+            chunks.get(1).opcode == ScriptOpCodes.OP_DROP;
     }
 
     private static class ParseResult {
