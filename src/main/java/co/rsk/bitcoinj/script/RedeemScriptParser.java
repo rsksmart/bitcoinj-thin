@@ -20,15 +20,7 @@ public interface RedeemScriptParser {
         UNDEFINED
     }
 
-    boolean isStandardMultiSig();
-
-    boolean isFastBridgeMultiSig();
-
-    boolean isErpFed();
-
-    boolean isFastBridgeErpFed();
-
-    boolean isNotMultiSig();
+    MultiSigType getMultiSigType();
 
     ScriptType getScriptType();
 

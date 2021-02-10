@@ -34,28 +34,8 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public boolean isStandardMultiSig() {
-        return this.multiSigType == MultiSigType.STANDARD_MULTISIG;
-    }
-
-    @Override
-    public boolean isFastBridgeMultiSig() {
-        return this.multiSigType == MultiSigType.FAST_BRIDGE_MULTISIG;
-    }
-
-    @Override
-    public boolean isErpFed() {
-        return this.multiSigType == MultiSigType.ERP_FED;
-    }
-
-    @Override
-    public boolean isFastBridgeErpFed() {
-        return this.multiSigType == MultiSigType.FAST_BRIDGE_ERP_FED;
-    }
-
-    @Override
-    public boolean isNotMultiSig() {
-        return false;
+    public MultiSigType getMultiSigType() {
+        return this.multiSigType;
     }
 
     @Override
@@ -139,4 +119,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
                 + Utils.HEX.encode(signatureBytes));
     }
 
+    public static boolean isStandardMultiSig(List<ScriptChunk> chunks) {
+        return RedeemScriptValidator.hasStandardRedeemScriptStructure(chunks);
+    }
 }

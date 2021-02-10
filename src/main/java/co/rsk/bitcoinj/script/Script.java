@@ -31,6 +31,7 @@ import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
+import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -627,10 +628,7 @@ public class Script {
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
     public boolean isSentToMultiSig() {
-        return redeemScriptParser.isStandardMultiSig() ||
-            redeemScriptParser.isFastBridgeMultiSig() ||
-            redeemScriptParser.isErpFed() ||
-            redeemScriptParser.isFastBridgeErpFed();
+        return !redeemScriptParser.getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
     }
 
     public boolean isSentToCLTVPaymentChannel() {

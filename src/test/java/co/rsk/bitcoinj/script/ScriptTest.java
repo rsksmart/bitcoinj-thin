@@ -28,7 +28,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import co.rsk.bitcoinj.RedeemScriptUtil;
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.BtcTransaction;
@@ -524,7 +523,7 @@ public class ScriptTest {
     @Test
     public void getNumberOfSignaturesRequiredToSpend_fast_bridge_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtil.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             data, btcECKeyList);
 
         Assert.assertEquals(2, fastBridgeRedeemScript.getNumberOfSignaturesRequiredToSpend());
@@ -532,14 +531,14 @@ public class ScriptTest {
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_no_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         Assert.assertEquals(2, redeemScript.getNumberOfSignaturesRequiredToSpend());
     }
 
     @Test
     public void getSigInsertionIndex_fast_bridge_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtil.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             data, btcECKeyList);
 
         NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
@@ -576,7 +575,7 @@ public class ScriptTest {
 
     @Test
     public void getSigInsertionIndex_no_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
 
         BtcTransaction fundTx = new BtcTransaction(networkParameters);
@@ -611,7 +610,7 @@ public class ScriptTest {
     @Test
     public void isSentToMultiSig_fast_bridge_multiSig() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtil.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             data, btcECKeyList);
 
         Assert.assertTrue(fastBridgeRedeemScript.isSentToMultiSig());
@@ -619,7 +618,7 @@ public class ScriptTest {
 
     @Test
     public void isStandardMultiSig_standard_multiSig() {
-        Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         Assert.assertTrue(redeemScript.isSentToMultiSig());
     }
 }
