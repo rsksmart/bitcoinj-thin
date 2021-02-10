@@ -627,8 +627,10 @@ public class Script {
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
     public boolean isSentToMultiSig() {
-        return redeemScriptParser.isStandardMultiSig() || redeemScriptParser.isFastBridgeMultiSig()
-            || redeemScriptParser.isErpFed();
+        return redeemScriptParser.isStandardMultiSig() ||
+            redeemScriptParser.isFastBridgeMultiSig() ||
+            redeemScriptParser.isErpFed() ||
+            redeemScriptParser.isFastBridgeErpFed();
     }
 
     public boolean isSentToCLTVPaymentChannel() {

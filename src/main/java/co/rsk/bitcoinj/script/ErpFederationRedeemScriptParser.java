@@ -17,32 +17,16 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     ) {
         super(
             scriptType,
-            extractStandardRedeemScriptFromErpRedeemScript(redeemScript).getChunks(),
+            extractStandardRedeemScriptChunksFromErpRedeemScript(redeemScript),
             chunks
         );
         this.multiSigType = MultiSigType.ERP_FED;
     }
 
-    public static Script extractStandardRedeemScriptFromErpRedeemScript(List<ScriptChunk> chunks) {
+    public static List<ScriptChunk> extractStandardRedeemScriptChunksFromErpRedeemScript(
+        List<ScriptChunk> chunks
+    ) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
-
-        ScriptChunk firstChunk = chunks.get(0);
-
-        if (firstChunk.data == null) {
-            String message = "First chunk data is null";
-            logger.debug(message);
-            throw new VerificationException(message);
-        }
-
-        // Add validations (like done in factory)
-        boolean hasErpPrefix = firstChunk.opcode == ScriptOpCodes.OP_NOTIF;
-        boolean hasEndIfOpcode = chunks.get(chunks.size() - 1).equalsOpCode(ScriptOpCodes.OP_ENDIF);
-
-        if (!hasErpPrefix || !hasEndIfOpcode) {
-            String message = "Invalid structure for ERP redeem script";
-            logger.debug(message);
-            throw new VerificationException(message);
-        }
 
         int i = 1;
         while (!chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
@@ -50,7 +34,9 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             i ++;
         }
 
-        return new Script(chunksForRedeem);
+        chunksForRedeem.add(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null));
+
+        return chunksForRedeem;
     }
 
     public static Script createErpRedeemScript(
