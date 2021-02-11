@@ -130,7 +130,7 @@ public class RedeemScriptValidator {
         return redeemScript.getChunks().subList(0, redeemScript.getChunks().size() - 1);
     }
 
-    private static boolean isOpN(ScriptChunk chunk) {
+    protected static boolean isOpN(ScriptChunk chunk) {
         return chunk.isOpCode() &&
             chunk.opcode >= ScriptOpCodes.OP_1 && chunk.opcode <= ScriptOpCodes.OP_16;
     }
