@@ -3,6 +3,7 @@ package co.rsk.bitcoinj.script;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIGVERIFY;
 
+import co.rsk.bitcoinj.core.VerificationException;
 import java.util.List;
 
 public class RedeemScriptValidator {
@@ -27,7 +28,7 @@ public class RedeemScriptValidator {
             // Second to last chunk must be an OP_N opcode and there should be
             // that many data chunks (keys).
             ScriptChunk secondToLastChunk = chunks.get(chunks.size() - 2);
-            if (!secondToLastChunk.isOpCode() || Script.decodeFromOpN(secondToLastChunk.opcode) < 1) {
+            if (!isOpN(secondToLastChunk)) {
                 return false;
             }
 
@@ -42,7 +43,7 @@ public class RedeemScriptValidator {
                 }
             }
             // First chunk must be an OP_N opcode too.
-            if (Script.decodeFromOpN(chunks.get(0).opcode) < 1) {
+            if (!isOpN(chunks.get(0))) {
                 return false;
             }
         } catch (IllegalStateException e) {
@@ -117,5 +118,20 @@ public class RedeemScriptValidator {
         return firstChunk.opcode == 32 &&
             firstChunk.data.length == 32 &&
             chunks.get(1).opcode == ScriptOpCodes.OP_DROP;
+    }
+
+    protected static List<ScriptChunk> removeOpCheckMultisig(Script redeemScript) {
+        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks())) {
+            String message = "Redeem script has an invalid structure";
+            throw new VerificationException(message);
+        }
+
+        // Remove the last chunk, which has CHECKMULTISIG op code
+        return redeemScript.getChunks().subList(0, redeemScript.getChunks().size() - 1);
+    }
+
+    private static boolean isOpN(ScriptChunk chunk) {
+        return chunk.isOpCode() &&
+            chunk.opcode >= ScriptOpCodes.OP_1 && chunk.opcode <= ScriptOpCodes.OP_16;
     }
 }
