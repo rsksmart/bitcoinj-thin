@@ -15,17 +15,15 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
     ) {
         super(
             scriptType,
-            extractStandardRedeemScriptFromFastBridgeErpRedeemScript(redeemScript),
+            extractStandardRedeemScript(redeemScript).getChunks(),
             chunks
         );
         this.multiSigType = MultiSigType.FAST_BRIDGE_ERP_FED;
     }
 
-    public static List<ScriptChunk> extractStandardRedeemScriptFromFastBridgeErpRedeemScript(
-        List<ScriptChunk> chunks
-    ) {
+    public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
         return ErpFederationRedeemScriptParser.
-            extractStandardRedeemScriptChunksFromErpRedeemScript(chunks.subList(2, chunks.size()));
+            extractStandardRedeemScript(chunks.subList(2, chunks.size()));
     }
 
     public static Script createFastBridgeErpRedeemScript(

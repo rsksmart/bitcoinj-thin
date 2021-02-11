@@ -34,7 +34,7 @@ public class FastBridgeRedeemScriptParserTest {
 
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
 
-        Script obtainedRedeemScript = FastBridgeRedeemScriptParser.extractRedeemScriptFromMultiSigFastBridgeRedeemScript(
+        Script obtainedRedeemScript = FastBridgeRedeemScriptParser.extractStandardRedeemScript(
             fastBridgeRedeemScript
         );
 
@@ -45,7 +45,7 @@ public class FastBridgeRedeemScriptParserTest {
     public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_std_redeem_script() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         Script obtainedRedeemScript =
-            FastBridgeRedeemScriptParser.extractRedeemScriptFromMultiSigFastBridgeRedeemScript(redeemScript);
+            FastBridgeRedeemScriptParser.extractStandardRedeemScript(redeemScript);
 
         Assert.assertEquals(redeemScript, obtainedRedeemScript);
     }
