@@ -19,15 +19,13 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     ) {
         super(
             scriptType,
-            extractStandardRedeemScriptChunksFromErpRedeemScript(redeemScript),
+            extractStandardRedeemScript(redeemScript).getChunks(),
             chunks
         );
         this.multiSigType = MultiSigType.ERP_FED;
     }
 
-    public static List<ScriptChunk> extractStandardRedeemScriptChunksFromErpRedeemScript(
-        List<ScriptChunk> chunks
-    ) {
+    public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
         int i = 1;
@@ -44,7 +42,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             throw new VerificationException(message);
         }
 
-        return chunksForRedeem;
+        return new Script(chunksForRedeem);
     }
 
     public static Script createErpRedeemScript(
