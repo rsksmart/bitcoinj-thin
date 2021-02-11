@@ -1,5 +1,7 @@
 package co.rsk.bitcoinj.script;
 
+import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
+
 import co.rsk.bitcoinj.core.VerificationException;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,17 +64,6 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             .op(ScriptOpCodes.OP_ENDIF)
             .op(ScriptOpCodes.OP_CHECKMULTISIG)
             .build();
-    }
-
-    private static List<ScriptChunk> removeOpCheckMultisig(Script redeemScript) {
-        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks())) {
-            String message = "Redeem script has an invalid structure";
-            logger.debug("[removeOpCheckMultisig] {}", message);
-            throw new VerificationException(message);
-        }
-
-        // Remove the last chunk, which has CHECKMULTISIG op code
-        return redeemScript.getChunks().subList(0, redeemScript.getChunks().size() - 1);
     }
 
     public static boolean isErpFed(List<ScriptChunk> chunks) {
