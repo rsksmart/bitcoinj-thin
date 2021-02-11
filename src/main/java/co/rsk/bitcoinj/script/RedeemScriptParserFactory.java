@@ -73,7 +73,9 @@ public class RedeemScriptParserFactory {
             if (lastByte == OP_CHECKMULTISIG || lastByte == OP_CHECKMULTISIGVERIFY) {
                 ScriptParserResult result = ScriptParser.parseScriptProgram(lastChunk.data);
                 if (result.getException().isPresent()) {
-                    throw new ScriptException("Error trying to parse inner script", result.getException().get());
+                    String message = String.format("Error trying to parse inner script. %s", result.getException().get());
+                    logger.debug("[extractRedeemScriptFromChunks] {}", message);
+                    throw new ScriptException(message);
                 }
                 return new ParseResult(result.getChunks(), ScriptType.P2SH);
             }
