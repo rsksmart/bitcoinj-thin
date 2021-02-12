@@ -436,7 +436,27 @@ public class Script {
             return ScriptBuilder.createInputScript(null);
         } else if (isPayToScriptHash()) {
             checkArgument(redeemScript != null, "Redeem script required to create P2SH input script");
-            return ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
+            Script emptyInputScript = ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
+
+            // Validate if redeem script is ERP or Fast Bridge ERP.
+            // If so, recreate empty input script adding a OP_0 before redeem script.
+            List<ScriptChunk> chunks = redeemScript.getChunks();
+            boolean isFastBridgeErp = FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(chunks);
+            boolean isErp = RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
+
+            if (isErp || isFastBridgeErp) {
+                ScriptBuilder builder = new ScriptBuilder();
+                List<ScriptChunk> inputScriptChunks = emptyInputScript.getChunks();
+                List<ScriptChunk> chunksWithoutRedeem = inputScriptChunks.subList(0, inputScriptChunks.size() -1);
+                ScriptChunk redeemScriptChunk = inputScriptChunks.get(inputScriptChunks.size() -1);
+                emptyInputScript = builder
+                    .addChunks(chunksWithoutRedeem)
+                    .number(ScriptOpCodes.OP_0)
+                    .addChunk(redeemScriptChunk)
+                    .build();
+            }
+
+            return emptyInputScript;
         } else {
             throw new ScriptException("Do not understand script type: " + this);
         }

@@ -17,7 +17,6 @@
 
 package co.rsk.bitcoinj.script;
 
-import static co.rsk.bitcoinj.core.Utils.HEX;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -55,7 +54,7 @@ import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -71,6 +70,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
 
 public class ScriptTest {
     // From tx 05e04c26c12fe408a3c1b71aa7996403f6acad1045252b1c62e055496f4d2cb1 on the testnet.
@@ -80,21 +80,27 @@ public class ScriptTest {
     private static final NetworkParameters PARAMS = TestNet3Params.get();
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
     private final List<BtcECKey> btcECKeyList = new ArrayList<>();
+    private final List<BtcECKey> erpFedECKeyList = new ArrayList<>();
     private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(100));
     private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(200));
     private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(300));
+    private final BtcECKey ecKey4 = BtcECKey.fromPrivate(BigInteger.valueOf(400));
+    private final BtcECKey ecKey5 = BtcECKey.fromPrivate(BigInteger.valueOf(500));
+    private final BtcECKey ecKey6 = BtcECKey.fromPrivate(BigInteger.valueOf(600));
 
     @Before
-    public void setUp() throws Exception {
-        //Context context = new Context(PARAMS);
+    public void setUp() {
         btcECKeyList.add(ecKey1);
         btcECKeyList.add(ecKey2);
         btcECKeyList.add(ecKey3);
+        erpFedECKeyList.add(ecKey4);
+        erpFedECKeyList.add(ecKey5);
+        erpFedECKeyList.add(ecKey6);
     }
 
     @Test
-    public void testScriptSig() throws Exception {
-        byte[] sigProgBytes = HEX.decode(sigProg);
+    public void testScriptSig() {
+        byte[] sigProgBytes = Hex.decode(sigProg);
         Script script = new Script(sigProgBytes);
         // Test we can extract the from address.
         byte[] hash160 = Utils.sha256hash160(script.getPubKey());
@@ -103,9 +109,9 @@ public class ScriptTest {
     }
 
     @Test
-    public void testScriptPubKey() throws Exception {
+    public void testScriptPubKey() {
         // Check we can extract the to address
-        byte[] pubkeyBytes = HEX.decode(pubkeyProg);
+        byte[] pubkeyBytes = Hex.decode(pubkeyProg);
         Script pubkey = new Script(pubkeyBytes);
         assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
         Address toAddr = new Address(PARAMS, pubkey.getPubKeyHash());
@@ -113,7 +119,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void testMultiSig() throws Exception {
+    public void testMultiSig() {
         List<BtcECKey> keys = Lists.newArrayList(new BtcECKey(), new BtcECKey(), new BtcECKey());
         assertTrue(ScriptBuilder.createMultiSigOutputScript(2, keys).isSentToMultiSig());
         Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
@@ -139,14 +145,14 @@ public class ScriptTest {
     }
 
     @Test
-    public void testP2SHOutputScript() throws Exception {
+    public void testP2SHOutputScript() {
         Address p2shAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertTrue(ScriptBuilder.createOutputScript(p2shAddress).isPayToScriptHash());
     }
 
     @Test
-    public void testIp() throws Exception {
-        byte[] bytes = HEX.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
+    public void testIp() {
+        byte[] bytes = Hex.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
         Script s = new Script(bytes);
         assertTrue(s.isSentToRawPubKey());
     }
@@ -158,7 +164,7 @@ public class ScriptTest {
         BtcECKey key2 = DumpedPrivateKey.fromBase58(PARAMS, "cTine92s8GLpVqvebi8rYce3FrUYq78ZGQffBYCS1HmDPJdSTxUo").getKey();
         BtcECKey key3 = DumpedPrivateKey.fromBase58(PARAMS, "cVHwXSPRZmL9adctwBwmn4oTZdZMbaCsR5XF6VznqMgcvt1FDDxg").getKey();
         Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key1, key2, key3));
-        byte[] bytes = HEX.decode("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
+        byte[] bytes = Hex.decode("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
         BtcTransaction transaction = PARAMS.getDefaultSerializer().makeTransaction(bytes);
         TransactionOutput output = transaction.getOutput(1);
         BtcTransaction spendTx = new BtcTransaction(PARAMS);
@@ -176,7 +182,7 @@ public class ScriptTest {
         Script inputScript = ScriptBuilder.createP2SHMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature), multisigScript);
 
         // Assert that the input script contains 4 chunks
-        assertTrue(inputScript.getChunks().size() == 4);
+        assertEquals(4, inputScript.getChunks().size());
 
         // Assert that the input script created contains the original multisig
         // script as the last chunk
@@ -187,7 +193,7 @@ public class ScriptTest {
         inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature));
 
         // Assert that the input script only contains 3 chunks
-        assertTrue(inputScript.getChunks().size() == 3);
+        assertEquals(3, inputScript.getChunks().size());
 
         // Assert that the input script created does not end with the original
         // multisig script
@@ -196,7 +202,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void createAndUpdateEmptyInputScript() throws Exception {
+    public void createAndUpdateEmptyInputScript() {
         TransactionSignature dummySig = TransactionSignature.dummy();
         BtcECKey key = new BtcECKey();
 
@@ -260,56 +266,6 @@ public class ScriptTest {
         Script.executeScript(tx, 0, script, stack, Script.ALL_VERIFY_FLAGS);
         assertEquals("OP_0 push length", 0, stack.get(0).length);
     }
-
-    private Script parseScriptString(String string) throws IOException {
-        String[] words = string.split("[ \\t\\n]");
-        
-        UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
-
-        for(String w : words) {
-            if (w.equals(""))
-                continue;
-            if (w.matches("^-?[0-9]*$")) {
-                // Number
-                long val = Long.parseLong(w);
-                if (val >= -1 && val <= 16)
-                    out.write(Script.encodeToOpN((int)val));
-                else
-                    Script.writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(val), false)));
-            } else if (w.matches("^0x[0-9a-fA-F]*$")) {
-                // Raw hex data, inserted NOT pushed onto stack:
-                out.write(HEX.decode(w.substring(2).toLowerCase()));
-            } else if (w.length() >= 2 && w.startsWith("'") && w.endsWith("'")) {
-                // Single-quoted string, pushed as data. NOTE: this is poor-man's
-                // parsing, spaces/tabs/newlines in single-quoted strings won't work.
-                Script.writeBytes(out, w.substring(1, w.length() - 1).getBytes(Charset.forName("UTF-8")));
-            } else if (ScriptOpCodes.getOpCode(w) != OP_INVALIDOPCODE) {
-                // opcode, e.g. OP_ADD or OP_1:
-                out.write(ScriptOpCodes.getOpCode(w));
-            } else if (w.startsWith("OP_") && ScriptOpCodes.getOpCode(w.substring(3)) != OP_INVALIDOPCODE) {
-                // opcode, e.g. OP_ADD or OP_1:
-                out.write(ScriptOpCodes.getOpCode(w.substring(3)));
-            } else {
-                throw new RuntimeException("Invalid Data");
-            }                        
-        }
-        
-        return new Script(out.toByteArray());
-    }
-
-    private Set<VerifyFlag> parseVerifyFlags(String str) {
-        Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
-        if (!"NONE".equals(str)) {
-            for (String flag : str.split(",")) {
-                try {
-                    flags.add(VerifyFlag.valueOf(flag));
-                } catch (IllegalArgumentException x) {
-                    log.debug("Cannot handle verify flag {} -- ignored.", flag);
-                }
-            }
-        }
-        return flags;
-    }
     
     @Test
     public void dataDrivenValidScripts() throws Exception {
@@ -347,18 +303,6 @@ public class ScriptTest {
             }
         }
     }
-    
-    private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
-        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
-        for (JsonNode input : inputs) {
-            String hash = input.get(0).asText();
-            int index = input.get(1).asInt();
-            String script = input.get(2).asText();
-            Sha256Hash sha256Hash = Sha256Hash.wrap(HEX.decode(hash));
-            scriptPubKeys.put(new TransactionOutPoint(PARAMS, index, sha256Hash), parseScriptString(script));
-        }
-        return scriptPubKeys;
-    }
 
     @Test
     public void dataDrivenValidTransactions() throws Exception {
@@ -370,7 +314,7 @@ public class ScriptTest {
             BtcTransaction transaction = null;
             try {
                 Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-                transaction = PARAMS.getDefaultSerializer().makeTransaction(HEX.decode(test.get(1).asText().toLowerCase()));
+                transaction = PARAMS.getDefaultSerializer().makeTransaction(Hex.decode(test.get(1).asText().toLowerCase()));
                 transaction.verify();
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
@@ -399,7 +343,7 @@ public class ScriptTest {
             if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
                 continue; // This is a comment.
             Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-            BtcTransaction transaction = PARAMS.getDefaultSerializer().makeTransaction(HEX.decode(test.get(1).asText().toLowerCase()));
+            BtcTransaction transaction = PARAMS.getDefaultSerializer().makeTransaction(Hex.decode(test.get(1).asText().toLowerCase()));
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
             boolean valid = true;
@@ -441,7 +385,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getToAddress() throws Exception {
+    public void getToAddress() {
         // pay to pubkey
         BtcECKey toKey = new BtcECKey();
         Address toAddress = toKey.toAddress(PARAMS);
@@ -455,7 +399,7 @@ public class ScriptTest {
     }
 
     @Test(expected = ScriptException.class)
-    public void getToAddressNoPubKey() throws Exception {
+    public void getToAddressNoPubKey() {
         ScriptBuilder.createOutputScript(new BtcECKey()).getToAddress(PARAMS, false);
     }
 
@@ -530,6 +474,29 @@ public class ScriptTest {
     }
 
     @Test
+    public void getNumberOfSignaturesRequiredToSpend_erp_redeem_script() {
+        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L
+        );
+
+        Assert.assertEquals(2, erpRedeemScript.getNumberOfSignaturesRequiredToSpend());
+    }
+
+    @Test
+    public void getNumberOfSignaturesRequiredToSpend_fast_bridge_erp_redeem_script() {
+        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L,
+            Sha256Hash.of(new byte[]{1}).getBytes()
+        );
+
+        Assert.assertEquals(2, fastBridgeErpRedeemScript.getNumberOfSignaturesRequiredToSpend());
+    }
+
+    @Test
     public void getNumberOfSignaturesRequiredToSpend_no_fast_bridge_redeem_script() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         Assert.assertEquals(2, redeemScript.getNumberOfSignaturesRequiredToSpend());
@@ -541,6 +508,178 @@ public class ScriptTest {
         Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             data, btcECKeyList);
 
+        testGetSigInsertionIndex(fastBridgeRedeemScript);
+    }
+
+    @Test
+    public void getSigInsertionIndex_erp_redeem_script() {
+        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L
+        );
+
+        testGetSigInsertionIndex(erpRedeemScript);
+    }
+
+    @Test
+    public void getSigInsertionIndex_fast_bridge_erp_redeem_script() {
+        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L,
+            Sha256Hash.of(new byte[]{1}).getBytes()
+        );
+
+        testGetSigInsertionIndex(fastBridgeErpRedeemScript);
+    }
+
+    @Test
+    public void getSigInsertionIndex_no_fast_bridge_redeem_script() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        testGetSigInsertionIndex(redeemScript);
+    }
+
+    @Test
+    public void isSentToMultiSig_fast_bridge_multiSig() {
+        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+            data,
+            btcECKeyList
+        );
+
+        Assert.assertTrue(fastBridgeRedeemScript.isSentToMultiSig());
+    }
+
+    @Test
+    public void isSentToMultiSig_erp_multiSig() {
+        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L
+        );
+
+        Assert.assertTrue(erpRedeemScript.isSentToMultiSig());
+    }
+
+    @Test
+    public void isSentToMultiSig_fast_bridge_erp_multiSig() {
+        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L,
+            Sha256Hash.of(new byte[]{1}).getBytes()
+        );
+
+        Assert.assertTrue(fastBridgeErpRedeemScript.isSentToMultiSig());
+    }
+
+    @Test
+    public void isStandardMultiSig_standard_multiSig() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Assert.assertTrue(redeemScript.isSentToMultiSig());
+    }
+
+    @Test
+    public void createEmptyInputScript_standard_redeemScript() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+
+        assertInputScriptStructure(
+            inputScript.getChunks(),
+            4,
+            3,
+            redeemScript.getProgram()
+        );
+    }
+
+    @Test
+    public void createEmptyInputScript_fast_bridge_redeemScript() {
+        Script redeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+            Sha256Hash.of(new byte[]{1}).getBytes(),
+            btcECKeyList
+        );
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+
+        assertInputScriptStructure(
+            inputScript.getChunks(),
+            4,
+            3,
+            redeemScript.getProgram()
+        );
+    }
+
+    @Test
+    public void createEmptyInputScript_erp_redeemScript() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L
+        );
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+
+        // The expected Erp input script structure is:
+        // First element: OP_0 - Belonging to the standard of BTC
+        // M elements OP_0 - Belonging to M/N amount of signatures
+        // OP_0 - Belonging to ERP
+        // Last element: Program of redeem script
+
+        assertInputScriptStructure(
+            inputScript.getChunks(),
+            5,
+            4,
+            redeemScript.getProgram()
+        );
+    }
+
+    @Test
+    public void createEmptyInputScript_fast_bridge_erp_redeemScript() {
+        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L,
+            Sha256Hash.of(new byte[]{1}).getBytes()
+        );
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+
+        // The expected Erp input script structure is:
+        // First element: OP_0 - Belonging to the standard of BTC
+        // M elements OP_0 - Belonging to M/N amount of signatures
+        // OP_0 - Belonging to ERP
+        // Last element: Program of redeem script
+
+        assertInputScriptStructure(
+            inputScript.getChunks(),
+            5,
+            4,
+            redeemScript.getProgram()
+        );
+    }
+
+    private void assertInputScriptStructure(
+        List<ScriptChunk> chunks,
+        int expectedChunksSize,
+        int expectedOpZeroes,
+        byte[] redeemScriptProgram
+    ) {
+        // Validate input scripts chunks
+        Assert.assertEquals(expectedChunksSize, chunks.size());
+
+        for (int i = 0; i < expectedOpZeroes; i++) {
+            Assert.assertTrue(chunks.get(i).equalsOpCode(OP_0));
+        }
+
+        Assert.assertArrayEquals(redeemScriptProgram, chunks.get(chunks.size() - 1).data);
+    }
+
+    private void testGetSigInsertionIndex(Script redeemScript) {
         NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
 
         BtcTransaction fundTx = new BtcTransaction(networkParameters);
@@ -549,12 +688,11 @@ public class ScriptTest {
         BtcTransaction spendTx = new BtcTransaction(networkParameters);
         spendTx.addInput(fundTx.getOutput(0));
 
-        Script spk = ScriptBuilder.createP2SHOutputScript(2,
-            Arrays.asList(ecKey1, ecKey2, ecKey3));
+        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
 
-        Script inputScript = spk.createEmptyInputScript(null, fastBridgeRedeemScript);
+        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
 
-        Sha256Hash sigHash = spendTx.hashForSignature(0, fastBridgeRedeemScript,
+        Sha256Hash sigHash = spendTx.hashForSignature(0, redeemScript,
             BtcTransaction.SigHash.ALL, false);
 
         BtcECKey.ECDSASignature sign1 = ecKey1.sign(sigHash);
@@ -569,56 +707,73 @@ public class ScriptTest {
         inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, txSigEncoded,
             sigIndex, 1, 1);
 
-        sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
-        Assert.assertEquals(1, sigIndex);
-    }
-
-    @Test
-    public void getSigInsertionIndex_no_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-        NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
-
-        BtcTransaction fundTx = new BtcTransaction(networkParameters);
-        fundTx.addOutput(Coin.FIFTY_COINS, ecKey1.toAddress(networkParameters));
-
-        BtcTransaction spendTx = new BtcTransaction(networkParameters);
-        spendTx.addInput(fundTx.getOutput(0));
-
-        Script spk = ScriptBuilder.createP2SHOutputScript(2,
-            Arrays.asList(ecKey1, ecKey2, ecKey3));
-
-        Script inputScript = spk.createEmptyInputScript(redeemScript.getPubKeys().get(0),
-            redeemScript);
-
-        Sha256Hash sigHash = spendTx.hashForSignature(0, redeemScript,
-            BtcTransaction.SigHash.ALL, false);
-
-        BtcECKey.ECDSASignature sign1 = ecKey1.sign(sigHash);
-        TransactionSignature txSig = new TransactionSignature(sign1, BtcTransaction.SigHash.ALL, false);
-        byte[] txSigEncoded = txSig.encodeToBitcoin();
-
-        int sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey1);
-        Assert.assertEquals(0, sigIndex);
-
-        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, txSigEncoded,
-            sigIndex, 1, 1);
+        Assert.assertFalse(inputScript.getChunks().get(1).equalsOpCode(OP_0));
+        Assert.assertArrayEquals(txSigEncoded, inputScript.getChunks().get(1).data);
 
         sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
         Assert.assertEquals(1, sigIndex);
     }
 
-    @Test
-    public void isSentToMultiSig_fast_bridge_multiSig() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data, btcECKeyList);
+    private Script parseScriptString(String string) throws IOException {
+        String[] words = string.split("[ \\t\\n]");
 
-        Assert.assertTrue(fastBridgeRedeemScript.isSentToMultiSig());
+        UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
+
+        for(String w : words) {
+            if (w.equals(""))
+                continue;
+            if (w.matches("^-?[0-9]*$")) {
+                // Number
+                long val = Long.parseLong(w);
+                if (val >= -1 && val <= 16)
+                    out.write(Script.encodeToOpN((int)val));
+                else
+                    Script.writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(val), false)));
+            } else if (w.matches("^0x[0-9a-fA-F]*$")) {
+                // Raw hex data, inserted NOT pushed onto stack:
+                out.write(Hex.decode(w.substring(2).toLowerCase()));
+            } else if (w.length() >= 2 && w.startsWith("'") && w.endsWith("'")) {
+                // Single-quoted string, pushed as data. NOTE: this is poor-man's
+                // parsing, spaces/tabs/newlines in single-quoted strings won't work.
+                Script.writeBytes(out, w.substring(1, w.length() - 1).getBytes(
+                    StandardCharsets.UTF_8));
+            } else if (ScriptOpCodes.getOpCode(w) != OP_INVALIDOPCODE) {
+                // opcode, e.g. OP_ADD or OP_1:
+                out.write(ScriptOpCodes.getOpCode(w));
+            } else if (w.startsWith("OP_") && ScriptOpCodes.getOpCode(w.substring(3)) != OP_INVALIDOPCODE) {
+                // opcode, e.g. OP_ADD or OP_1:
+                out.write(ScriptOpCodes.getOpCode(w.substring(3)));
+            } else {
+                throw new RuntimeException("Invalid Data");
+            }
+        }
+
+        return new Script(out.toByteArray());
     }
 
-    @Test
-    public void isStandardMultiSig_standard_multiSig() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-        Assert.assertTrue(redeemScript.isSentToMultiSig());
+    private Set<VerifyFlag> parseVerifyFlags(String str) {
+        Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
+        if (!"NONE".equals(str)) {
+            for (String flag : str.split(",")) {
+                try {
+                    flags.add(VerifyFlag.valueOf(flag));
+                } catch (IllegalArgumentException x) {
+                    log.debug("Cannot handle verify flag {} -- ignored.", flag);
+                }
+            }
+        }
+        return flags;
+    }
+
+    private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
+        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
+        for (JsonNode input : inputs) {
+            String hash = input.get(0).asText();
+            int index = input.get(1).asInt();
+            String script = input.get(2).asText();
+            Sha256Hash sha256Hash = Sha256Hash.wrap(Hex.decode(hash));
+            scriptPubKeys.put(new TransactionOutPoint(PARAMS, index, sha256Hash), parseScriptString(script));
+        }
+        return scriptPubKeys;
     }
 }
