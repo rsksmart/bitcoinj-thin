@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class RedeemScriptParserFactoryTest {
+
     private final List<BtcECKey> defaultFedBtcECKeyList = new ArrayList<>();
     private final List<BtcECKey> erpFedBtcECKeyList = new ArrayList<>();
     private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(100));
