@@ -4,9 +4,22 @@ import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIGVERIFY;
 
 import co.rsk.bitcoinj.core.VerificationException;
+import java.math.BigInteger;
 import java.util.List;
 
 public class RedeemScriptValidator {
+
+    public static Long extractCsvValue(List<ScriptChunk> chunks) {
+        for (int i = 1; i < chunks.size(); i++) {
+            ScriptChunk chunk = chunks.get(i);
+            if (chunk.isOpCode() && chunk.equalsOpCode(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)) {
+                ScriptChunk csvValueChunk = chunks.get(i - 1); // CSV value goes right before CSV op code
+                return new BigInteger(csvValueChunk.data).longValue();
+            }
+        }
+
+        throw new VerificationException("No CSV value found");
+    }
 
     protected static boolean isRedeemLikeScript(List<ScriptChunk> chunks) {
         if (chunks.size() < 4) {
