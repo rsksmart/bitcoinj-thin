@@ -101,4 +101,22 @@ public class FastBridgeRedeemScriptParserTest {
 
         Assert.assertArrayEquals(fastBridgeRedeemScriptParser.getDerivationHash(), data);
     }
+
+    @Test
+    public void isFastBridgeMultisig() {
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+            derivationArgumentsHash.getBytes(),
+            btcECKeyList
+        );
+
+        Assert.assertTrue(FastBridgeRedeemScriptParser.isFastBridgeMultiSig(fastBridgeRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void isFastBridgeMultisig_falseWithCustomRedeemScrip() {
+        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(btcECKeyList);
+
+        Assert.assertFalse(FastBridgeRedeemScriptParser.isFastBridgeMultiSig(customRedeemScript.getChunks()));
+    }
 }
