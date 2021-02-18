@@ -3,11 +3,11 @@ package co.rsk.bitcoinj.script;
 import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
 
 import co.rsk.bitcoinj.core.VerificationException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
@@ -29,10 +29,11 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
         int i = 1;
-        while (!chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
+        while (i < chunks.size() && !chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
             chunksForRedeem.add(chunks.get(i));
             i ++;
         }
+
         chunksForRedeem.add(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null));
 
         // Validate the obtained redeem script has a valid format
@@ -50,12 +51,20 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
+        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
+            !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
+
+            String message = "Provided redeem scripts have an invalid structure, not standard";
+            logger.debug("[createErpRedeemScript] {}", message);
+            throw new VerificationException(message);
+        }
+
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
         return scriptBuilder.op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
-            .data(Hex.decode(csvValue.toString()))
+            .data(BigInteger.valueOf(csvValue).toByteArray())
             .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
