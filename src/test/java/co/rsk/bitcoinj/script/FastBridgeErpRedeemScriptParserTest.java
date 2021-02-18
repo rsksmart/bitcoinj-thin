@@ -1,6 +1,7 @@
 package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ErpFederationRedeemScriptParserTest {
+public class FastBridgeErpRedeemScriptParserTest {
 
     private final List<BtcECKey> defaultFedBtcECKeyList = new ArrayList<>();
     private final List<BtcECKey> erpFedBtcECKeyList = new ArrayList<>();
@@ -31,16 +32,20 @@ public class ErpFederationRedeemScriptParserTest {
     }
 
     @Test
-    public void extractStandardRedeemScript_fromErpRedeemScript() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void extractStandardRedeemScript_fromFastBridgeErpRedeemScript() {
+        Long csvValue = 100L;
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
-            100L
+            csvValue,
+            derivationArgumentsHash.getBytes()
         );
+
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
 
-        Script obtainedRedeemScript = ErpFederationRedeemScriptParser.extractStandardRedeemScript(
-            erpRedeemScript.getChunks()
+        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(
+            fastBridgeErpRedeemScript.getChunks()
         );
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
@@ -50,71 +55,79 @@ public class ErpFederationRedeemScriptParserTest {
     public void extractStandardRedeemScript_fromStandardRedeemScript_fail() {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
 
-        ErpFederationRedeemScriptParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
+        FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
     }
 
     @Test
-    public void createErpRedeemScript() {
+    public void createFastBridgeErpRedeemScript() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
         Long csvValue = 200L;
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
 
-        Script expectedErpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script expectedErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
-            csvValue
+            csvValue,
+            derivationArgumentsHash.getBytes()
         );
 
-        Script obtainedRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue
+            csvValue,
+            derivationArgumentsHash
         );
 
         Assert.assertEquals(expectedErpRedeemScript, obtainedRedeemScript);
     }
 
     @Test(expected = VerificationException.class)
-    public void createErpRedeemScript_invalidDefaultFederationRedeemScript() {
+    public void createFastBridgeErpRedeemScript_invalidDefaultFederationRedeemScript() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
         Long csvValue = 200L;
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
 
-        ErpFederationRedeemScriptParser.createErpRedeemScript(
+        FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue
+            csvValue,
+            derivationArgumentsHash
         );
     }
 
     @Test(expected = VerificationException.class)
-    public void createErpRedeemScript_invalidErpFederationRedeemScript() {
+    public void createFastBridgeErpRedeemScript_invalidErpFederationRedeemScript() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(erpFedBtcECKeyList);
         Long csvValue = 200L;
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
 
-        ErpFederationRedeemScriptParser.createErpRedeemScript(
+        FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue
+            csvValue,
+            derivationArgumentsHash
         );
     }
 
     @Test
-    public void isErpFed() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void isFastBridgeErpFed() {
+        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
-            200L
+            200L,
+            Sha256Hash.of(new byte[]{1}).getBytes()
         );
 
-        Assert.assertTrue(ErpFederationRedeemScriptParser.isErpFed(erpRedeemScript.getChunks()));
+        Assert.assertTrue(FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(fastBridgeErpRedeemScript.getChunks()));
     }
 
     @Test
-    public void isErpFed_falseWithCustomRedeemScript() {
+    public void isFastBridgeErpFed_falseWithCustomRedeemScript() {
         Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultFedBtcECKeyList);
 
-        Assert.assertFalse(ErpFederationRedeemScriptParser.isErpFed(customRedeemScript.getChunks()));
+        Assert.assertFalse(FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(customRedeemScript.getChunks()));
     }
 }
