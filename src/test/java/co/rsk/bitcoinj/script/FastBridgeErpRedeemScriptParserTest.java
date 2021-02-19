@@ -82,6 +82,31 @@ public class FastBridgeErpRedeemScriptParserTest {
         Assert.assertEquals(expectedErpRedeemScript, obtainedRedeemScript);
     }
 
+    @Test
+    public void createFastBridgeErpRedeemScript_from_Erp_redeem_script() {
+        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            5063L
+        );
+
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+
+        Script expectedRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            5063L,
+            derivationArgumentsHash.getBytes()
+        );
+
+        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
+            erpRedeemScript,
+            derivationArgumentsHash
+        );
+
+        Assert.assertEquals(expectedRedeemScript, obtainedRedeemScript);
+    }
+
     @Test(expected = VerificationException.class)
     public void createFastBridgeErpRedeemScript_invalidDefaultFederationRedeemScript() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultFedBtcECKeyList);
