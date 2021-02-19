@@ -1,10 +1,7 @@
 package co.rsk.bitcoinj.script;
 
-import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
-
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
-import java.math.BigInteger;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +28,26 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
     }
 
     public static Script createFastBridgeErpRedeemScript(
+        Script erpRedeemScript,
+        Sha256Hash derivationArgumentsHash
+    ) {
+        if (!RedeemScriptValidator.hasErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
+            String message = "Provided redeem script has not ERP structure";
+            logger.debug("[createFastBridgeErpRedeemScript] {}", message);
+            throw new VerificationException(message);
+        }
+
+        List<ScriptChunk> chunks = erpRedeemScript.getChunks();
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+
+        return scriptBuilder
+            .data(derivationArgumentsHash.getBytes())
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(chunks)
+            .build();
+    }
+
+    public static Script createFastBridgeErpRedeemScript(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue,
@@ -44,21 +61,13 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
             throw new VerificationException(message);
         }
 
-        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
 
-        return scriptBuilder
-            .data(derivationArgumentsHash.getBytes())
-            .op(ScriptOpCodes.OP_DROP)
-            .op(ScriptOpCodes.OP_NOTIF)
-            .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
-            .op(ScriptOpCodes.OP_ELSE)
-            .data(BigInteger.valueOf(csvValue).toByteArray())
-            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
-            .op(ScriptOpCodes.OP_DROP)
-            .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
-            .op(ScriptOpCodes.OP_ENDIF)
-            .op(ScriptOpCodes.OP_CHECKMULTISIG)
-            .build();
+        return createFastBridgeErpRedeemScript(erpRedeemScript, derivationArgumentsHash);
     }
 
     public static boolean isFastBridgeErpFed(List<ScriptChunk> chunks) {
