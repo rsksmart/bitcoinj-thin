@@ -14,13 +14,13 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
 
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
-        List<ScriptChunk> redeemScript,
-        List<ScriptChunk> chunks
+        List<ScriptChunk> redeemScriptChunks,
+        List<ScriptChunk> rawChunks
     ) {
         super(
             scriptType,
-            extractStandardRedeemScript(redeemScript).getChunks(),
-            chunks
+            extractStandardRedeemScript(redeemScriptChunks).getChunks(),
+            rawChunks
         );
         this.multiSigType = MultiSigType.ERP_FED;
     }
@@ -31,7 +31,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         int i = 1;
         while (i < chunks.size() && !chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
             chunksForRedeem.add(chunks.get(i));
-            i ++;
+            i++;
         }
 
         chunksForRedeem.add(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null));
