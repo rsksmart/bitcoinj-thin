@@ -11,13 +11,13 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
 
     public FastBridgeErpRedeemScriptParser(
         ScriptType scriptType,
-        List<ScriptChunk> redeemScript,
-        List<ScriptChunk> chunks
+        List<ScriptChunk> redeemScriptChunks,
+        List<ScriptChunk> rawChunks
     ) {
         super(
             scriptType,
-            extractStandardRedeemScript(redeemScript).getChunks(),
-            chunks
+            extractStandardRedeemScript(redeemScriptChunks).getChunks(),
+            rawChunks
         );
         this.multiSigType = MultiSigType.FAST_BRIDGE_ERP_FED;
     }
