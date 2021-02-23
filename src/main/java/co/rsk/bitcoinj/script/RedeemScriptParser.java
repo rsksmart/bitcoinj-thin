@@ -33,4 +33,6 @@ public interface RedeemScriptParser {
     List<BtcECKey> getPubKeys();
 
     int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash);
+
+    Script extractStandardRedeemScript();
 }
