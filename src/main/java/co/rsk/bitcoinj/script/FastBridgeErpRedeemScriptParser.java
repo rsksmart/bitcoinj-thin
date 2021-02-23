@@ -22,6 +22,11 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
         this.multiSigType = MultiSigType.FAST_BRIDGE_ERP_FED;
     }
 
+    @Override
+    public Script extractStandardRedeemScript() {
+        return extractStandardRedeemScript(this.redeemScriptChunks);
+    }
+
     public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
         return ErpFederationRedeemScriptParser.
             extractStandardRedeemScript(chunks.subList(2, chunks.size()));

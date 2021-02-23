@@ -41,4 +41,9 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
         return 0;
     }
+
+    @Override
+    public Script extractStandardRedeemScript() {
+        throw new ScriptException("Only usable for multisig scripts.");
+    }
 }

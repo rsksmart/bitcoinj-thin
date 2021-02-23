@@ -18,7 +18,6 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     protected MultiSigType multiSigType;
     protected ScriptType scriptType;
-
     // In case of P2SH represents a scriptSig, where the last chunk is the redeem script (either standard or extended)
     protected List<ScriptChunk> rawChunks;
     // Standard redeem script
@@ -48,7 +47,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int getM() {
-        checkArgument(rawChunks.get(0).isOpCode());
+        checkArgument(redeemScriptChunks.get(0).isOpCode());
         return Script.decodeFromOpN(redeemScriptChunks.get(0).opcode);
     }
 
@@ -117,6 +116,11 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
             "Could not find matching key for signature on " + hash.toString() + " sig "
                 + Utils.HEX.encode(signatureBytes)
         );
+    }
+
+    @Override
+    public Script extractStandardRedeemScript() {
+        return new Script(redeemScriptChunks);
     }
 
     public static boolean isStandardMultiSig(List<ScriptChunk> chunks) {
