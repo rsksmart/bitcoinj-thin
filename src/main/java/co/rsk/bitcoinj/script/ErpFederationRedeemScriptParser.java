@@ -25,11 +25,6 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         this.multiSigType = MultiSigType.ERP_FED;
     }
 
-    @Override
-    public Script extractStandardRedeemScript() {
-        return extractStandardRedeemScript(this.redeemScriptChunks);
-    }
-
     public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
