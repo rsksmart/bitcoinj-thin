@@ -19,7 +19,6 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
-
 import java.util.Arrays;
 import java.util.List;
 
