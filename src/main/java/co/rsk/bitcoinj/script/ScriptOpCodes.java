@@ -17,7 +17,6 @@
 package co.rsk.bitcoinj.script;
 
 import com.google.common.collect.ImmutableMap;
-
 import java.util.Map;
 
 /**
