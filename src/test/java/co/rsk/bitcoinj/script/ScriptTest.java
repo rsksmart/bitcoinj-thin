@@ -87,6 +87,8 @@ public class ScriptTest {
     private final BtcECKey ecKey4 = BtcECKey.fromPrivate(BigInteger.valueOf(400));
     private final BtcECKey ecKey5 = BtcECKey.fromPrivate(BigInteger.valueOf(500));
     private final BtcECKey ecKey6 = BtcECKey.fromPrivate(BigInteger.valueOf(600));
+    private final BtcECKey ecKey7 = BtcECKey.fromPrivate(BigInteger.valueOf(700));
+    private final BtcECKey ecKey8 = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
     @Before
     public void setUp() {
@@ -96,6 +98,8 @@ public class ScriptTest {
         erpFedECKeyList.add(ecKey4);
         erpFedECKeyList.add(ecKey5);
         erpFedECKeyList.add(ecKey6);
+        erpFedECKeyList.add(ecKey7);
+        erpFedECKeyList.add(ecKey8);
     }
 
     @Test
