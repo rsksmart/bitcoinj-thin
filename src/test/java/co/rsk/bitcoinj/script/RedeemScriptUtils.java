@@ -3,22 +3,23 @@ package co.rsk.bitcoinj.script;
 import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
 
 import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.Sha256Hash;
 import java.math.BigInteger;
 import java.util.List;
-import org.spongycastle.util.encoders.Hex;
 
 public class RedeemScriptUtils {
 
     public static Script createStandardRedeemScript(List<BtcECKey> btcECKeyList) {
-        return ScriptBuilder.createRedeemScript(2, btcECKeyList);
+        return ScriptBuilder.createRedeemScript(btcECKeyList.size() / 2 + 1, btcECKeyList);
     }
 
     public static Script createFastBridgeRedeemScript(
         byte[] derivationArgumentsHashBytes,
         List<BtcECKey> btcECKeyList
     ) {
-        Script redeem = ScriptBuilder.createRedeemScript(2, btcECKeyList);
+        Script redeem = ScriptBuilder.createRedeemScript(
+            btcECKeyList.size() / 2 + 1,
+            btcECKeyList
+        );
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
         return scriptBuilder.data(derivationArgumentsHashBytes)
@@ -33,10 +34,16 @@ public class RedeemScriptUtils {
         Long csvValue
     ) {
         Script defaultFedRedeemScript =
-            ScriptBuilder.createRedeemScript(2, defaultFedBtcECKeyList);
+            ScriptBuilder.createRedeemScript(
+                defaultFedBtcECKeyList.size() / 2 + 1,
+                defaultFedBtcECKeyList
+            );
 
         Script erpFedRedeemScript =
-            ScriptBuilder.createRedeemScript(2, erpFedBtcECKeyList);
+            ScriptBuilder.createRedeemScript(
+                erpFedBtcECKeyList.size() / 2 + 1,
+                erpFedBtcECKeyList
+            );
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
@@ -74,7 +81,10 @@ public class RedeemScriptUtils {
     }
 
     public static Script createCustomRedeemScript(List<BtcECKey> btcECKeyList) {
-        Script redeem = ScriptBuilder.createRedeemScript(2, btcECKeyList);
+        Script redeem = ScriptBuilder.createRedeemScript(
+            btcECKeyList.size() / 2 + 1,
+            btcECKeyList
+        );
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
         return scriptBuilder.op(ScriptOpCodes.OP_DROP)
