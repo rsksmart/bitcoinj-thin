@@ -20,9 +20,10 @@ import co.rsk.bitcoinj.core.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
- * Keeps {@link org.bitcoinj.core.StoredBlock}s in memory. Used primarily for unit testing.
+ * Keeps {@link co.rsk.bitcoinj.core.StoredBlock}s in memory. Used primarily for unit testing.
  */
 public class BtcMemoryBlockStore implements BtcBlockStore {
     private LinkedHashMap<Sha256Hash, StoredBlock> blockMap = new LinkedHashMap<Sha256Hash, StoredBlock>() {
@@ -33,6 +34,12 @@ public class BtcMemoryBlockStore implements BtcBlockStore {
     };
     private StoredBlock chainHead;
     private NetworkParameters params;
+    private LinkedHashMap<Integer, Sha256Hash> blockHashMap = new LinkedHashMap<Integer, Sha256Hash>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Integer, Sha256Hash> eldest) {
+            return blockHashMap.size() > 5000;
+        }
+    };
 
     public BtcMemoryBlockStore(NetworkParameters params) {
         // Insert the genesis block.
@@ -72,11 +79,34 @@ public class BtcMemoryBlockStore implements BtcBlockStore {
     public final void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         this.chainHead = chainHead;
+        this.setMainChainBlock(chainHead.getHeight(), chainHead.getHeader().getHash());
     }
-    
+
+    @Override
+    public Optional<StoredBlock> getInMainchain(int height) {
+        if (blockHashMap == null) {
+            return Optional.empty();
+        }
+
+        Sha256Hash blockHash = blockHashMap.get(height);
+        try {
+            StoredBlock block = get(blockHash);
+            return Optional.of(block);
+        } catch (BlockStoreException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void setMainChainBlock(int height, Sha256Hash blockHash) throws BlockStoreException {
+        if (blockHashMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
+        blockHashMap.put(height, blockHash);
+    }
+
     @Override
     public void close() {
         blockMap = null;
+        blockHashMap = null;
     }
 
     @Override

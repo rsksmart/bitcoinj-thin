@@ -17,51 +17,80 @@
 
 package co.rsk.bitcoinj.script;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import co.rsk.bitcoinj.core.*;
-import co.rsk.bitcoinj.core.BtcTransaction.SigHash;
-import co.rsk.bitcoinj.crypto.TransactionSignature;
-import co.rsk.bitcoinj.params.MainNetParams;
-import co.rsk.bitcoinj.params.TestNet3Params;
-import co.rsk.bitcoinj.script.Script.VerifyFlag;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
-import org.hamcrest.core.IsNot;
-import org.junit.Assert;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.util.*;
-
 import static co.rsk.bitcoinj.core.Utils.HEX;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import co.rsk.bitcoinj.RedeemScriptUtil;
+import co.rsk.bitcoinj.core.Address;
+import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.BtcTransaction;
+import co.rsk.bitcoinj.core.BtcTransaction.SigHash;
+import co.rsk.bitcoinj.core.Coin;
+import co.rsk.bitcoinj.core.DumpedPrivateKey;
+import co.rsk.bitcoinj.core.NetworkParameters;
+import co.rsk.bitcoinj.core.ScriptException;
+import co.rsk.bitcoinj.core.Sha256Hash;
+import co.rsk.bitcoinj.core.TransactionInput;
+import co.rsk.bitcoinj.core.TransactionOutPoint;
+import co.rsk.bitcoinj.core.TransactionOutput;
+import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
+import co.rsk.bitcoinj.core.Utils;
+import co.rsk.bitcoinj.core.VerificationException;
+import co.rsk.bitcoinj.crypto.TransactionSignature;
+import co.rsk.bitcoinj.params.MainNetParams;
+import co.rsk.bitcoinj.params.TestNet3Params;
+import co.rsk.bitcoinj.script.Script.VerifyFlag;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.hamcrest.core.IsNot;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ScriptTest {
     // From tx 05e04c26c12fe408a3c1b71aa7996403f6acad1045252b1c62e055496f4d2cb1 on the testnet.
-
     static final String sigProg = "47304402202b4da291cc39faf8433911988f9f49fc5c995812ca2f94db61468839c228c3e90220628bff3ff32ec95825092fa051cba28558a981fcf59ce184b14f2e215e69106701410414b38f4be3bb9fa0f4f32b74af07152b2f2f630bc02122a491137b6c523e46f18a0d5034418966f93dfc37cc3739ef7b2007213a302b7fba161557f4ad644a1c";
-
     static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
 
     private static final NetworkParameters PARAMS = TestNet3Params.get();
-
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
+    private final List<BtcECKey> btcECKeyList = new ArrayList<>();
+    private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(100));
+    private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(200));
+    private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(300));
 
     @Before
     public void setUp() throws Exception {
-        Context context = new Context(PARAMS);
+        //Context context = new Context(PARAMS);
+        btcECKeyList.add(ecKey1);
+        btcECKeyList.add(ecKey2);
+        btcECKeyList.add(ecKey3);
     }
 
     @Test
@@ -490,5 +519,107 @@ public class ScriptTest {
             0x01,        // Length of the pushed data
             ((byte) 133) // Pushed data
         }, builder.build().getProgram());
+    }
+
+    @Test
+    public void getNumberOfSignaturesRequiredToSpend_fast_bridge_redeem_script() {
+        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script fastBridgeRedeemScript = RedeemScriptUtil.createFastBridgeRedeemScript(
+            data, btcECKeyList);
+
+        Assert.assertEquals(2, fastBridgeRedeemScript.getNumberOfSignaturesRequiredToSpend());
+    }
+
+    @Test
+    public void getNumberOfSignaturesRequiredToSpend_no_fast_bridge_redeem_script() {
+        Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
+        Assert.assertEquals(2, redeemScript.getNumberOfSignaturesRequiredToSpend());
+    }
+
+    @Test
+    public void getSigInsertionIndex_fast_bridge_redeem_script() {
+        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script fastBridgeRedeemScript = RedeemScriptUtil.createFastBridgeRedeemScript(
+            data, btcECKeyList);
+
+        NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
+
+        BtcTransaction fundTx = new BtcTransaction(networkParameters);
+        fundTx.addOutput(Coin.FIFTY_COINS, ecKey1.toAddress(networkParameters));
+
+        BtcTransaction spendTx = new BtcTransaction(networkParameters);
+        spendTx.addInput(fundTx.getOutput(0));
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(2,
+            Arrays.asList(ecKey1, ecKey2, ecKey3));
+
+        Script inputScript = spk.createEmptyInputScript(null, fastBridgeRedeemScript);
+
+        Sha256Hash sigHash = spendTx.hashForSignature(0, fastBridgeRedeemScript,
+            BtcTransaction.SigHash.ALL, false);
+
+        BtcECKey.ECDSASignature sign1 = ecKey1.sign(sigHash);
+        TransactionSignature txSig = new TransactionSignature(sign1,
+            BtcTransaction.SigHash.ALL, false);
+
+        byte[] txSigEncoded = txSig.encodeToBitcoin();
+
+        int sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey1);
+        Assert.assertEquals(0, sigIndex);
+
+        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, txSigEncoded,
+            sigIndex, 1, 1);
+
+        sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
+        Assert.assertEquals(1, sigIndex);
+    }
+
+    @Test
+    public void getSigInsertionIndex_no_fast_bridge_redeem_script() {
+        Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
+        NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
+
+        BtcTransaction fundTx = new BtcTransaction(networkParameters);
+        fundTx.addOutput(Coin.FIFTY_COINS, ecKey1.toAddress(networkParameters));
+
+        BtcTransaction spendTx = new BtcTransaction(networkParameters);
+        spendTx.addInput(fundTx.getOutput(0));
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(2,
+            Arrays.asList(ecKey1, ecKey2, ecKey3));
+
+        Script inputScript = spk.createEmptyInputScript(redeemScript.getPubKeys().get(0),
+            redeemScript);
+
+        Sha256Hash sigHash = spendTx.hashForSignature(0, redeemScript,
+            BtcTransaction.SigHash.ALL, false);
+
+        BtcECKey.ECDSASignature sign1 = ecKey1.sign(sigHash);
+        TransactionSignature txSig = new TransactionSignature(sign1, BtcTransaction.SigHash.ALL, false);
+        byte[] txSigEncoded = txSig.encodeToBitcoin();
+
+        int sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey1);
+        Assert.assertEquals(0, sigIndex);
+
+        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, txSigEncoded,
+            sigIndex, 1, 1);
+
+        sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
+        Assert.assertEquals(1, sigIndex);
+    }
+
+    @Test
+    public void isSentToMultiSig_fast_bridge_multiSig() {
+        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script fastBridgeRedeemScript = RedeemScriptUtil.createFastBridgeRedeemScript(
+            data, btcECKeyList);
+
+        Assert.assertTrue(fastBridgeRedeemScript.isSentToMultiSig());
+    }
+
+    @Test
+    public void isStandardMultiSig_standard_multiSig() {
+        Script redeemScript = RedeemScriptUtil.createStandardRedeemScript(btcECKeyList);
+        Assert.assertTrue(redeemScript.isSentToMultiSig());
     }
 }

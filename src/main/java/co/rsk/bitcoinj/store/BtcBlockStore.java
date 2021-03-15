@@ -20,6 +20,7 @@ import co.rsk.bitcoinj.core.BtcBlockChain;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.StoredBlock;
+import java.util.Optional;
 
 /**
  * An implementor of BlockStore saves StoredBlock objects to disk. Different implementations store them in
@@ -57,6 +58,10 @@ public interface BtcBlockStore {
      * Sets the {@link StoredBlock} that represents the top of the chain of greatest total work.
      */
     void setChainHead(StoredBlock chainHead) throws BlockStoreException;
+
+    Optional<StoredBlock> getInMainchain(int height);
+
+    void setMainChainBlock(int height, Sha256Hash blockHash) throws BlockStoreException;
     
     /** Closes the store. */
     void close() throws BlockStoreException;
