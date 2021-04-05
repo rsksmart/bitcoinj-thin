@@ -8,18 +8,8 @@ import java.util.List;
 public class NoRedeemScriptParser implements RedeemScriptParser {
 
     @Override
-    public boolean isStandardMultiSig() {
-        return false;
-    }
-
-    @Override
-    public boolean isFastBridgeMultiSig() {
-        return false;
-    }
-
-    @Override
-    public boolean isNotMultiSig() {
-        return true;
+    public MultiSigType getMultiSigType() {
+        return MultiSigType.NO_MULTISIG_TYPE;
     }
 
     @Override
@@ -50,5 +40,10 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
     @Override
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
         return 0;
+    }
+
+    @Override
+    public Script extractStandardRedeemScript() {
+        throw new ScriptException("Only usable for multisig scripts.");
     }
 }

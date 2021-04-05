@@ -10,6 +10,8 @@ public interface RedeemScriptParser {
         NO_MULTISIG_TYPE,
         STANDARD_MULTISIG,
         FAST_BRIDGE_MULTISIG,
+        ERP_FED,
+        FAST_BRIDGE_ERP_FED
     }
 
     enum ScriptType {
@@ -18,11 +20,7 @@ public interface RedeemScriptParser {
         UNDEFINED
     }
 
-    boolean isStandardMultiSig();
-
-    boolean isFastBridgeMultiSig();
-
-    boolean isNotMultiSig();
+    MultiSigType getMultiSigType();
 
     ScriptType getScriptType();
 
@@ -35,4 +33,6 @@ public interface RedeemScriptParser {
     List<BtcECKey> getPubKeys();
 
     int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash);
+
+    Script extractStandardRedeemScript();
 }

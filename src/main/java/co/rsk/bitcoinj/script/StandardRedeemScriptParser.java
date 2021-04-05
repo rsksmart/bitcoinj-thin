@@ -18,34 +18,26 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     protected MultiSigType multiSigType;
     protected ScriptType scriptType;
-    protected List<ScriptChunk> chunks;
-    protected List<ScriptChunk> redeemScript;
+    // In case of P2SH represents a scriptSig, where the last chunk is the redeem script (either standard or extended)
+    protected List<ScriptChunk> rawChunks;
+    // Standard redeem script
+    protected List<ScriptChunk> redeemScriptChunks;
 
     public StandardRedeemScriptParser(
         ScriptType scriptType,
-        List<ScriptChunk> redeemScript,
-        List<ScriptChunk> chunks
+        List<ScriptChunk> redeemScriptChunks,
+        List<ScriptChunk> rawChunks
     ) {
         this.multiSigType = MultiSigType.STANDARD_MULTISIG;
         this.scriptType = scriptType;
-        this.redeemScript = redeemScript;
+        this.redeemScriptChunks = redeemScriptChunks;
 
-        this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
+        this.rawChunks = Collections.unmodifiableList(new ArrayList<>(rawChunks));
     }
 
     @Override
-    public boolean isStandardMultiSig() {
-        return this.multiSigType == MultiSigType.STANDARD_MULTISIG;
-    }
-
-    @Override
-    public boolean isFastBridgeMultiSig() {
-        return this.multiSigType == MultiSigType.FAST_BRIDGE_MULTISIG;
-    }
-
-    @Override
-    public boolean isNotMultiSig() {
-        return false;
+    public MultiSigType getMultiSigType() {
+        return this.multiSigType;
     }
 
     @Override
@@ -55,22 +47,23 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int getM() {
-        return Script.decodeFromOpN(redeemScript.get(0).opcode);
+        checkArgument(redeemScriptChunks.get(0).isOpCode());
+        return Script.decodeFromOpN(redeemScriptChunks.get(0).opcode);
     }
 
     @Override
     public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
         // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
         // and any placeholder OP_0 sigs.
-        List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
-        Script redeemScript = new Script(this.redeemScript);
+        List<ScriptChunk> existingChunks = rawChunks.subList(1, rawChunks.size() - 1);
+        Script redeemScript = new Script(this.redeemScriptChunks);
 
         int sigCount = 0;
         int myIndex = redeemScript.findKeyInRedeem(signingKey);
         Iterator chunkIterator = existingChunks.iterator();
 
         while(chunkIterator.hasNext()) {
-            ScriptChunk chunk = (ScriptChunk)chunkIterator.next();
+            ScriptChunk chunk = (ScriptChunk) chunkIterator.next();
             if (chunk.opcode != 0) {
                 Preconditions.checkNotNull(chunk.data);
                 if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash)) {
@@ -86,27 +79,23 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
-        List<ScriptChunk> chunks = redeemScript;
-        checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
-        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
+        checkArgument(redeemScriptChunks.get(0).isOpCode()); // P2SH scriptSig
+        int numKeys = Script.decodeFromOpN(redeemScriptChunks.get(redeemScriptChunks.size() - 2).opcode);
         for (int i = 0; i < numKeys; i++) {
-            if (Arrays.equals(chunks.get(1 + i).data, key.getPubKey())) {
+            if (Arrays.equals(redeemScriptChunks.get(1 + i).data, key.getPubKey())) {
                 return i;
             }
         }
 
-        throw new IllegalStateException(
-            "Could not find matching key " + key.toString() + " in script " + this);
+        throw new IllegalStateException("Could not find matching key " + key.toString() + " in script " + this);
     }
 
     @Override
     public List<BtcECKey> getPubKeys() {
-        List<ScriptChunk> chunks = redeemScript;
-
         ArrayList<BtcECKey> result = Lists.newArrayList();
-        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
+        int numKeys = Script.decodeFromOpN(redeemScriptChunks.get(redeemScriptChunks.size() - 2).opcode);
         for (int i = 0; i < numKeys; i++) {
-            result.add(BtcECKey.fromPublicOnly(chunks.get(1 + i).data));
+            result.add(BtcECKey.fromPublicOnly(redeemScriptChunks.get(1 + i).data));
         }
 
         return result;
@@ -114,19 +103,27 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        List<ScriptChunk> chunks = redeemScript;
-        checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
-        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
+        checkArgument(redeemScriptChunks.get(0).isOpCode()); // P2SH scriptSig
+        int numKeys = Script.decodeFromOpN(redeemScriptChunks.get(redeemScriptChunks.size() - 2).opcode);
         TransactionSignature signature = TransactionSignature
             .decodeFromBitcoin(signatureBytes, true);
         for (int i = 0; i < numKeys; i++) {
-            if (BtcECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
+            if (BtcECKey.fromPublicOnly(redeemScriptChunks.get(i + 1).data).verify(hash, signature)) {
                 return i;
             }
         }
         throw new IllegalStateException(
             "Could not find matching key for signature on " + hash.toString() + " sig "
-                + Utils.HEX.encode(signatureBytes));
+                + Utils.HEX.encode(signatureBytes)
+        );
     }
 
+    @Override
+    public Script extractStandardRedeemScript() {
+        return new Script(redeemScriptChunks);
+    }
+
+    public static boolean isStandardMultiSig(List<ScriptChunk> chunks) {
+        return RedeemScriptValidator.hasStandardRedeemScriptStructure(chunks);
+    }
 }
