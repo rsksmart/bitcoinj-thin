@@ -18,6 +18,7 @@
 package co.rsk.bitcoinj.wallet;
 
 import com.google.common.collect.*;
+import java.util.stream.Collectors;
 import net.jcip.annotations.*;
 import co.rsk.bitcoinj.core.BtcAbstractBlockChain;
 import co.rsk.bitcoinj.core.Address;
@@ -575,31 +576,40 @@ public class Wallet
                 value = value.add(output.getValue());
             }
 
-            log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
-                    value.toFriendlyString(), req.feePerKb.toFriendlyString());
+            log.info(
+                "Completing send tx with {} outputs totalling {} and a fee of {}/kB",
+                req.tx.getOutputs().size(),
+                value.toFriendlyString(),
+                req.feePerKb.toFriendlyString()
+            );
 
             // If any inputs have already been added, we don't need to get their value from wallet
             Coin totalInput = Coin.ZERO;
-            for (TransactionInput input : req.tx.getInputs())
-                if (input.getConnectedOutput() != null)
+            for (TransactionInput input : req.tx.getInputs()) {
+                if (input.getConnectedOutput() != null) {
                     totalInput = totalInput.add(input.getConnectedOutput().getValue());
-                else
+                } else {
                     log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
+                }
+            }
             value = value.subtract(totalInput);
 
-            List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
+            List<TransactionInput> originalInputs = new ArrayList<>(req.tx.getInputs());
 
             // Check for dusty sends and the OP_RETURN limit.
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
                 int opReturnCount = 0;
                 for (TransactionOutput output : req.tx.getOutputs()) {
-                    if (output.isDust())
+                    if (output.isDust()) {
                         throw new DustySendRequested();
-                    if (output.getScriptPubKey().isOpReturn())
+                    }
+                    if (output.getScriptPubKey().isOpReturn()) {
                         ++opReturnCount;
+                    }
                 }
-                if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
+                if (opReturnCount > 1) { // Only 1 OP_RETURN per transaction allowed.
                     throw new MultipleOpReturnRequested();
+                }
             }
 
             // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
@@ -628,13 +638,15 @@ public class Wallet
                 log.info("  emptying {}", bestCoinSelection.valueGathered.toFriendlyString());
             }
 
-            for (TransactionOutput output : bestCoinSelection.gathered)
+            for (TransactionOutput output : bestCoinSelection.gathered) {
                 req.tx.addInput(output);
+            }
 
             if (req.emptyWallet) {
                 final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
-                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
+                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, feePerKb, req.ensureMinRequiredFee)) {
                     throw new CouldNotAdjustDownwards();
+                }
             }
 
             if (updatedOutputValues != null) {
@@ -649,17 +661,20 @@ public class Wallet
             }
 
             // Now shuffle the outputs to obfuscate which is the change.
-            if (req.shuffleOutputs)
+            if (req.shuffleOutputs) {
                 req.tx.shuffleOutputs();
+            }
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
-            if (req.signInputs)
+            if (req.signInputs) {
                 signTransaction(req);
+            }
 
             // Check size.
             final int size = req.tx.unsafeBitcoinSerialize().length;
-            if (size > BtcTransaction.MAX_STANDARD_TX_SIZE)
+            if (size > BtcTransaction.MAX_STANDARD_TX_SIZE) {
                 throw new ExceededMaxTransactionSize();
+            }
 
             // Label the transaction as being a user requested payment. This can be used to render GUI wallet
             // transaction lists more appropriately, especially when the wallet starts to generate transactions itself
@@ -913,8 +928,13 @@ public class Wallet
 
     //region Fee calculation code
 
-    public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
-                                       boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
+    public FeeCalculation calculateFee(
+        SendRequest req,
+        Coin value,
+        List<TransactionInput> originalInputs,
+        boolean needAtLeastReferenceFee,
+        List<TransactionOutput> candidates
+    ) throws InsufficientMoneyException {
         FeeCalculation result;
         Coin fee = Coin.ZERO;
         while (true) {
@@ -929,16 +949,27 @@ public class Wallet
             if (req.recipientsPayFees) {
                 result.updatedOutputValues = new ArrayList<Coin>();
             }
-            for (int i = 0; i < req.tx.getOutputs().size(); i++) {
-                TransactionOutput output = new TransactionOutput(params, tx,
-                        req.tx.getOutputs().get(i).bitcoinSerialize(), 0);
+            // Don't take into account outputs with OP_RETURN to divide the fee since these usually have 0 value
+            List<TransactionOutput> txOutputsExcludingOpReturn = req.tx.getOutputs()
+                .stream()
+                .filter(t -> !t.getScriptPubKey().isOpReturn())
+                .collect(Collectors.toList());
+            for (int i = 0; i < txOutputsExcludingOpReturn.size(); i++) {
+                TransactionOutput output = new TransactionOutput(
+                    params,
+                    tx,
+                    txOutputsExcludingOpReturn.get(i).bitcoinSerialize(),
+                    0
+                );
                 if (req.recipientsPayFees) {
                     // Subtract fee equally from each selected recipient
-                    output.setValue(output.getValue().subtract(fee.divide(req.tx.getOutputs().size())));
+                    output.setValue(output.getValue().subtract(fee.divide(txOutputsExcludingOpReturn.size())));
                     // first receiver pays the remainder not divisible by output count
                     if (i == 0) {
+                        // Subtract fee equally from each selected recipient
                         output.setValue(
-                                output.getValue().subtract(fee.divideAndRemainder(req.tx.getOutputs().size())[1])); // Subtract fee equally from each selected recipient
+                            output.getValue().subtract(fee.divideAndRemainder(txOutputsExcludingOpReturn.size())[1])
+                        );
                     }
                     result.updatedOutputValues.add(output.getValue());
                     if (output.getMinNonDustValue().isGreaterThan(output.getValue())) {
@@ -949,7 +980,7 @@ public class Wallet
             }
             CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
             // selector is allowed to modify candidates list.
-            CoinSelection selection = selector.select(valueNeeded, new LinkedList<TransactionOutput>(candidates));
+            CoinSelection selection = selector.select(valueNeeded, new LinkedList<>(candidates));
             result.bestCoinSelection = selection;
             // Can we afford this?
             if (selection.valueGathered.compareTo(valueNeeded) < 0) {
@@ -996,6 +1027,12 @@ public class Wallet
                 checkState(input.getScriptBytes().length == 0);
             }
 
+            // Add outputs with OP_RETURN to tx object in order to calculate the needed fee with the complete transaction
+            req.tx.getOutputs().forEach(t -> {
+                if (t.getScriptPubKey().isOpReturn()) {
+                    tx.addOutput(t);
+                }
+            });
             int size = tx.unsafeBitcoinSerialize().length;
             size += estimateBytesForSigning(selection);
 
@@ -1013,8 +1050,8 @@ public class Wallet
             // Include more fee and try again.
             fee = feeNeeded;
         }
-        return result;
 
+        return result;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
