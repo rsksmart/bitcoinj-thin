@@ -2,6 +2,7 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.VerificationException;
+import co.rsk.bitcoinj.utils.NumberConversions;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +28,14 @@ public class ErpFederationRedeemScriptParserTest {
         defaultFedBtcECKeyList.add(ecKey1);
         defaultFedBtcECKeyList.add(ecKey2);
         defaultFedBtcECKeyList.add(ecKey3);
+        defaultFedBtcECKeyList.sort(BtcECKey.PUBKEY_COMPARATOR);
+
         erpFedBtcECKeyList.add(ecKey4);
         erpFedBtcECKeyList.add(ecKey5);
         erpFedBtcECKeyList.add(ecKey6);
         erpFedBtcECKeyList.add(ecKey7);
         erpFedBtcECKeyList.add(ecKey8);
+        erpFedBtcECKeyList.sort(BtcECKey.PUBKEY_COMPARATOR);
     }
 
     @Test
@@ -104,6 +108,165 @@ public class ErpFederationRedeemScriptParserTest {
         );
     }
 
+    @Test(expected = VerificationException.class)
+    public void createErpRedeemScript_csv_below_zero() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+        Long csvValue = -200L;
+
+        ErpFederationRedeemScriptParser.createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+    }
+
+    @Test(expected = VerificationException.class)
+    public void createErpRedeemScript_csv_above_max_value() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+        Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE + 1;
+
+        ErpFederationRedeemScriptParser.createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+    }
+
+    @Test
+    public void createErpRedeemScript_csv_exact_max_value() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+        long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE;
+
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        validateErpRedeemScript(
+            erpRedeemScript,
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            true
+        );
+    }
+
+    @Test
+    public void createErpRedeemScript_csv_value_one_byte_long() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+
+        // For a value that only uses 1 byte,
+        // it should add an extra byte with value 0 to complete 2 bytes length
+        long csvValue = 20L;
+
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        validateErpRedeemScript(
+            erpRedeemScript,
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            true
+        );
+    }
+
+    @Test
+    public void createErpRedeemScriptWithoutValidation_csv_value_three_bytes_long() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+
+        long csvValue = 32_768L;
+
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScriptWithoutValidation(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        validateErpRedeemScript(
+            erpRedeemScript,
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            false
+        );
+    }
+
+    @Test
+    public void createErpRedeemScriptWithoutValidation_csv_value_one_byte_long() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+
+        long csvValue = 30L;
+
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScriptWithoutValidation(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        validateErpRedeemScript(
+            erpRedeemScript,
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            false
+        );
+    }
+
+    @Test
+    public void createErpRedeemScriptWithoutValidation_csv_above_max_value() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+
+        long csvValue = 1_000_000L;
+
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScriptWithoutValidation(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        validateErpRedeemScript(
+            erpRedeemScript,
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            false
+        );
+    }
+
+    @Test
+    public void createErpRedeemScriptWithoutValidation_csv_below_zero() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+
+        long csvValue = -200L;
+
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScriptWithoutValidation(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        validateErpRedeemScript(
+            erpRedeemScript,
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            false
+        );
+    }
+
     @Test
     public void isErpFed() {
         Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
@@ -120,5 +283,81 @@ public class ErpFederationRedeemScriptParserTest {
         Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultFedBtcECKeyList);
 
         Assert.assertFalse(ErpFederationRedeemScriptParser.isErpFed(customRedeemScript.getChunks()));
+    }
+
+    private void validateErpRedeemScript(
+        Script erpRedeemScript,
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue,
+        boolean validateCsvValue) {
+
+        byte[] parsedCsvValue;
+        int parsedCsvValueLength;
+
+        if (validateCsvValue) {
+            // Ensure cvs value has constant length
+            parsedCsvValue = NumberConversions.unsignedLongToByteArray(csvValue, ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH);
+            parsedCsvValueLength = ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH;
+        } else {
+            // When not validating the csv value, it uses BigInteger to serialize the value
+            // resulting in 3 bytes for values above or equal 32768 since it adds an extra byte for the sign
+            parsedCsvValue = BigInteger.valueOf(csvValue).toByteArray();
+            parsedCsvValueLength = parsedCsvValue.length;
+        }
+
+        byte[] script = erpRedeemScript.getProgram();
+        Assert.assertTrue(script.length > 0);
+
+        int index = 0;
+
+        // First byte should equal OP_NOTIF
+        Assert.assertEquals(ScriptOpCodes.OP_NOTIF, script[index++]);
+
+        // Next byte should equal M, from an M/N multisig
+        Assert.assertEquals(defaultFederationRedeemScript.getChunks().get(0).opcode, script[index++]);
+
+        // Assert public keys
+        for (BtcECKey key: defaultFedBtcECKeyList) {
+            byte[] pubkey = key.getPubKey();
+            Assert.assertEquals(pubkey.length, script[index++]);
+            for (int pkIndex = 0; pkIndex < pubkey.length; pkIndex++) {
+                Assert.assertEquals(pubkey[pkIndex], script[index++]);
+            }
+        }
+
+        // Next byte should equal N, from an M/N multisig
+        Assert.assertEquals(defaultFederationRedeemScript.getChunks().get(defaultFederationRedeemScript.getChunks().size() - 2).opcode, script[index++]);
+
+        // Next byte should equal OP_ELSE
+        Assert.assertEquals(ScriptOpCodes.OP_ELSE, script[index++]);
+
+        // Next byte should equal csv value length
+        Assert.assertEquals(parsedCsvValueLength, script[index++]);
+
+        // Next bytes should equal the csv value in bytes
+        for (int i = 0; i < parsedCsvValueLength; i++) {
+            Assert.assertEquals(parsedCsvValue[i], script[index++]);
+        }
+
+        Assert.assertEquals(Integer.valueOf(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY).byteValue(), script[index++]);
+        Assert.assertEquals(ScriptOpCodes.OP_DROP, script[index++]);
+
+        // Next byte should equal M, from an M/N multisig
+        Assert.assertEquals(erpFederationRedeemScript.getChunks().get(0).opcode, script[index++]);
+
+        for (BtcECKey key: erpFedBtcECKeyList) {
+            byte[] pubkey = key.getPubKey();
+            Assert.assertEquals(Integer.valueOf(pubkey.length).byteValue(), script[index++]);
+            for (int pkIndex = 0; pkIndex < pubkey.length; pkIndex++) {
+                Assert.assertEquals(pubkey[pkIndex], script[index++]);
+            }
+        }
+
+        // Next byte should equal N, from an M/N multisig
+        Assert.assertEquals(erpFederationRedeemScript.getChunks().get(erpFederationRedeemScript.getChunks().size() - 2).opcode, script[index++]);
+
+        Assert.assertEquals(ScriptOpCodes.OP_ENDIF, script[index++]);
+        Assert.assertEquals(Integer.valueOf(ScriptOpCodes.OP_CHECKMULTISIG).byteValue(), script[index++]);
     }
 }

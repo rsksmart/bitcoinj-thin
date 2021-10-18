@@ -3,6 +3,7 @@ package co.rsk.bitcoinj.script;
 import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
 
 import co.rsk.bitcoinj.core.VerificationException;
+import co.rsk.bitcoinj.utils.NumberConversions;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
+    public static long MAX_CSV_VALUE = 65_535L; // 65535 is 2 bytes. The max value currently accepted
+    public static int CSV_SERIALIZED_LENGTH = 2;
 
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
@@ -51,6 +54,38 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
+        return createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            true
+        );
+    }
+
+    @Deprecated
+    public static Script createErpRedeemScriptWithoutValidation(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue) {
+
+        return createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            false
+        );
+    }
+
+    public static boolean isErpFed(List<ScriptChunk> chunks) {
+        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
+    }
+
+    private static Script createErpRedeemScript(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue,
+        boolean validateCsvValue
+    ) {
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
             !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
 
@@ -59,21 +94,34 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             throw new VerificationException(message);
         }
 
+        byte[] parsedCsvValue = BigInteger.valueOf(csvValue).toByteArray();
+        if (validateCsvValue) {
+            if (csvValue > MAX_CSV_VALUE) {
+                String message = "Provided csv Value surpasses the limit of " + MAX_CSV_VALUE;
+                logger.warn("[createErpRedeemScript] {}", message);
+                throw new VerificationException(message);
+            }
+
+            if (csvValue < 0) {
+                String message = "Provided csv Value is smaller than 0";
+                logger.warn("[createErpRedeemScript] {}", message);
+                throw new VerificationException(message);
+            }
+
+            parsedCsvValue = NumberConversions.unsignedLongToByteArray(csvValue, CSV_SERIALIZED_LENGTH);
+        }
+
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
         return scriptBuilder.op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
-            .data(BigInteger.valueOf(csvValue).toByteArray())
+            .data(parsedCsvValue)
             .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
             .op(ScriptOpCodes.OP_ENDIF)
             .op(ScriptOpCodes.OP_CHECKMULTISIG)
             .build();
-    }
-
-    public static boolean isErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
     }
 }
