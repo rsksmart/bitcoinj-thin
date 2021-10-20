@@ -95,6 +95,8 @@ public abstract class NetworkParameters {
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
+    protected RskjSettings rskjSettings;
+
     protected NetworkParameters() {
         genesisBlock = createGenesis(this);
     }
@@ -448,6 +450,14 @@ public abstract class NetworkParameters {
     }
 
     public abstract int getProtocolVersionNum(final ProtocolVersion version);
+
+    public RskjSettings getRskjSettings() {
+        return rskjSettings;
+    }
+
+    public void setRskjSettings(RskjSettings rskjSettings) {
+        this.rskjSettings = rskjSettings;
+    }
 
     public static enum ProtocolVersion {
         MINIMUM(70000),
