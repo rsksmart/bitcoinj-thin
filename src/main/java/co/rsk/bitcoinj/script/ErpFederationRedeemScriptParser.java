@@ -2,6 +2,7 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
 
+import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -11,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
+    public static long MAX_CSV_VALUE = 65_535L; // 65535 is 2 bytes. The max value currently accepted
+    public static int CSV_SERIALIZED_LENGTH = 2;
 
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
@@ -51,20 +54,17 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
-            !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
+        validateErpRedeemScriptValues(defaultFederationRedeemScript, erpFederationRedeemScript, csvValue);
 
-            String message = "Provided redeem scripts have an invalid structure, not standard";
-            logger.debug("[createErpRedeemScript] {}", message);
-            throw new VerificationException(message);
-        }
+        byte[] parsedCsvValue = new byte[2];
+        Utils.uint16ToByteArrayBE(csvValue, parsedCsvValue, 0);
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
         return scriptBuilder.op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
-            .data(BigInteger.valueOf(csvValue).toByteArray())
+            .data(parsedCsvValue)
             .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
@@ -75,5 +75,31 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
 
     public static boolean isErpFed(List<ScriptChunk> chunks) {
         return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
+    }
+
+    private static void validateErpRedeemScriptValues(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue
+    ) {
+        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
+            !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
+
+            String message = "Provided redeem scripts have an invalid structure, not standard";
+            logger.debug("[validateErpRedeemScriptValues] {}", message);
+            throw new VerificationException(message);
+        }
+
+        if (csvValue > MAX_CSV_VALUE) {
+            String message = "Provided csv Value surpasses the limit of " + MAX_CSV_VALUE;
+            logger.warn("[validateErpRedeemScriptValues] {}", message);
+            throw new VerificationException(message);
+        }
+
+        if (csvValue < 0) {
+            String message = "Provided csv Value is smaller than 0";
+            logger.warn("[validateErpRedeemScriptValues] {}", message);
+            throw new VerificationException(message);
+        }
     }
 }
