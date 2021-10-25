@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.Date;
 
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
 import static org.junit.Assert.*;
 
@@ -60,5 +61,42 @@ public class UtilsTest {
     public void dateTimeFormat() {
         assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(1416135273781L));
         assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(new Date(1416135273781L)));
+    }
+
+    @Test
+    public void uint16ToByteArrayBE_twoBytesLength() {
+        long value = 1L;
+        byte[] conversion = new byte[2];
+        Utils.uint16ToByteArrayBE(value, conversion, 0);
+        long obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(value, obtainedValue);
+
+        value = 255L;
+        conversion = new byte[2];
+        Utils.uint16ToByteArrayBE(value, conversion, 0);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(value, obtainedValue);
+
+        value = 256L;
+        conversion = new byte[2];
+        Utils.uint16ToByteArrayBE(value, conversion, 0);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(value, obtainedValue);
+
+        value = 65535L;
+        conversion = new byte[2];
+        Utils.uint16ToByteArrayBE(value, conversion, 0);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(value, obtainedValue);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void uint16ToByteArrayBE_aboveMaxValue() {
+        Utils.uint16ToByteArrayBE(65536, new byte[2], 0);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void uint16ToByteArrayBE_negativeValue() {
+        Utils.uint16ToByteArrayBE(-1L, new byte[2], 0);
     }
 }
