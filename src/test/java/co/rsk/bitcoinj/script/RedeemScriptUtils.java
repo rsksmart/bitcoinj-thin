@@ -3,6 +3,8 @@ package co.rsk.bitcoinj.script;
 import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
 
 import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.Utils;
+import co.rsk.bitcoinj.core.VerificationException;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -22,7 +24,8 @@ public class RedeemScriptUtils {
         );
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
-        return scriptBuilder.data(derivationArgumentsHashBytes)
+        return scriptBuilder
+            .data(derivationArgumentsHashBytes)
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(redeem.getChunks())
             .build();
@@ -33,30 +36,25 @@ public class RedeemScriptUtils {
         List<BtcECKey> erpFedBtcECKeyList,
         Long csvValue
     ) {
-        Script defaultFedRedeemScript =
-            ScriptBuilder.createRedeemScript(
-                defaultFedBtcECKeyList.size() / 2 + 1,
-                defaultFedBtcECKeyList
-            );
+        return createErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            csvValue,
+            true
+        );
+    }
 
-        Script erpFedRedeemScript =
-            ScriptBuilder.createRedeemScript(
-                erpFedBtcECKeyList.size() / 2 + 1,
-                erpFedBtcECKeyList
-            );
-
-        ScriptBuilder scriptBuilder = new ScriptBuilder();
-
-        return scriptBuilder.op(ScriptOpCodes.OP_NOTIF)
-            .addChunks(removeOpCheckMultisig(defaultFedRedeemScript))
-            .op(ScriptOpCodes.OP_ELSE)
-            .data(BigInteger.valueOf(csvValue).toByteArray())
-            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
-            .op(ScriptOpCodes.OP_DROP)
-            .addChunks(removeOpCheckMultisig(erpFedRedeemScript))
-            .op(ScriptOpCodes.OP_ENDIF)
-            .op(ScriptOpCodes.OP_CHECKMULTISIG)
-            .build();
+    public static Script createErpRedeemScriptWithoutCsvValueValidation(
+        List<BtcECKey> defaultFedBtcECKeyList,
+        List<BtcECKey> erpFedBtcECKeyList,
+        Long csvValue
+    ) {
+        return createErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            csvValue,
+            false
+        );
     }
 
     public static Script createFastBridgeErpRedeemScript(
@@ -87,8 +85,54 @@ public class RedeemScriptUtils {
         );
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
-        return scriptBuilder.op(ScriptOpCodes.OP_DROP)
+        return scriptBuilder
+            .op(ScriptOpCodes.OP_DROP)
             .addChunks(redeem.getChunks())
+            .build();
+    }
+
+    private static Script createErpRedeemScript(
+        List<BtcECKey> defaultFedBtcECKeyList,
+        List<BtcECKey> erpFedBtcECKeyList,
+        Long csvValue,
+        boolean validateCsvValue
+    ) {
+        Script defaultFedRedeemScript = ScriptBuilder.createRedeemScript(
+            defaultFedBtcECKeyList.size() / 2 + 1,
+            defaultFedBtcECKeyList
+        );
+
+        Script erpFedRedeemScript = ScriptBuilder.createRedeemScript(
+            erpFedBtcECKeyList.size() / 2 + 1,
+            erpFedBtcECKeyList
+        );
+
+        byte[] parsedCsvValue = BigInteger.valueOf(csvValue).toByteArray();
+        if (validateCsvValue) {
+            if (csvValue > ErpFederationRedeemScriptParser.MAX_CSV_VALUE) {
+                throw new VerificationException("Provided csv value surpasses the limit of " + ErpFederationRedeemScriptParser.MAX_CSV_VALUE);
+            }
+
+            if (csvValue < 0) {
+                throw new VerificationException("Provided csv value is smaller than 0");
+            }
+
+            parsedCsvValue = new byte[ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH];
+            Utils.uint16ToByteArrayBE(csvValue, parsedCsvValue, 0);
+        }
+
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+
+        return scriptBuilder
+            .op(ScriptOpCodes.OP_NOTIF)
+            .addChunks(removeOpCheckMultisig(defaultFedRedeemScript))
+            .op(ScriptOpCodes.OP_ELSE)
+            .data(parsedCsvValue)
+            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(removeOpCheckMultisig(erpFedRedeemScript))
+            .op(ScriptOpCodes.OP_ENDIF)
+            .op(ScriptOpCodes.OP_CHECKMULTISIG)
             .build();
     }
 }

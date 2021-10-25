@@ -56,7 +56,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     ) {
         validateErpRedeemScriptValues(defaultFederationRedeemScript, erpFederationRedeemScript, csvValue);
 
-        byte[] parsedCsvValue = new byte[2];
+        byte[] parsedCsvValue = new byte[CSV_SERIALIZED_LENGTH];
         Utils.uint16ToByteArrayBE(csvValue, parsedCsvValue, 0);
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();

@@ -91,7 +91,7 @@ public class RedeemScriptValidator {
                 ScriptChunk csvOpcode = chunks.get(elseOpcodeIndex + 2);
                 ScriptChunk opDrop = chunks.get(elseOpcodeIndex + 3);
 
-                hasErpStructure = pushBytesOpcode.opcode == 2 &&
+                hasErpStructure = pushBytesOpcode.opcode == ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH &&
                     csvOpcode.equalsOpCode(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY) &&
                     opDrop.equalsOpCode(ScriptOpCodes.OP_DROP);
 
@@ -107,13 +107,15 @@ public class RedeemScriptValidator {
         // necessary to add opcode OP_CHECKMULTISIG at the end of the redeem scripts
         ScriptBuilder scriptBuilder = new ScriptBuilder();
         List<ScriptChunk> defaultFedRedeemScriptChunks = chunks.subList(1, elseOpcodeIndex);
-        Script defaultFedRedeemScript = scriptBuilder.addChunks(defaultFedRedeemScriptChunks)
+        Script defaultFedRedeemScript = scriptBuilder
+            .addChunks(defaultFedRedeemScriptChunks)
             .addChunk(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null))
             .build();
 
         scriptBuilder = new ScriptBuilder();
         List<ScriptChunk> erpFedRedeemScriptChunks = chunks.subList(elseOpcodeIndex + 4, chunks.size() - 2);
-        Script erpFedRedeemScript = scriptBuilder.addChunks(erpFedRedeemScriptChunks)
+        Script erpFedRedeemScript = scriptBuilder
+            .addChunks(erpFedRedeemScriptChunks)
             .addChunk(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null))
             .build();
 

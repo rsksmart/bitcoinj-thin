@@ -201,7 +201,7 @@ public class ErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript,
         Long csvValue) {
 
-        byte[] parsedCsvValue = new byte[2];
+        byte[] parsedCsvValue = new byte[ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH];
         Utils.uint16ToByteArrayBE(csvValue, parsedCsvValue, 0);
 
         byte[] script = erpRedeemScript.getProgram();
