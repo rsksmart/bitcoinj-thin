@@ -107,7 +107,9 @@ public class RedeemScriptUtils {
             erpFedBtcECKeyList
         );
 
+        // If no validation is done we use BigInteger serialization
         byte[] parsedCsvValue = BigInteger.valueOf(csvValue).toByteArray();
+
         if (validateCsvValue) {
             if (csvValue > ErpFederationRedeemScriptParser.MAX_CSV_VALUE) {
                 throw new VerificationException("Provided csv value surpasses the limit of " + ErpFederationRedeemScriptParser.MAX_CSV_VALUE);
@@ -117,8 +119,7 @@ public class RedeemScriptUtils {
                 throw new VerificationException("Provided csv value is smaller than 0");
             }
 
-            parsedCsvValue = new byte[ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH];
-            Utils.uint16ToByteArrayBE(csvValue, parsedCsvValue, 0);
+            parsedCsvValue = Utils.unsignedLongToByteArray(csvValue, ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH);
         }
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();

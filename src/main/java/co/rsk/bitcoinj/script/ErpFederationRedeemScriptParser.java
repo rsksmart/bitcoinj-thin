@@ -56,12 +56,11 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     ) {
         validateErpRedeemScriptValues(defaultFederationRedeemScript, erpFederationRedeemScript, csvValue);
 
-        byte[] parsedCsvValue = new byte[CSV_SERIALIZED_LENGTH];
-        Utils.uint16ToByteArrayBE(csvValue, parsedCsvValue, 0);
-
+        byte[] parsedCsvValue = Utils.unsignedLongToByteArray(csvValue, CSV_SERIALIZED_LENGTH);
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
-        return scriptBuilder.op(ScriptOpCodes.OP_NOTIF)
+        return scriptBuilder
+            .op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
             .data(parsedCsvValue)

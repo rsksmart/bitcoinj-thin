@@ -64,6 +64,55 @@ public class UtilsTest {
     }
 
     @Test
+    public void unsignedLongToByteArray_twoBytes() {
+        final int numBytes = 2;
+
+        long value = 1L;
+        byte[] conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        long obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(value, obtainedValue);
+
+        value = 255L;
+        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(value, obtainedValue);
+
+        value = 256L;
+        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(value, obtainedValue);
+
+        value = 65535L;
+        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(value, obtainedValue);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArray_insufficientNumBytesOf1() {
+        Utils.unsignedLongToByteArray(260, 1);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArray_insufficientNumBytesOf2() {
+        Utils.unsignedLongToByteArray(65536, 2);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArray_negativeNumber() {
+        Utils.unsignedLongToByteArray(-100, 2);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArray_negativeLength() {
+        Utils.unsignedLongToByteArray(260, -1);
+    }
+
+    @Test
     public void uint16ToByteArrayBE_twoBytesLength() {
         long value = 1L;
         byte[] conversion = new byte[2];
@@ -98,5 +147,14 @@ public class UtilsTest {
     @Test(expected = VerificationException.class)
     public void uint16ToByteArrayBE_negativeValue() {
         Utils.uint16ToByteArrayBE(-1L, new byte[2], 0);
+    }
+
+    @Test
+    public void byteArrayToUnsignedLong() {
+        byte[] value = new byte[]{0, 0, 0, 0, 0, 0, -1, -1};
+        long conversion = Utils.byteArrayToUnsignedLong(value);
+
+        long obtainedValue = Long.valueOf(Hex.toHexString(value), 16);
+        assertEquals(obtainedValue, conversion);
     }
 }

@@ -85,6 +85,20 @@ public class Utils {
         return bytes;        
     }
 
+    public static byte[] unsignedLongToByteArray(long number, int numBytes) {
+        if (number < 0) {
+            throw new VerificationException("Number needs to be positive");
+        }
+        validateNumberFitsInByteArray(number, numBytes);
+
+        byte[] result = new byte[numBytes];
+        for (int i = numBytes - 1; i >= 0; i--) {
+            result[i] = (byte)(number & 0xFF);
+            number >>= Byte.SIZE;
+        }
+        return result;
+    }
+
     public static void uint16ToByteArrayBE(long val, byte[] out, int offset) {
         final long MAX_VALUE = 65_535; // 2^16 - 1
         if (val < 0 || val > MAX_VALUE) {
@@ -149,6 +163,15 @@ public class Utils {
             for (int i = 0; i < 8 - bytes.length; i++)
                 stream.write(0);
         }
+    }
+
+    public static long byteArrayToUnsignedLong(byte[] byteArray) {
+        long result = 0;
+        for (int i = 0; i < Long.BYTES; i++) {
+            result <<= Byte.SIZE;
+            result |= (byteArray[i] & 0xFF);
+        }
+        return result;
     }
 
     /**
@@ -661,6 +684,15 @@ public class Utils {
             return stream;
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void validateNumberFitsInByteArray(long number, int numBytes) {
+        double maxNumberRepresentation = Math.pow(2, numBytes * Byte.SIZE) - 1;
+        if (number > maxNumberRepresentation) {
+            throw new VerificationException(
+                String.format("%d can not be represented with %d bytes", number, numBytes)
+            );
         }
     }
 }
