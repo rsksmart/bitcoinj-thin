@@ -4,7 +4,6 @@ import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig
 
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -54,9 +53,15 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        validateErpRedeemScriptValues(defaultFederationRedeemScript, erpFederationRedeemScript, csvValue);
-
         byte[] parsedCsvValue = Utils.unsignedLongToByteArray(csvValue, CSV_SERIALIZED_LENGTH);
+
+        validateErpRedeemScriptValues(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            parsedCsvValue
+        );
+
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
         return scriptBuilder
@@ -79,7 +84,8 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     private static void validateErpRedeemScriptValues(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
-        Long csvValue
+        Long csvValue,
+        byte[] parsedCsvValue
     ) {
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
             !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
@@ -99,6 +105,14 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             String message = "Provided csv Value is smaller than 0";
             logger.warn("[validateErpRedeemScriptValues] {}", message);
             throw new VerificationException(message);
+        }
+
+        if (parsedCsvValue.length != CSV_SERIALIZED_LENGTH) {
+            throw new VerificationException(String.format(
+                "Invalid CSV value serialization. Expected %d bytes but got %d",
+                CSV_SERIALIZED_LENGTH,
+                parsedCsvValue.length
+            ));
         }
     }
 }
