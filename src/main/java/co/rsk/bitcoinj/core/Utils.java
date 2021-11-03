@@ -99,16 +99,6 @@ public class Utils {
         return result;
     }
 
-    public static void uint16ToByteArrayBE(long val, byte[] out, int offset) {
-        final long MAX_VALUE = 65_535; // 2^16 - 1
-        if (val < 0 || val > MAX_VALUE) {
-            throw new VerificationException("Number needs to be between 0 and 65535");
-        }
-
-        out[offset] = (byte) (0xFF & (val >> 8));
-        out[offset + 1] = (byte) (0xFF & val);
-    }
-
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & (val >> 24));
         out[offset + 1] = (byte) (0xFF & (val >> 16));
@@ -163,15 +153,6 @@ public class Utils {
             for (int i = 0; i < 8 - bytes.length; i++)
                 stream.write(0);
         }
-    }
-
-    public static long byteArrayToUnsignedLong(byte[] byteArray) {
-        long result = 0;
-        for (int i = 0; i < Long.BYTES; i++) {
-            result <<= Byte.SIZE;
-            result |= (byteArray[i] & 0xFF);
-        }
-        return result;
     }
 
     /**
