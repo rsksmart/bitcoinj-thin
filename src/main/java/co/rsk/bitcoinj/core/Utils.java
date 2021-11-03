@@ -94,7 +94,7 @@ public class Utils {
         byte[] result = new byte[numBytes];
         for (int i = numBytes - 1; i >= 0; i--) {
             result[i] = (byte)(number & 0xFF);
-            number >>= Byte.SIZE;
+            number >>= 8;
         }
         return result;
     }
