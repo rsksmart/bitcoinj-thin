@@ -35,43 +35,6 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void extractCsvValue_fromErpRedeemScript() {
-        Long csvValue = 100L;
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
-            defaultFedBtcECKeyList,
-            erpFedBtcECKeyList,
-            csvValue
-        );
-
-        Long obtainedCsvValue = RedeemScriptValidator.extractCsvValue(erpRedeemScript.getChunks());
-
-        Assert.assertEquals(csvValue, obtainedCsvValue);
-    }
-
-    @Test
-    public void extractCsvValue_fromFastBridgeErpRedeemScript() {
-        Long csvValue = 100L;
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
-            defaultFedBtcECKeyList,
-            erpFedBtcECKeyList,
-            csvValue,
-            derivationArgumentsHash.getBytes()
-        );
-
-        Long obtainedCsvValue = RedeemScriptValidator.extractCsvValue(fastBridgeErpRedeemScript.getChunks());
-
-        Assert.assertEquals(csvValue, obtainedCsvValue);
-    }
-
-    @Test(expected = VerificationException.class)
-    public void extractCsvValue_noValue() {
-        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultFedBtcECKeyList);
-
-        RedeemScriptValidator.extractCsvValue(customRedeemScript.getChunks());
-    }
-
-    @Test
     public void isRedeemLikeScript_invalid_redeem_script_missing_checkSig() {
         List<ScriptChunk> chunksWithoutCheckSig = RedeemScriptValidator.removeOpCheckMultisig(
             RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList)
