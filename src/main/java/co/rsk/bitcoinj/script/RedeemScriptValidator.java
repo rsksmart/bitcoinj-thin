@@ -75,12 +75,10 @@ public class RedeemScriptValidator {
         for (int i = 1; i < chunks.size(); i++) {
             if (chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE) && chunks.size() >= i + 3) {
                 elseOpcodeIndex = i;
-                ScriptChunk pushBytesOpcode = chunks.get(elseOpcodeIndex + 1);
                 ScriptChunk csvOpcode = chunks.get(elseOpcodeIndex + 2);
                 ScriptChunk opDrop = chunks.get(elseOpcodeIndex + 3);
 
-                hasErpStructure = pushBytesOpcode.opcode == ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH &&
-                    csvOpcode.equalsOpCode(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY) &&
+                hasErpStructure = csvOpcode.equalsOpCode(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY) &&
                     opDrop.equalsOpCode(ScriptOpCodes.OP_DROP);
 
                 break;

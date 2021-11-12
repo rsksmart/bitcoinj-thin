@@ -118,7 +118,7 @@ public class RedeemScriptValidatorTest {
             10L
         );
 
-        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -129,7 +129,7 @@ public class RedeemScriptValidatorTest {
             1_000_000L
         );
 
-        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
