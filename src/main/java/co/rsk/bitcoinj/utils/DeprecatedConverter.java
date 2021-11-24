@@ -61,7 +61,9 @@ public class DeprecatedConverter {
     }
 
     public static co.rsk.bitcoinj.deprecated.core.BtcECKey toDeprecated(BtcECKey key) {
-        return co.rsk.bitcoinj.deprecated.core.BtcECKey.fromPublicOnly(key.getPubKey());
+        return key.isPubKeyOnly() ?
+            co.rsk.bitcoinj.deprecated.core.BtcECKey.fromPublicOnly(key.getPubKey()) :
+            co.rsk.bitcoinj.deprecated.core.BtcECKey.fromPrivate(key.getPrivKey());
     }
 
     public static List<co.rsk.bitcoinj.deprecated.core.BtcECKey> toDeprecatedKeys(List<BtcECKey> keys) {
@@ -100,7 +102,9 @@ public class DeprecatedConverter {
     }
 
     public static BtcECKey toStandard(co.rsk.bitcoinj.deprecated.core.BtcECKey key) {
-        return BtcECKey.fromPublicOnly(key.getPubKey());
+        return key.isPubKeyOnly() ?
+            BtcECKey.fromPublicOnly(key.getPubKey()) :
+            BtcECKey.fromPrivate(key.getPrivKey());
     }
 
     public static List<BtcECKey> toStandardKeys(List<co.rsk.bitcoinj.deprecated.core.BtcECKey> keys) {
