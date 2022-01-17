@@ -35,43 +35,6 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void extractCsvValue_fromErpRedeemScript() {
-        Long csvValue = 100L;
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
-            defaultFedBtcECKeyList,
-            erpFedBtcECKeyList,
-            csvValue
-        );
-
-        Long obtainedCsvValue = RedeemScriptValidator.extractCsvValue(erpRedeemScript.getChunks());
-
-        Assert.assertEquals(csvValue, obtainedCsvValue);
-    }
-
-    @Test
-    public void extractCsvValue_fromFastBridgeErpRedeemScript() {
-        Long csvValue = 100L;
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
-            defaultFedBtcECKeyList,
-            erpFedBtcECKeyList,
-            csvValue,
-            derivationArgumentsHash.getBytes()
-        );
-
-        Long obtainedCsvValue = RedeemScriptValidator.extractCsvValue(fastBridgeErpRedeemScript.getChunks());
-
-        Assert.assertEquals(csvValue, obtainedCsvValue);
-    }
-
-    @Test(expected = VerificationException.class)
-    public void extractCsvValue_noValue() {
-        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultFedBtcECKeyList);
-
-        RedeemScriptValidator.extractCsvValue(customRedeemScript.getChunks());
-    }
-
-    @Test
     public void isRedeemLikeScript_invalid_redeem_script_missing_checkSig() {
         List<ScriptChunk> chunksWithoutCheckSig = RedeemScriptValidator.removeOpCheckMultisig(
             RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList)
@@ -126,14 +89,47 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script() {
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_small_csv_value() {
         Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
-            500L
+            10L
         );
 
         Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_max_csv_value() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            ErpFederationRedeemScriptParser.MAX_CSV_VALUE
+        );
+
+        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_invalid_small_csv_value() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScriptWithoutCsvValueValidation(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            10L
+        );
+
+        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_invalid_large_csv_value() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScriptWithoutCsvValueValidation(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            1_000_000L
+        );
+
+        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test

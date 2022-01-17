@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.Date;
 
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
 import static org.junit.Assert.*;
 
@@ -60,5 +61,54 @@ public class UtilsTest {
     public void dateTimeFormat() {
         assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(1416135273781L));
         assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(new Date(1416135273781L)));
+    }
+
+    @Test
+    public void unsignedLongToByteArray_twoBytes() {
+        final int numBytes = 2;
+
+        long value = 1L;
+        byte[] conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        long obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(value, obtainedValue);
+
+        value = 255L;
+        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(value, obtainedValue);
+
+        value = 256L;
+        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(value, obtainedValue);
+
+        value = 65535L;
+        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(value, obtainedValue);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArray_insufficientNumBytesOf1() {
+        Utils.unsignedLongToByteArray(260, 1);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArray_insufficientNumBytesOf2() {
+        Utils.unsignedLongToByteArray(65536, 2);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArray_negativeNumber() {
+        Utils.unsignedLongToByteArray(-100, 2);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArray_negativeLength() {
+        Utils.unsignedLongToByteArray(260, -1);
     }
 }
