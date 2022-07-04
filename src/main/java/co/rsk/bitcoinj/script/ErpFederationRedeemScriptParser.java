@@ -48,19 +48,52 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         return new Script(chunksForRedeem);
     }
 
+    public static Script createErpRedeemScript(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue
+    ) {
+        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayLE(csvValue, CSV_SERIALIZED_LENGTH);
+
+        return createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            serializedCsvValue
+        );
+    }
+
     @Deprecated
     public static Script createErpRedeemScriptDeprecated(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        byte[] parsedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, CSV_SERIALIZED_LENGTH);
+        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, CSV_SERIALIZED_LENGTH);
+
+        return createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            serializedCsvValue
+        );
+    }
+
+    public static boolean isErpFed(List<ScriptChunk> chunks) {
+        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
+    }
+
+    private static Script createErpRedeemScript(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue,
+        byte[] serializedCsvValue) {
 
         validateErpRedeemScriptValues(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue,
-            parsedCsvValue
+            serializedCsvValue
         );
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
@@ -69,7 +102,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             .op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
-            .data(parsedCsvValue)
+            .data(serializedCsvValue)
             .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
@@ -78,9 +111,6 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             .build();
     }
 
-    public static boolean isErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
-    }
 
     private static void validateErpRedeemScriptValues(
         Script defaultFederationRedeemScript,
