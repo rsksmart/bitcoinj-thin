@@ -111,4 +111,69 @@ public class UtilsTest {
     public void unsignedLongToByteArrayBE_negativeLength() {
         Utils.unsignedLongToByteArrayBE(260, -1);
     }
+
+    @Test
+    public void unsignedLongToByteArrayLE_twoBytes() {
+        final int numBytes = 2;
+
+        long valueInBE = 1L;
+        long valueInLE = 256;
+        byte[] conversion = Utils.unsignedLongToByteArrayLE(valueInBE, numBytes);
+        byte[] reversed = Utils.reverseBytes(conversion);
+        long obtainedValueInLE = Long.parseLong(Hex.toHexString(conversion), 16);
+        long obtainedValueInBE = Long.parseLong(Hex.toHexString(reversed), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(valueInLE, obtainedValueInLE);
+        assertEquals(valueInBE, obtainedValueInBE);
+
+        valueInBE = 255L;
+        valueInLE = 65_280;
+        conversion = Utils.unsignedLongToByteArrayLE(valueInBE, numBytes);
+        reversed = Utils.reverseBytes(conversion);
+        obtainedValueInLE = Long.parseLong(Hex.toHexString(conversion), 16);
+        obtainedValueInBE = Long.parseLong(Hex.toHexString(reversed), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(valueInLE, obtainedValueInLE);
+        assertEquals(valueInBE, obtainedValueInBE);
+
+        valueInBE = 256L;
+        valueInLE = 1L;
+        conversion = Utils.unsignedLongToByteArrayLE(valueInBE, numBytes);
+        reversed = Utils.reverseBytes(conversion);
+        obtainedValueInLE = Long.parseLong(Hex.toHexString(conversion), 16);
+        obtainedValueInBE = Long.parseLong(Hex.toHexString(reversed), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(valueInLE, obtainedValueInLE);
+        assertEquals(valueInBE, obtainedValueInBE);
+
+        valueInBE = 65_535L;
+        valueInLE = 65_535L;
+        conversion = Utils.unsignedLongToByteArrayLE(valueInBE, numBytes);
+        reversed = Utils.reverseBytes(conversion);
+        obtainedValueInLE = Long.parseLong(Hex.toHexString(conversion), 16);
+        obtainedValueInBE = Long.parseLong(Hex.toHexString(reversed), 16);
+        assertEquals(numBytes, conversion.length);
+        assertEquals(valueInLE, obtainedValueInLE);
+        assertEquals(valueInBE, obtainedValueInBE);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArrayLE_insufficientNumBytesOf1() {
+        Utils.unsignedLongToByteArrayLE(260, 1);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArrayLE_insufficientNumBytesOf2() {
+        Utils.unsignedLongToByteArrayLE(65536, 2);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArrayLE_negativeNumber() {
+        Utils.unsignedLongToByteArrayLE(-100, 2);
+    }
+
+    @Test(expected = VerificationException.class)
+    public void unsignedLongToByteArrayLE_negativeLength() {
+        Utils.unsignedLongToByteArrayLE(260, -1);
+    }
 }
