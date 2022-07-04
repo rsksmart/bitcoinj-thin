@@ -85,7 +85,7 @@ public class Utils {
         return bytes;        
     }
 
-    public static byte[] unsignedLongToByteArray(long number, int numBytes) {
+    public static byte[] unsignedLongToByteArrayBE(long number, int numBytes) {
         if (number < 0) {
             throw new VerificationException("Number needs to be positive");
         }
@@ -181,8 +181,9 @@ public class Utils {
         // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
         // performance issue the matter can be revisited.
         byte[] buf = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++)
+        for (int i = 0; i < bytes.length; i++) {
             buf[i] = bytes[bytes.length - 1 - i];
+        }
         return buf;
     }
     

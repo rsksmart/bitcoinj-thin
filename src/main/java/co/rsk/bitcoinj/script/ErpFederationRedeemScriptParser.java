@@ -54,7 +54,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        byte[] parsedCsvValue = Utils.unsignedLongToByteArray(csvValue, CSV_SERIALIZED_LENGTH);
+        byte[] parsedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, CSV_SERIALIZED_LENGTH);
 
         validateErpRedeemScriptValues(
             defaultFederationRedeemScript,

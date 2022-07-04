@@ -119,7 +119,7 @@ public class RedeemScriptUtils {
                 throw new VerificationException("Provided csv value is smaller than 0");
             }
 
-            parsedCsvValue = Utils.unsignedLongToByteArray(csvValue, ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH);
+            parsedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH);
         }
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
