@@ -40,7 +40,22 @@ public class RedeemScriptUtils {
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
             csvValue,
+            true,
             true
+        );
+    }
+
+    public static Script createErpRedeemScriptDeprecated(
+        List<BtcECKey> defaultFedBtcECKeyList,
+        List<BtcECKey> erpFedBtcECKeyList,
+        Long csvValue
+    ) {
+        return createErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            csvValue,
+            true,
+            false
         );
     }
 
@@ -53,6 +68,7 @@ public class RedeemScriptUtils {
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
             csvValue,
+            false,
             false
         );
     }
@@ -95,7 +111,8 @@ public class RedeemScriptUtils {
         List<BtcECKey> defaultFedBtcECKeyList,
         List<BtcECKey> erpFedBtcECKeyList,
         Long csvValue,
-        boolean validateCsvValue
+        boolean validateCsvValue,
+        boolean useLEEncoding
     ) {
         Script defaultFedRedeemScript = ScriptBuilder.createRedeemScript(
             defaultFedBtcECKeyList.size() / 2 + 1,
@@ -108,7 +125,7 @@ public class RedeemScriptUtils {
         );
 
         // If no validation is done we use BigInteger serialization
-        byte[] parsedCsvValue = BigInteger.valueOf(csvValue).toByteArray();
+        byte[] serializedCsvValue = BigInteger.valueOf(csvValue).toByteArray();
 
         if (validateCsvValue) {
             if (csvValue > ErpFederationRedeemScriptParser.MAX_CSV_VALUE) {
@@ -119,7 +136,9 @@ public class RedeemScriptUtils {
                 throw new VerificationException("Provided csv value is smaller than 0");
             }
 
-            parsedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH);
+            serializedCsvValue = useLEEncoding ?
+                Utils.unsignedLongToByteArrayLE(csvValue, ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH) :
+                Utils.unsignedLongToByteArrayBE(csvValue, ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH);
         }
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
@@ -128,7 +147,7 @@ public class RedeemScriptUtils {
             .op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFedRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
-            .data(parsedCsvValue)
+            .data(serializedCsvValue)
             .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(removeOpCheckMultisig(erpFedRedeemScript))
