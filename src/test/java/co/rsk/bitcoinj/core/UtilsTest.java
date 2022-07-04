@@ -64,51 +64,51 @@ public class UtilsTest {
     }
 
     @Test
-    public void unsignedLongToByteArray_twoBytes() {
+    public void unsignedLongToByteArrayBE_twoBytes() {
         final int numBytes = 2;
 
         long value = 1L;
-        byte[] conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        byte[] conversion = Utils.unsignedLongToByteArrayBE(value, numBytes);
         long obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
         assertEquals(numBytes, conversion.length);
         assertEquals(value, obtainedValue);
 
         value = 255L;
-        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        conversion = Utils.unsignedLongToByteArrayBE(value, numBytes);
         obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
         assertEquals(numBytes, conversion.length);
         assertEquals(value, obtainedValue);
 
         value = 256L;
-        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        conversion = Utils.unsignedLongToByteArrayBE(value, numBytes);
         obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
         assertEquals(numBytes, conversion.length);
         assertEquals(value, obtainedValue);
 
         value = 65535L;
-        conversion = Utils.unsignedLongToByteArray(value, numBytes);
+        conversion = Utils.unsignedLongToByteArrayBE(value, numBytes);
         obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
         assertEquals(numBytes, conversion.length);
         assertEquals(value, obtainedValue);
     }
 
     @Test(expected = VerificationException.class)
-    public void unsignedLongToByteArray_insufficientNumBytesOf1() {
-        Utils.unsignedLongToByteArray(260, 1);
+    public void unsignedLongToByteArrayBE_insufficientNumBytesOf1() {
+        Utils.unsignedLongToByteArrayBE(260, 1);
     }
 
     @Test(expected = VerificationException.class)
-    public void unsignedLongToByteArray_insufficientNumBytesOf2() {
-        Utils.unsignedLongToByteArray(65536, 2);
+    public void unsignedLongToByteArrayBE_insufficientNumBytesOf2() {
+        Utils.unsignedLongToByteArrayBE(65536, 2);
     }
 
     @Test(expected = VerificationException.class)
-    public void unsignedLongToByteArray_negativeNumber() {
-        Utils.unsignedLongToByteArray(-100, 2);
+    public void unsignedLongToByteArrayBE_negativeNumber() {
+        Utils.unsignedLongToByteArrayBE(-100, 2);
     }
 
     @Test(expected = VerificationException.class)
-    public void unsignedLongToByteArray_negativeLength() {
-        Utils.unsignedLongToByteArray(260, -1);
+    public void unsignedLongToByteArrayBE_negativeLength() {
+        Utils.unsignedLongToByteArrayBE(260, -1);
     }
 }
