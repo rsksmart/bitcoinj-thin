@@ -65,7 +65,7 @@ public class ErpFederationRedeemScriptParserTest {
     public void createErpRedeemScriptDeprecated() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
-        Long csvValue = 200L;
+        Long csvValue = 300L;
 
         Script expectedErpRedeemScript = RedeemScriptUtils.createErpRedeemScriptDeprecated(
             defaultFedBtcECKeyList,
@@ -155,27 +155,18 @@ public class ErpFederationRedeemScriptParserTest {
         );
     }
 
-    @Test
+    @Test(expected = VerificationException.class)
     public void createErpRedeemScriptDeprecated_csv_value_one_byte_long() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
 
-        // For a value that only uses 1 byte,
-        // it should add an extra byte with value 0 to complete 2 bytes length
+        // For a value that only uses 1 byte it should fail
         long csvValue = 20L;
 
-        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
+        ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
-        );
-
-        validateErpRedeemScript(
-            erpRedeemScript,
-            defaultFederationRedeemScript,
-            erpFederationRedeemScript,
-            csvValue,
-            false
         );
     }
 
@@ -183,7 +174,7 @@ public class ErpFederationRedeemScriptParserTest {
     public void createErpRedeemScript() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
-        Long csvValue = 200L;
+        Long csvValue = 300L;
 
         Script expectedErpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultFedBtcECKeyList,
@@ -204,7 +195,7 @@ public class ErpFederationRedeemScriptParserTest {
     public void createErpRedeemScript_invalidDefaultFederationRedeemScript() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
-        Long csvValue = 200L;
+        Long csvValue = 300L;
 
         ErpFederationRedeemScriptParser.createErpRedeemScript(
             defaultFederationRedeemScript,
@@ -217,7 +208,7 @@ public class ErpFederationRedeemScriptParserTest {
     public void createErpRedeemScript_invalidErpFederationRedeemScript() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(erpFedBtcECKeyList);
-        Long csvValue = 200L;
+        Long csvValue = 300L;
 
         ErpFederationRedeemScriptParser.createErpRedeemScript(
             defaultFederationRedeemScript,
@@ -227,10 +218,10 @@ public class ErpFederationRedeemScriptParserTest {
     }
 
     @Test(expected = VerificationException.class)
-    public void createErpRedeemScript_csv_below_zero() {
+    public void createErpRedeemScript_csv_below_minimum() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
-        Long csvValue = -200L;
+        Long csvValue = ErpFederationRedeemScriptParser.MIN_CSV_VALUE - 1;
 
         ErpFederationRedeemScriptParser.createErpRedeemScript(
             defaultFederationRedeemScript,
@@ -249,6 +240,27 @@ public class ErpFederationRedeemScriptParserTest {
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
+        );
+    }
+
+    @Test
+    public void createErpRedeemScript_csv_exact_min_value() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+        long csvValue = ErpFederationRedeemScriptParser.MIN_CSV_VALUE;
+
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        validateErpRedeemScript(
+            erpRedeemScript,
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            true
         );
     }
 
@@ -273,27 +285,18 @@ public class ErpFederationRedeemScriptParserTest {
         );
     }
 
-    @Test
+    @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_value_one_byte_long() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
 
-        // For a value that only uses 1 byte,
-        // it should add an extra byte with value 0 to complete 2 bytes length
+        // For a value that only uses 1 byte it should fail
         long csvValue = 20L;
 
-        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+        ErpFederationRedeemScriptParser.createErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
-        );
-
-        validateErpRedeemScript(
-            erpRedeemScript,
-            defaultFederationRedeemScript,
-            erpFederationRedeemScript,
-            csvValue,
-            true
         );
     }
 

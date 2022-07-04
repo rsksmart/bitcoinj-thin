@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
+    public static long MIN_CSV_VALUE = 256L; // 65535 is 2 bytes. The max value currently accepted
     public static long MAX_CSV_VALUE = 65_535L; // 65535 is 2 bytes. The max value currently accepted
     public static int CSV_SERIALIZED_LENGTH = 2;
 
@@ -111,7 +112,6 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             .build();
     }
 
-
     private static void validateErpRedeemScriptValues(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
@@ -126,14 +126,14 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             throw new VerificationException(message);
         }
 
-        if (csvValue > MAX_CSV_VALUE) {
-            String message = "Provided csv Value surpasses the limit of " + MAX_CSV_VALUE;
-            logger.warn("[validateErpRedeemScriptValues] {}", message);
-            throw new VerificationException(message);
-        }
-
-        if (csvValue < 0) {
-            String message = "Provided csv Value is smaller than 0";
+        if (csvValue < MIN_CSV_VALUE || csvValue > MAX_CSV_VALUE) {
+            String message = String.format(
+                "Provided csv value %d must be between %d and %d to ensure the use of %d bytes for serialization",
+                csvValue,
+                MIN_CSV_VALUE,
+                MAX_CSV_VALUE,
+                CSV_SERIALIZED_LENGTH
+            );
             logger.warn("[validateErpRedeemScriptValues] {}", message);
             throw new VerificationException(message);
         }
