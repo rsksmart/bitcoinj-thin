@@ -73,7 +73,7 @@ public class ErpFederationRedeemScriptParserTest {
             csvValue
         );
 
-        Script obtainedRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+        Script obtainedRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -88,7 +88,7 @@ public class ErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
         Long csvValue = 200L;
 
-        ErpFederationRedeemScriptParser.createErpRedeemScript(
+        ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -101,7 +101,7 @@ public class ErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(erpFedBtcECKeyList);
         Long csvValue = 200L;
 
-        ErpFederationRedeemScriptParser.createErpRedeemScript(
+        ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -114,7 +114,7 @@ public class ErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
         Long csvValue = -200L;
 
-        ErpFederationRedeemScriptParser.createErpRedeemScript(
+        ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -127,7 +127,7 @@ public class ErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
         Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE + 1;
 
-        ErpFederationRedeemScriptParser.createErpRedeemScript(
+        ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -140,7 +140,7 @@ public class ErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
         long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE;
 
-        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -163,7 +163,7 @@ public class ErpFederationRedeemScriptParserTest {
         // it should add an extra byte with value 0 to complete 2 bytes length
         long csvValue = 20L;
 
-        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue

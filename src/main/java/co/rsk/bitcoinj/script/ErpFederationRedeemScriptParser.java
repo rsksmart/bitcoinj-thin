@@ -48,7 +48,8 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         return new Script(chunksForRedeem);
     }
 
-    public static Script createErpRedeemScript(
+    @Deprecated
+    public static Script createErpRedeemScriptDeprecated(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue
