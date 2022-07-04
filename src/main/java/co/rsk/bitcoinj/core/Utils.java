@@ -99,6 +99,20 @@ public class Utils {
         return result;
     }
 
+    public static byte[] unsignedLongToByteArrayLE(long number, int numBytes) {
+        if (number < 0) {
+            throw new VerificationException("Number needs to be positive");
+        }
+        validateNumberFitsInByteArray(number, numBytes);
+
+        byte[] result = new byte[numBytes];
+        for (int i = 0; i < numBytes; i++) {
+            result[i] = (byte)(number & 0xFF);
+            number >>= 8;
+        }
+        return result;
+    }
+
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & (val >> 24));
         out[offset + 1] = (byte) (0xFF & (val >> 16));
