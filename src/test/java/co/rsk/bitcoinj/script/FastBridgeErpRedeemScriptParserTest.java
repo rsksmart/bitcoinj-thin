@@ -63,30 +63,6 @@ public class FastBridgeErpRedeemScriptParserTest {
     }
 
     @Test
-    public void createFastBridgeErpRedeemScript() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
-        Long csvValue = 200L;
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-
-        Script expectedErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
-            defaultFedBtcECKeyList,
-            erpFedBtcECKeyList,
-            csvValue,
-            derivationArgumentsHash.getBytes()
-        );
-
-        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
-            defaultFederationRedeemScript,
-            erpFederationRedeemScript,
-            csvValue,
-            derivationArgumentsHash
-        );
-
-        Assert.assertEquals(expectedErpRedeemScript, obtainedRedeemScript);
-    }
-
-    @Test
     public void createFastBridgeErpRedeemScript_from_Erp_redeem_script() {
         Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultFedBtcECKeyList,
@@ -109,36 +85,6 @@ public class FastBridgeErpRedeemScriptParserTest {
         );
 
         Assert.assertEquals(expectedRedeemScript, obtainedRedeemScript);
-    }
-
-    @Test(expected = VerificationException.class)
-    public void createFastBridgeErpRedeemScript_invalidDefaultFederationRedeemScript() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultFedBtcECKeyList);
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
-        Long csvValue = 200L;
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-
-        FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
-            defaultFederationRedeemScript,
-            erpFederationRedeemScript,
-            csvValue,
-            derivationArgumentsHash
-        );
-    }
-
-    @Test(expected = VerificationException.class)
-    public void createFastBridgeErpRedeemScript_invalidErpFederationRedeemScript() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
-        Script erpFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(erpFedBtcECKeyList);
-        Long csvValue = 200L;
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-
-        FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
-            defaultFederationRedeemScript,
-            erpFederationRedeemScript,
-            csvValue,
-            derivationArgumentsHash
-        );
     }
 
     @Test

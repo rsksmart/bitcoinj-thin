@@ -47,29 +47,6 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
             .build();
     }
 
-    public static Script createFastBridgeErpRedeemScript(
-        Script defaultFederationRedeemScript,
-        Script erpFederationRedeemScript,
-        Long csvValue,
-        Sha256Hash derivationArgumentsHash
-    ) {
-        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
-            !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
-
-            String message = "Provided redeem scripts have an invalid structure, not standard";
-            logger.debug("[createFastBridgeErpRedeemScript] {}", message);
-            throw new VerificationException(message);
-        }
-
-        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
-            defaultFederationRedeemScript,
-            erpFederationRedeemScript,
-            csvValue
-        );
-
-        return createFastBridgeErpRedeemScript(erpRedeemScript, derivationArgumentsHash);
-    }
-
     public static boolean isFastBridgeErpFed(List<ScriptChunk> chunks) {
         return RedeemScriptValidator.hasFastBridgePrefix(chunks) &&
             RedeemScriptValidator.hasErpRedeemScriptStructure(chunks.subList(2, chunks.size()));
