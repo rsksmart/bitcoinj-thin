@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
-    public static long MIN_CSV_VALUE = 256L; // 65535 is 2 bytes. The max value currently accepted
-    public static long MAX_CSV_VALUE = 65_535L; // 65535 is 2 bytes. The max value currently accepted
+    public static long MIN_CSV_VALUE = 256L; // 256  is the minimum value that can be represented using 2 bytes without adding extra zeroes
+    public static long MAX_CSV_VALUE = 65_535L; // 65_535 is the maximum value that can be represented using 2 bytes
     public static int CSV_SERIALIZED_LENGTH = 2;
 
     public ErpFederationRedeemScriptParser(
