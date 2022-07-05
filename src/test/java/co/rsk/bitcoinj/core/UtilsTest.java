@@ -68,27 +68,35 @@ public class UtilsTest {
         final int numBytes = 2;
 
         long value = 1L;
+        byte[] valueSerializedAsBE = Hex.decode("0001");
         byte[] conversion = Utils.unsignedLongToByteArrayBE(value, numBytes);
         long obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
         assertEquals(numBytes, conversion.length);
+        assertArrayEquals(valueSerializedAsBE, conversion);
         assertEquals(value, obtainedValue);
 
         value = 255L;
+        valueSerializedAsBE = Hex.decode("00FF");
         conversion = Utils.unsignedLongToByteArrayBE(value, numBytes);
         obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
         assertEquals(numBytes, conversion.length);
+        assertArrayEquals(valueSerializedAsBE, conversion);
         assertEquals(value, obtainedValue);
 
         value = 256L;
+        valueSerializedAsBE = Hex.decode("0100");
         conversion = Utils.unsignedLongToByteArrayBE(value, numBytes);
         obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
         assertEquals(numBytes, conversion.length);
+        assertArrayEquals(valueSerializedAsBE, conversion);
         assertEquals(value, obtainedValue);
 
         value = 65535L;
+        valueSerializedAsBE = Hex.decode("FFFF");
         conversion = Utils.unsignedLongToByteArrayBE(value, numBytes);
         obtainedValue = Long.parseLong(Hex.toHexString(conversion), 16);
         assertEquals(numBytes, conversion.length);
+        assertArrayEquals(valueSerializedAsBE, conversion);
         assertEquals(value, obtainedValue);
     }
 
