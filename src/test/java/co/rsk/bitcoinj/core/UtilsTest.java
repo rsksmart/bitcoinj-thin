@@ -116,45 +116,29 @@ public class UtilsTest {
     public void unsignedLongToByteArrayLE_twoBytes() {
         final int numBytes = 2;
 
-        long valueInBE = 1L;
-        long valueInLE = 256;
-        byte[] conversion = Utils.unsignedLongToByteArrayLE(valueInBE, numBytes);
-        byte[] reversed = Utils.reverseBytes(conversion);
-        long obtainedValueInLE = Long.parseLong(Hex.toHexString(conversion), 16);
-        long obtainedValueInBE = Long.parseLong(Hex.toHexString(reversed), 16);
+        long value = 1L;
+        byte[] valueSerializedAsLE = Hex.decode("0100");
+        byte[] conversion = Utils.unsignedLongToByteArrayLE(value, numBytes);
         assertEquals(numBytes, conversion.length);
-        assertEquals(valueInLE, obtainedValueInLE);
-        assertEquals(valueInBE, obtainedValueInBE);
+        assertArrayEquals(valueSerializedAsLE, conversion);
 
-        valueInBE = 255L;
-        valueInLE = 65_280;
-        conversion = Utils.unsignedLongToByteArrayLE(valueInBE, numBytes);
-        reversed = Utils.reverseBytes(conversion);
-        obtainedValueInLE = Long.parseLong(Hex.toHexString(conversion), 16);
-        obtainedValueInBE = Long.parseLong(Hex.toHexString(reversed), 16);
+        value = 255L;
+        valueSerializedAsLE = Hex.decode("FF00");
+        conversion = Utils.unsignedLongToByteArrayLE(value, numBytes);
         assertEquals(numBytes, conversion.length);
-        assertEquals(valueInLE, obtainedValueInLE);
-        assertEquals(valueInBE, obtainedValueInBE);
+        assertArrayEquals(valueSerializedAsLE, conversion);
 
-        valueInBE = 256L;
-        valueInLE = 1L;
-        conversion = Utils.unsignedLongToByteArrayLE(valueInBE, numBytes);
-        reversed = Utils.reverseBytes(conversion);
-        obtainedValueInLE = Long.parseLong(Hex.toHexString(conversion), 16);
-        obtainedValueInBE = Long.parseLong(Hex.toHexString(reversed), 16);
+        value = 256L;
+        valueSerializedAsLE = Hex.decode("0001");;
+        conversion = Utils.unsignedLongToByteArrayLE(value, numBytes);
         assertEquals(numBytes, conversion.length);
-        assertEquals(valueInLE, obtainedValueInLE);
-        assertEquals(valueInBE, obtainedValueInBE);
+        assertArrayEquals(valueSerializedAsLE, conversion);
 
-        valueInBE = 65_535L;
-        valueInLE = 65_535L;
-        conversion = Utils.unsignedLongToByteArrayLE(valueInBE, numBytes);
-        reversed = Utils.reverseBytes(conversion);
-        obtainedValueInLE = Long.parseLong(Hex.toHexString(conversion), 16);
-        obtainedValueInBE = Long.parseLong(Hex.toHexString(reversed), 16);
+        value = 65_535L;
+        valueSerializedAsLE = Hex.decode("FFFF");;
+        conversion = Utils.unsignedLongToByteArrayLE(value, numBytes);
         assertEquals(numBytes, conversion.length);
-        assertEquals(valueInLE, obtainedValueInLE);
-        assertEquals(valueInBE, obtainedValueInBE);
+        assertArrayEquals(valueSerializedAsLE, conversion);
     }
 
     @Test(expected = VerificationException.class)
