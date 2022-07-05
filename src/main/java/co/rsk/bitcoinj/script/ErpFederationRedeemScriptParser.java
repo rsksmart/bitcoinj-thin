@@ -65,6 +65,8 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     }
 
     @Deprecated
+    // This method encodes the CSV value as Big Endian which is not correct. It should be encoded as LE
+    // Keeping this method for backwards compatibility in rskj
     public static Script createErpRedeemScriptDeprecated(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
