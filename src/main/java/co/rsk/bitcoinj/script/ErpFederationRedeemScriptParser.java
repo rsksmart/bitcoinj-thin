@@ -4,6 +4,7 @@ import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig
 
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -11,9 +12,6 @@ import org.slf4j.LoggerFactory;
 
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
-    public static long MIN_CSV_VALUE = 256L; // 256  is the minimum value that can be represented using 2 bytes without adding extra zeroes
-    public static long MAX_CSV_VALUE = 65_535L; // 65_535 is the maximum value that can be represented using 2 bytes
-    public static int CSV_SERIALIZED_LENGTH = 2;
 
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
@@ -54,7 +52,8 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayLE(csvValue, CSV_SERIALIZED_LENGTH);
+        byte[] csvValueBytes = BigInteger.valueOf(csvValue).toByteArray();
+        byte[] serializedCsvValue = Utils.reverseBytes(csvValueBytes); // LE encoding
 
         return createErpRedeemScript(
             defaultFederationRedeemScript,
@@ -72,6 +71,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
+        final int CSV_SERIALIZED_LENGTH = 2;
         byte[] serializedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, CSV_SERIALIZED_LENGTH);
 
         return createErpRedeemScript(
@@ -95,13 +95,12 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         validateErpRedeemScriptValues(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue,
-            serializedCsvValue
+            csvValue
         );
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
-        return scriptBuilder
+        Script erpRedeemScript = scriptBuilder
             .op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
@@ -112,13 +111,23 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             .op(ScriptOpCodes.OP_ENDIF)
             .op(ScriptOpCodes.OP_CHECKMULTISIG)
             .build();
+
+        // Validate the created redeem script has a valid structure
+        if (!RedeemScriptValidator.hasErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
+            String message = String.format(
+                "Created redeem script has an invalid structure, not ERP redeem script. Redeem script created: %s",
+                erpRedeemScript
+            );
+            logger.debug("[createErpRedeemScript] {}", message);
+            throw new VerificationException(message);
+        }
+        return erpRedeemScript;
     }
 
     private static void validateErpRedeemScriptValues(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
-        Long csvValue,
-        byte[] parsedCsvValue
+        Long csvValue
     ) {
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
             !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
@@ -128,24 +137,10 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             throw new VerificationException(message);
         }
 
-        if (csvValue < MIN_CSV_VALUE || csvValue > MAX_CSV_VALUE) {
-            String message = String.format(
-                "Provided csv value %d must be between %d and %d to ensure the use of %d bytes for serialization",
-                csvValue,
-                MIN_CSV_VALUE,
-                MAX_CSV_VALUE,
-                CSV_SERIALIZED_LENGTH
-            );
+        if (csvValue <= 0) {
+            String message = String.format("Provided csv value %d must be larger than 0", csvValue);
             logger.warn("[validateErpRedeemScriptValues] {}", message);
             throw new VerificationException(message);
-        }
-
-        if (parsedCsvValue.length != CSV_SERIALIZED_LENGTH) {
-            throw new VerificationException(String.format(
-                "Invalid CSV value serialization. Expected %d bytes but got %d",
-                CSV_SERIALIZED_LENGTH,
-                parsedCsvValue.length
-            ));
         }
     }
 }
