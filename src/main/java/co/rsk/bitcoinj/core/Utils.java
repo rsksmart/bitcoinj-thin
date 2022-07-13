@@ -113,6 +113,11 @@ public class Utils {
         return result;
     }
 
+    public static byte[] signedLongToByteArrayLE(long number) {
+        byte[] numberBytes = BigInteger.valueOf(number).toByteArray(); // BigInteger serializes with a sign MSB
+        return reverseBytes(numberBytes);
+    }
+
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & (val >> 24));
         out[offset + 1] = (byte) (0xFF & (val >> 16));
@@ -164,8 +169,9 @@ public class Utils {
         bytes = reverseBytes(bytes);
         stream.write(bytes);
         if (bytes.length < 8) {
-            for (int i = 0; i < 8 - bytes.length; i++)
+            for (int i = 0; i < 8 - bytes.length; i++) {
                 stream.write(0);
+            }
         }
     }
 

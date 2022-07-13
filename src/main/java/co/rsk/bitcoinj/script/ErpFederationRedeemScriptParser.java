@@ -52,8 +52,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        byte[] csvValueBytes = BigInteger.valueOf(csvValue).toByteArray();
-        byte[] serializedCsvValue = Utils.reverseBytes(csvValueBytes); // LE encoding
+        byte[] serializedCsvValue = Utils.signedLongToByteArrayLE(csvValue);
 
         return createErpRedeemScript(
             defaultFederationRedeemScript,
@@ -64,7 +63,8 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     }
 
     @Deprecated
-    // This method encodes the CSV value as Big Endian which is not correct. It should be encoded as LE
+    // This method encodes the CSV value as unsigned Big Endian which is not correct.
+    // It should be encoded as signed LE
     // Keeping this method for backwards compatibility in rskj
     public static Script createErpRedeemScriptDeprecated(
         Script defaultFederationRedeemScript,

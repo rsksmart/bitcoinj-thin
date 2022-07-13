@@ -330,7 +330,7 @@ public class ErpFederationRedeemScriptParserTest {
         int expectedCsvValueLength = hasDeprecatedFormat ? 2 : BigInteger.valueOf(csvValue).toByteArray().length;
         byte[] serializedCsvValue = hasDeprecatedFormat ?
             Utils.unsignedLongToByteArrayBE(csvValue, expectedCsvValueLength) :
-            Utils.reverseBytes(BigInteger.valueOf(csvValue).toByteArray());
+            Utils.signedLongToByteArrayLE(csvValue);
 
         byte[] script = erpRedeemScript.getProgram();
         Assert.assertTrue(script.length > 0);

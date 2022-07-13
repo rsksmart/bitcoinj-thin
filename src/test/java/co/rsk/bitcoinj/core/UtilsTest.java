@@ -137,13 +137,13 @@ public class UtilsTest {
         assertArrayEquals(valueSerializedAsLE, conversion);
 
         value = 256L;
-        valueSerializedAsLE = Hex.decode("0001");;
+        valueSerializedAsLE = Hex.decode("0001");
         conversion = Utils.unsignedLongToByteArrayLE(value, numBytes);
         assertEquals(numBytes, conversion.length);
         assertArrayEquals(valueSerializedAsLE, conversion);
 
         value = 65_535L;
-        valueSerializedAsLE = Hex.decode("FFFF");;
+        valueSerializedAsLE = Hex.decode("FFFF");
         conversion = Utils.unsignedLongToByteArrayLE(value, numBytes);
         assertEquals(numBytes, conversion.length);
         assertArrayEquals(valueSerializedAsLE, conversion);
@@ -167,5 +167,68 @@ public class UtilsTest {
     @Test(expected = VerificationException.class)
     public void unsignedLongToByteArrayLE_negativeLength() {
         Utils.unsignedLongToByteArrayLE(260, -1);
+    }
+
+    @Test
+    public void signedLongToByteArrayLE() {
+        long value = 1L;
+        byte[] conversion = Utils.signedLongToByteArrayLE(value);
+        byte[] reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        long obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = 255L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = 256L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = 65_535L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = 65_536L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = 5_000_000L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = 100_000_000L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = 0L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = -100L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
+
+        value = -100_000L;
+        conversion = Utils.signedLongToByteArrayLE(value);
+        reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
+        obtainedValue = new BigInteger(reversedConversion).longValue();
+        assertEquals(value, obtainedValue);
     }
 }

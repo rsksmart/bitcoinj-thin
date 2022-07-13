@@ -1,10 +1,6 @@
 package co.rsk.bitcoinj.script;
 
-import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
-import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIGVERIFY;
-
 import co.rsk.bitcoinj.core.VerificationException;
-import java.math.BigInteger;
 import java.util.List;
 
 public class RedeemScriptValidator {
@@ -17,7 +13,7 @@ public class RedeemScriptValidator {
         ScriptChunk lastChunk = chunks.get(chunks.size() - 1);
         // Must end in OP_CHECKMULTISIG[VERIFY]
         return lastChunk.isOpCode() &&
-            (lastChunk.equalsOpCode(OP_CHECKMULTISIG) || lastChunk.equalsOpCode(OP_CHECKMULTISIGVERIFY));
+            (lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIG) || lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIGVERIFY));
     }
 
     protected static boolean hasStandardRedeemScriptStructure(List<ScriptChunk> chunks) {
