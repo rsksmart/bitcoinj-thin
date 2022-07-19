@@ -115,6 +115,33 @@ public class ErpFederationRedeemScriptParserTest {
         );
     }
 
+    @Test(expected = VerificationException.class)
+    public void createErpRedeemScriptDeprecated_csv_above_max_value() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+        Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE + 1;
+
+        ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+    }
+
+    @Test(expected = VerificationException.class)
+    public void createErpRedeemScriptDeprecated_csv_exact_max_value() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+        Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE;
+
+        // Should fail since the max value is larger than 2 bytes
+        ErpFederationRedeemScriptParser.createErpRedeemScriptDeprecated(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+    }
+
     @Test
     public void createErpRedeemScriptDeprecated_csv_value_one_byte_long() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
@@ -199,6 +226,34 @@ public class ErpFederationRedeemScriptParserTest {
         );
     }
 
+    @Test(expected = VerificationException.class)
+    public void createErpRedeemScript_csv_above_max_value() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+        Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE + 1;
+
+        ErpFederationRedeemScriptParser.createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+    }
+
+    @Test
+    public void createErpRedeemScript_csv_exact_max_value() {
+        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
+        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
+        Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE;
+
+        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        validateErpRedeemScript(erpRedeemScript, csvValue, false);
+    }
+
     @Test
     public void createErpRedeemScript_csv_value_one_byte_long() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
@@ -274,34 +329,32 @@ public class ErpFederationRedeemScriptParserTest {
         validateErpRedeemScript(erpRedeemScript, csvValue, false);
     }
 
-    @Test
+    @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_value_four_bytes_long() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
         long csvValue = 10_000_000L;
 
-        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+        // Should fail since this value is above the max value
+        ErpFederationRedeemScriptParser.createErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
         );
-
-        validateErpRedeemScript(erpRedeemScript, csvValue, false);
     }
 
-    @Test
+    @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_value_four_bytes_long_including_sign() {
         Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultFedBtcECKeyList);
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(erpFedBtcECKeyList);
         long csvValue = 8_400_000L; // Any value above 8_388_607 needs an extra byte to indicate the sign
 
-        Script erpRedeemScript = ErpFederationRedeemScriptParser.createErpRedeemScript(
+        // Should fail since this value is above the max value
+        ErpFederationRedeemScriptParser.createErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
         );
-
-        validateErpRedeemScript(erpRedeemScript, csvValue, false);
     }
 
     @Test

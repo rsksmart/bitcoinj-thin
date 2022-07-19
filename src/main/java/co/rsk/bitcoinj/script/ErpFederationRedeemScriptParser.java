@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
 
+    public static long MAX_CSV_VALUE = 105_120L; // 2 years in BTC blocks (considering 1 block every 10 minutes)
+
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
         List<ScriptChunk> redeemScriptChunks,
@@ -137,8 +139,12 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             throw new VerificationException(message);
         }
 
-        if (csvValue <= 0) {
-            String message = String.format("Provided csv value %d must be larger than 0", csvValue);
+        if (csvValue <= 0 || csvValue > MAX_CSV_VALUE) {
+            String message = String.format(
+                "Provided csv value %d must be larger than 0 and lower than %d",
+                csvValue,
+                MAX_CSV_VALUE
+            );
             logger.warn("[validateErpRedeemScriptValues] {}", message);
             throw new VerificationException(message);
         }
