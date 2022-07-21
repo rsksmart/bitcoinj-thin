@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
 
-    public static long MAX_CSV_VALUE = 105_120L; // 2 years in BTC blocks (considering 1 block every 10 minutes)
+    public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
