@@ -31,32 +31,6 @@ public class RedeemScriptUtils {
             .build();
     }
 
-    public static Script createErpRedeemScript(
-        List<BtcECKey> defaultFedBtcECKeyList,
-        List<BtcECKey> erpFedBtcECKeyList,
-        Long csvValue
-    ) {
-        return createErpRedeemScript(
-            defaultFedBtcECKeyList,
-            erpFedBtcECKeyList,
-            csvValue,
-            true
-        );
-    }
-
-    public static Script createErpRedeemScriptWithoutCsvValueValidation(
-        List<BtcECKey> defaultFedBtcECKeyList,
-        List<BtcECKey> erpFedBtcECKeyList,
-        Long csvValue
-    ) {
-        return createErpRedeemScript(
-            defaultFedBtcECKeyList,
-            erpFedBtcECKeyList,
-            csvValue,
-            false
-        );
-    }
-
     public static Script createFastBridgeErpRedeemScript(
         List<BtcECKey> defaultFedBtcECKeyList,
         List<BtcECKey> erpFedBtcECKeyList,
@@ -91,11 +65,10 @@ public class RedeemScriptUtils {
             .build();
     }
 
-    private static Script createErpRedeemScript(
+    public static Script createErpRedeemScript(
         List<BtcECKey> defaultFedBtcECKeyList,
         List<BtcECKey> erpFedBtcECKeyList,
-        Long csvValue,
-        boolean validateCsvValue
+        Long csvValue
     ) {
         Script defaultFedRedeemScript = ScriptBuilder.createRedeemScript(
             defaultFedBtcECKeyList.size() / 2 + 1,
@@ -107,28 +80,14 @@ public class RedeemScriptUtils {
             erpFedBtcECKeyList
         );
 
-        // If no validation is done we use BigInteger serialization
-        byte[] parsedCsvValue = BigInteger.valueOf(csvValue).toByteArray();
-
-        if (validateCsvValue) {
-            if (csvValue > ErpFederationRedeemScriptParser.MAX_CSV_VALUE) {
-                throw new VerificationException("Provided csv value surpasses the limit of " + ErpFederationRedeemScriptParser.MAX_CSV_VALUE);
-            }
-
-            if (csvValue < 0) {
-                throw new VerificationException("Provided csv value is smaller than 0");
-            }
-
-            parsedCsvValue = Utils.unsignedLongToByteArray(csvValue, ErpFederationRedeemScriptParser.CSV_SERIALIZED_LENGTH);
-        }
+        byte[] serializedCsvValue = Utils.reverseBytes(BigInteger.valueOf(csvValue).toByteArray());
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
-
         return scriptBuilder
             .op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFedRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
-            .data(parsedCsvValue)
+            .data(serializedCsvValue)
             .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(removeOpCheckMultisig(erpFedRedeemScript))

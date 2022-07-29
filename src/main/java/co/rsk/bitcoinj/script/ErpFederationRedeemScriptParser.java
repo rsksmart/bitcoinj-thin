@@ -4,6 +4,7 @@ import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig
 
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -11,8 +12,8 @@ import org.slf4j.LoggerFactory;
 
 public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
-    public static long MAX_CSV_VALUE = 65_535L; // 65535 is 2 bytes. The max value currently accepted
-    public static int CSV_SERIALIZED_LENGTH = 2;
+
+    public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
@@ -53,39 +54,82 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        byte[] parsedCsvValue = Utils.unsignedLongToByteArray(csvValue, CSV_SERIALIZED_LENGTH);
+        byte[] serializedCsvValue = Utils.signedLongToByteArrayLE(csvValue);
 
-        validateErpRedeemScriptValues(
+        return createErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue,
-            parsedCsvValue
+            serializedCsvValue
         );
+    }
 
-        ScriptBuilder scriptBuilder = new ScriptBuilder();
+    @Deprecated
+    // This method encodes the CSV value as unsigned Big Endian which is not correct.
+    // It should be encoded as signed LE
+    // Keeping this method for backwards compatibility in rskj
+    public static Script createErpRedeemScriptDeprecated(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue
+    ) {
+        final int CSV_SERIALIZED_LENGTH = 2;
+        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, CSV_SERIALIZED_LENGTH);
 
-        return scriptBuilder
-            .op(ScriptOpCodes.OP_NOTIF)
-            .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
-            .op(ScriptOpCodes.OP_ELSE)
-            .data(parsedCsvValue)
-            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
-            .op(ScriptOpCodes.OP_DROP)
-            .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
-            .op(ScriptOpCodes.OP_ENDIF)
-            .op(ScriptOpCodes.OP_CHECKMULTISIG)
-            .build();
+        return createErpRedeemScript(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue,
+            serializedCsvValue
+        );
     }
 
     public static boolean isErpFed(List<ScriptChunk> chunks) {
         return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
     }
 
-    private static void validateErpRedeemScriptValues(
+    private static Script createErpRedeemScript(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue,
-        byte[] parsedCsvValue
+        byte[] serializedCsvValue) {
+
+        validateErpRedeemScriptValues(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );
+
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+
+        Script erpRedeemScript = scriptBuilder
+            .op(ScriptOpCodes.OP_NOTIF)
+            .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
+            .op(ScriptOpCodes.OP_ELSE)
+            .data(serializedCsvValue)
+            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
+            .op(ScriptOpCodes.OP_ENDIF)
+            .op(ScriptOpCodes.OP_CHECKMULTISIG)
+            .build();
+
+        // Validate the created redeem script has a valid structure
+        if (!RedeemScriptValidator.hasErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
+            String message = String.format(
+                "Created redeem script has an invalid structure, not ERP redeem script. Redeem script created: %s",
+                erpRedeemScript
+            );
+            logger.debug("[createErpRedeemScript] {}", message);
+            throw new VerificationException(message);
+        }
+        return erpRedeemScript;
+    }
+
+    private static void validateErpRedeemScriptValues(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue
     ) {
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
             !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
@@ -95,24 +139,14 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             throw new VerificationException(message);
         }
 
-        if (csvValue > MAX_CSV_VALUE) {
-            String message = "Provided csv Value surpasses the limit of " + MAX_CSV_VALUE;
+        if (csvValue <= 0 || csvValue > MAX_CSV_VALUE) {
+            String message = String.format(
+                "Provided csv value %d must be larger than 0 and lower than %d",
+                csvValue,
+                MAX_CSV_VALUE
+            );
             logger.warn("[validateErpRedeemScriptValues] {}", message);
             throw new VerificationException(message);
-        }
-
-        if (csvValue < 0) {
-            String message = "Provided csv Value is smaller than 0";
-            logger.warn("[validateErpRedeemScriptValues] {}", message);
-            throw new VerificationException(message);
-        }
-
-        if (parsedCsvValue.length != CSV_SERIALIZED_LENGTH) {
-            throw new VerificationException(String.format(
-                "Invalid CSV value serialization. Expected %d bytes but got %d",
-                CSV_SERIALIZED_LENGTH,
-                parsedCsvValue.length
-            ));
         }
     }
 }

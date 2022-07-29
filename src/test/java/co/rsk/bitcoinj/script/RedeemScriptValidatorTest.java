@@ -89,7 +89,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_small_csv_value() {
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_one_byte_csv_value() {
         Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
@@ -100,36 +100,69 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_max_csv_value() {
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_two_bytes_csv_value() {
         Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
-            ErpFederationRedeemScriptParser.MAX_CSV_VALUE
+            500L
         );
 
         Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_invalid_small_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScriptWithoutCsvValueValidation(
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_two_bytes_including_sign_csv_value() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
-            10L
+            130L // Any value above 127 needs an extra byte to indicate the sign
         );
 
-        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_invalid_large_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScriptWithoutCsvValueValidation(
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_three_bytes_csv_value() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultFedBtcECKeyList,
             erpFedBtcECKeyList,
-            1_000_000L
+            100_000L
         );
 
-        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_three_bytes_including_sign_csv_value() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            33_000L // Any value above 32_767 needs an extra byte to indicate the sign
+        );
+
+        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_four_bytes_csv_value() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            10_000_000L
+        );
+
+        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_four_bytes_including_sign_csv_value() {
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            8_400_000L // Any value above 8_388_607 needs an extra byte to indicate the sign
+        );
+
+        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test

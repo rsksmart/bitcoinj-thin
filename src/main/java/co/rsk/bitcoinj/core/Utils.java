@@ -85,7 +85,7 @@ public class Utils {
         return bytes;        
     }
 
-    public static byte[] unsignedLongToByteArray(long number, int numBytes) {
+    public static byte[] unsignedLongToByteArrayBE(long number, int numBytes) {
         if (number < 0) {
             throw new VerificationException("Number needs to be positive");
         }
@@ -97,6 +97,25 @@ public class Utils {
             number >>= 8;
         }
         return result;
+    }
+
+    public static byte[] unsignedLongToByteArrayLE(long number, int numBytes) {
+        if (number < 0) {
+            throw new VerificationException("Number needs to be positive");
+        }
+        validateNumberFitsInByteArray(number, numBytes);
+
+        byte[] result = new byte[numBytes];
+        for (int i = 0; i < numBytes; i++) {
+            result[i] = (byte)(number & 0xFF);
+            number >>= 8;
+        }
+        return result;
+    }
+
+    public static byte[] signedLongToByteArrayLE(long number) {
+        byte[] numberBytes = BigInteger.valueOf(number).toByteArray(); // BigInteger serializes with a sign MSB
+        return reverseBytes(numberBytes);
     }
 
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
@@ -150,8 +169,9 @@ public class Utils {
         bytes = reverseBytes(bytes);
         stream.write(bytes);
         if (bytes.length < 8) {
-            for (int i = 0; i < 8 - bytes.length; i++)
+            for (int i = 0; i < 8 - bytes.length; i++) {
                 stream.write(0);
+            }
         }
     }
 
@@ -181,8 +201,9 @@ public class Utils {
         // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
         // performance issue the matter can be revisited.
         byte[] buf = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++)
+        for (int i = 0; i < bytes.length; i++) {
             buf[i] = bytes[bytes.length - 1 - i];
+        }
         return buf;
     }
     
