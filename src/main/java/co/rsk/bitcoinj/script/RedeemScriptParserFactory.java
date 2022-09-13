@@ -23,7 +23,7 @@ public class RedeemScriptParserFactory {
 
         if (chunks.size() < 4) {
             // A multisig redeem script must have at least 4 chunks (OP_N [PUB1 ...] OP_N CHECK_MULTISIG)
-            logger.debug("[get] Less than 4 chunks, return NoRedeemScriptParser");
+            logger.trace("[get] Less than 4 chunks, return NoRedeemScriptParser");
             return new NoRedeemScriptParser();
         }
 
