@@ -49,6 +49,22 @@ public class RedeemScriptParserFactory {
                 chunks
             );
         }
+        if (P2shErpFederationRedeemScriptParser.isP2shErpFed(result.internalScript)) {
+            logger.debug("[get] Return P2shErpFederationRedeemScriptParser");
+            return new P2shErpFederationRedeemScriptParser(
+                result.scriptType,
+                result.internalScript,
+                chunks
+            );
+        }
+        if (FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(result.internalScript)) {
+            logger.debug("[get] Return FastBridgeP2shErpRedeemScriptParser");
+            return new FastBridgeP2shErpRedeemScriptParser(
+                result.scriptType,
+                result.internalScript,
+                chunks
+            );
+        }
         if (ErpFederationRedeemScriptParser.isErpFed(result.internalScript)) {
             logger.debug("[get] Return ErpFederationRedeemScriptParser");
             return new ErpFederationRedeemScriptParser(
@@ -77,7 +93,12 @@ public class RedeemScriptParserFactory {
         }
         if (lastChunk.data != null && lastChunk.data.length > 0) {
             int lastByte = lastChunk.data[lastChunk.data.length - 1] & 0xff;
-            if (lastByte == ScriptOpCodes.OP_CHECKMULTISIG || lastByte == ScriptOpCodes.OP_CHECKMULTISIGVERIFY) {
+            // ERP and standard (+fastBridge) finish with OP_CHECKMULTISIG and P2SHERP (+fastBridge) finish with OP_ENDIF
+            if (
+                    lastByte == ScriptOpCodes.OP_CHECKMULTISIG ||
+                    lastByte == ScriptOpCodes.OP_CHECKMULTISIGVERIFY ||
+                    lastByte == ScriptOpCodes.OP_ENDIF
+            ) {
                 ScriptParserResult result = ScriptParser.parseScriptProgram(lastChunk.data);
                 if (result.getException().isPresent()) {
                     String message = String.format("Error trying to parse inner script. %s", result.getException().get());

@@ -11,7 +11,9 @@ public interface RedeemScriptParser {
         STANDARD_MULTISIG,
         FAST_BRIDGE_MULTISIG,
         ERP_FED,
-        FAST_BRIDGE_ERP_FED
+        FAST_BRIDGE_ERP_FED,
+        P2SH_ERP_FED,
+        FAST_BRIDGE_P2SH_ERP_FED
     }
 
     enum ScriptType {

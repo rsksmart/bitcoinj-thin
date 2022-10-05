@@ -11,9 +11,21 @@ public class RedeemScriptValidator {
         }
 
         ScriptChunk lastChunk = chunks.get(chunks.size() - 1);
-        // Must end in OP_CHECKMULTISIG[VERIFY]
+        // A standard multisig redeem script must end in OP_CHECKMULTISIG[VERIFY]
+        boolean isStandard = lastChunk.isOpCode() &&
+                (lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIG) ||
+                    lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIGVERIFY));
+        if (isStandard) {
+            return true;
+        }
+        // A P2SH ERP like script must finish in OP_ENDIF
+        // and the previous element should be OP_CHECKMULTISIG[VERIFY]
+        ScriptChunk penultimateChunk = chunks.get(chunks.size() - 2);
         return lastChunk.isOpCode() &&
-            (lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIG) || lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIGVERIFY));
+            lastChunk.equalsOpCode(ScriptOpCodes.OP_ENDIF) &&
+            penultimateChunk.isOpCode() &&
+            (penultimateChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIG) ||
+                penultimateChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIGVERIFY));
     }
 
     protected static boolean hasStandardRedeemScriptStructure(List<ScriptChunk> chunks) {
@@ -22,7 +34,12 @@ public class RedeemScriptValidator {
                 return false;
             }
 
-            // Second to last chunk must be an OP_N opcode and there should be
+            // First chunk must be an OP_N
+            if (!isOpN(chunks.get(0))) {
+                return false;
+            }
+
+            // Second to last chunk must be an OP_N opcode too, and there should be
             // that many data chunks (keys).
             ScriptChunk secondToLastChunk = chunks.get(chunks.size() - 2);
             if (!isOpN(secondToLastChunk)) {
@@ -39,14 +56,78 @@ public class RedeemScriptValidator {
                     return false;
                 }
             }
-            // First chunk must be an OP_N opcode too.
-            if (!isOpN(chunks.get(0))) {
-                return false;
-            }
+
+            return true;
         } catch (IllegalStateException e) {
             return false;   // Not an OP_N opcode.
         }
-        return true;
+    }
+
+    protected static boolean hasP2shErpRedeemScriptStructure(List<ScriptChunk> chunks) {
+        if (!isRedeemLikeScript(chunks)) {
+            return false;
+        }
+
+        ScriptChunk firstChunk = chunks.get(0);
+
+        boolean hasErpPrefix = firstChunk.opcode == ScriptOpCodes.OP_NOTIF;
+        boolean hasEndIfOpcode = chunks.get(chunks.size() - 1).equalsOpCode(ScriptOpCodes.OP_ENDIF);
+
+        if (!hasErpPrefix || !hasEndIfOpcode) {
+            return false;
+        }
+
+        boolean hasErpStructure = false;
+        int elseOpcodeIndex = 0;
+
+        // Check existence of OP_ELSE opcode, followed by PUSH_BYTES, CSV and OP_DROP and
+        // get both default and ERP federations redeem scripts
+        for (int i = 1; i < chunks.size(); i++) {
+            if (chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE) && chunks.size() >= i + 3) {
+                elseOpcodeIndex = i;
+                ScriptChunk pushBytesOpcode = chunks.get(elseOpcodeIndex + 1);
+                ScriptChunk csvOpcode = chunks.get(elseOpcodeIndex + 2);
+                ScriptChunk opDrop = chunks.get(elseOpcodeIndex + 3);
+
+                hasErpStructure = pushBytesOpcode.isPushData() &&
+                        csvOpcode.equalsOpCode(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY) &&
+                        opDrop.equalsOpCode(ScriptOpCodes.OP_DROP);
+
+                break;
+            }
+        }
+
+        if (!hasErpStructure) {
+            return false;
+        }
+
+        /***
+         * Expected structure:
+         * OP_NOTIF
+         *  OP_M
+         *  PUBKEYS...N
+         *  OP_N
+         *  OP_CHECKMULTISIG
+         * OP_ELSE
+         *  OP_PUSHBYTES
+         *  CSV_VALUE
+         *  OP_CHECKSEQUENCEVERIFY
+         *  OP_DROP
+         *  OP_M
+         *  PUBKEYS...N
+         *  OP_N
+         *  OP_CHECKMULTISIG
+         * OP_ENDIF
+         */
+
+        // Validate both default and erp federations redeem scripts.
+        // Extract the default PowPeg and the emergency multisig redeemscript chunks
+        List<ScriptChunk> defaultFedRedeemScriptChunks = chunks.subList(1, elseOpcodeIndex);
+        List<ScriptChunk> erpFedRedeemScriptChunks = chunks.subList(elseOpcodeIndex + 4, chunks.size() - 1);
+
+        // Both should be standard multisig redeemscripts
+        return hasStandardRedeemScriptStructure(defaultFedRedeemScriptChunks) &&
+                hasStandardRedeemScriptStructure(erpFedRedeemScriptChunks);
     }
 
     protected static boolean hasErpRedeemScriptStructure(List<ScriptChunk> chunks) {

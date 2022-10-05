@@ -1,21 +1,21 @@
 package co.rsk.bitcoinj.script;
 
-import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
-
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
-    private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
+import java.util.ArrayList;
+import java.util.List;
+
+import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
+
+public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
+    private static final Logger logger = LoggerFactory.getLogger(P2shErpFederationRedeemScriptParser.class);
 
     public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
-    public ErpFederationRedeemScriptParser(
+    public P2shErpFederationRedeemScriptParser(
         ScriptType scriptType,
         List<ScriptChunk> redeemScriptChunks,
         List<ScriptChunk> rawChunks
@@ -25,7 +25,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             extractStandardRedeemScript(redeemScriptChunks).getChunks(),
             rawChunks
         );
-        this.multiSigType = MultiSigType.ERP_FED;
+        this.multiSigType = MultiSigType.P2SH_ERP_FED;
     }
 
     public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
@@ -37,64 +37,24 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             i++;
         }
 
-        chunksForRedeem.add(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null));
-
         // Validate the obtained redeem script has a valid format
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
-            String message = "Standard redeem script obtained from ERP redeem script has an invalid structure";
-            logger.debug("[extractStandardRedeemScriptChunksFromErpRedeemScript] {} {}", message, chunksForRedeem);
+            String message = "Standard redeem script obtained from P2SH ERP redeem script has an invalid structure";
+            logger.debug("[extractStandardRedeemScript] {} {}", message, chunksForRedeem);
             throw new VerificationException(message);
         }
 
         return new Script(chunksForRedeem);
     }
 
-    public static Script createErpRedeemScript(
+    public static Script createP2shErpRedeemScript(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
         byte[] serializedCsvValue = Utils.signedLongToByteArrayLE(csvValue);
 
-        return createErpRedeemScript(
-            defaultFederationRedeemScript,
-            erpFederationRedeemScript,
-            csvValue,
-            serializedCsvValue
-        );
-    }
-
-    @Deprecated
-    // This method encodes the CSV value as unsigned Big Endian which is not correct.
-    // It should be encoded as signed LE
-    // Keeping this method for backwards compatibility in rskj
-    public static Script createErpRedeemScriptDeprecated(
-        Script defaultFederationRedeemScript,
-        Script erpFederationRedeemScript,
-        Long csvValue
-    ) {
-        final int CSV_SERIALIZED_LENGTH = 2;
-        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, CSV_SERIALIZED_LENGTH);
-
-        return createErpRedeemScript(
-            defaultFederationRedeemScript,
-            erpFederationRedeemScript,
-            csvValue,
-            serializedCsvValue
-        );
-    }
-
-    public static boolean isErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
-    }
-
-    private static Script createErpRedeemScript(
-        Script defaultFederationRedeemScript,
-        Script erpFederationRedeemScript,
-        Long csvValue,
-        byte[] serializedCsvValue) {
-
-        validateErpRedeemScriptValues(
+        validateP2shErpRedeemScriptValues(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -104,29 +64,33 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
 
         Script erpRedeemScript = scriptBuilder
             .op(ScriptOpCodes.OP_NOTIF)
-            .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
+            .addChunks(defaultFederationRedeemScript.getChunks())
             .op(ScriptOpCodes.OP_ELSE)
             .data(serializedCsvValue)
             .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
             .op(ScriptOpCodes.OP_DROP)
-            .addChunks(removeOpCheckMultisig(erpFederationRedeemScript))
+            .addChunks(erpFederationRedeemScript.getChunks())
             .op(ScriptOpCodes.OP_ENDIF)
-            .op(ScriptOpCodes.OP_CHECKMULTISIG)
             .build();
 
         // Validate the created redeem script has a valid structure
-        if (!RedeemScriptValidator.hasErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
+        if (!RedeemScriptValidator.hasP2shErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
             String message = String.format(
-                "Created redeem script has an invalid structure, not ERP redeem script. Redeem script created: %s",
+                "Created redeem script has an invalid structure, not P2SH ERP redeem script. Redeem script created: %s",
                 erpRedeemScript
             );
             logger.debug("[createErpRedeemScript] {}", message);
             throw new VerificationException(message);
         }
+
         return erpRedeemScript;
     }
 
-    private static void validateErpRedeemScriptValues(
+    public static boolean isP2shErpFed(List<ScriptChunk> chunks) {
+        return RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
+    }
+
+    private static void validateP2shErpRedeemScriptValues(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue
@@ -134,8 +98,13 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
             !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
 
-            String message = "Provided redeem scripts have an invalid structure, not standard";
-            logger.debug("[validateErpRedeemScriptValues] {}", message);
+            String message = "Provided redeem scripts has an invalid structure, not standard";
+            logger.debug(
+                "[validateP2shErpRedeemScriptValues] {}. Default script {}. Emergency script {}",
+                message,
+                defaultFederationRedeemScript,
+                erpFederationRedeemScript
+            );
             throw new VerificationException(message);
         }
 
@@ -145,7 +114,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
                 csvValue,
                 MAX_CSV_VALUE
             );
-            logger.warn("[validateErpRedeemScriptValues] {}", message);
+            logger.warn("[validateP2shErpRedeemScriptValues] {}", message);
             throw new VerificationException(message);
         }
     }
