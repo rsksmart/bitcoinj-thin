@@ -95,4 +95,34 @@ public class RedeemScriptUtils {
             .op(ScriptOpCodes.OP_CHECKMULTISIG)
             .build();
     }
+
+    public static Script createP2shErpRedeemScript(
+        List<BtcECKey> defaultFedBtcECKeyList,
+        List<BtcECKey> erpFedBtcECKeyList,
+        Long csvValue
+    ) {
+        Script defaultFedRedeemScript = ScriptBuilder.createRedeemScript(
+            defaultFedBtcECKeyList.size() / 2 + 1,
+            defaultFedBtcECKeyList
+        );
+
+        Script erpFedRedeemScript = ScriptBuilder.createRedeemScript(
+            erpFedBtcECKeyList.size() / 2 + 1,
+            erpFedBtcECKeyList
+        );
+
+        byte[] serializedCsvValue = Utils.reverseBytes(BigInteger.valueOf(csvValue).toByteArray());
+
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        return scriptBuilder
+            .op(ScriptOpCodes.OP_NOTIF)
+            .addChunks(defaultFedRedeemScript.getChunks())
+            .op(ScriptOpCodes.OP_ELSE)
+            .data(serializedCsvValue)
+            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(erpFedRedeemScript.getChunks())
+            .op(ScriptOpCodes.OP_ENDIF)
+            .build();
+    }
 }

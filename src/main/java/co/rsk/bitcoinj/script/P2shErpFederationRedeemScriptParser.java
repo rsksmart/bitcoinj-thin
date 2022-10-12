@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
-
 public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(P2shErpFederationRedeemScriptParser.class);
 
