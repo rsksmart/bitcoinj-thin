@@ -52,6 +52,27 @@ public class RedeemScriptUtils {
             .build();
     }
 
+    public static Script createFastBridgeP2shErpRedeemScript(
+        List<BtcECKey> defaultFedBtcECKeyList,
+        List<BtcECKey> erpFedBtcECKeyList,
+        Long csvValue,
+        byte[] derivationArgumentsHashBytes
+    ) {
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+
+        Script erpRedeemScript = createP2shErpRedeemScript(
+            defaultFedBtcECKeyList,
+            erpFedBtcECKeyList,
+            csvValue
+        );
+
+        return scriptBuilder
+            .data(derivationArgumentsHashBytes)
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(erpRedeemScript.getChunks())
+            .build();
+    }
+
     public static Script createCustomRedeemScript(List<BtcECKey> btcECKeyList) {
         Script redeem = ScriptBuilder.createRedeemScript(
             btcECKeyList.size() / 2 + 1,
