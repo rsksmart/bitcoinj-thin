@@ -79,6 +79,35 @@ public class RedeemScriptParserFactoryTest {
     }
 
     @Test
+    public void create_RedeemScriptParser_object_from_p2sh_erp_multiSig_chunk() {
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+            defaultRedeemScriptKeys,
+            emergencyRedeemScriptKeys,
+            500L
+        );
+
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+
+        Assert.assertEquals(MultiSigType.P2SH_ERP_FED, parser.getMultiSigType());
+        Assert.assertEquals(ScriptType.REDEEM_SCRIPT, parser.getScriptType());
+    }
+
+    @Test
+    public void create_RedeemScriptParser_object_from_fast_bridge_p2sh_erp_multiSig_chunk() {
+        Script redeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
+            defaultRedeemScriptKeys,
+            emergencyRedeemScriptKeys,
+            500L,
+            Sha256Hash.of(new byte[]{1}).getBytes()
+        );
+
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+
+        Assert.assertEquals(MultiSigType.FAST_BRIDGE_P2SH_ERP_FED, parser.getMultiSigType());
+        Assert.assertEquals(ScriptType.REDEEM_SCRIPT, parser.getScriptType());
+    }
+
+    @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_P2SH_chunk() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
@@ -152,6 +181,47 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_ERP_FED, parser.getMultiSigType());
+        Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
+    }
+
+    @Test
+    public void create_RedeemScriptParser_object_from_p2sh_erp_P2SH_chunk() {
+        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+            defaultRedeemScriptKeys,
+            emergencyRedeemScriptKeys,
+            500L
+        );
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(
+            2,
+            Arrays.asList(ecKey1, ecKey2, ecKey3)
+        );
+
+        Script inputScript = spk.createEmptyInputScript(null, p2shErpRedeemScript);
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
+
+        Assert.assertEquals(MultiSigType.P2SH_ERP_FED, parser.getMultiSigType());
+        Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
+    }
+
+    @Test
+    public void create_RedeemScriptParser_object_from_fast_bridge_p2sh_erp_P2SH_chunk() {
+        Script fastBridgeP2shErpRedeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
+            defaultRedeemScriptKeys,
+            emergencyRedeemScriptKeys,
+            500L,
+            Sha256Hash.of(new byte[]{1}).getBytes()
+        );
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(
+            2,
+            Arrays.asList(ecKey1, ecKey2, ecKey3)
+        );
+
+        Script inputScript = spk.createEmptyInputScript(null, fastBridgeP2shErpRedeemScript);
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
+
+        Assert.assertEquals(MultiSigType.FAST_BRIDGE_P2SH_ERP_FED, parser.getMultiSigType());
         Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
     }
 

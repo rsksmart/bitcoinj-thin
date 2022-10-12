@@ -450,6 +450,24 @@ public class ErpFederationRedeemScriptParserTest {
         Long csvValue,
         boolean hasDeprecatedFormat) {
 
+        /***
+         * Expected structure:
+         * OP_NOTIF
+         *  OP_M
+         *  PUBKEYS...N
+         *  OP_N
+         * OP_ELSE
+         *  OP_PUSHBYTES
+         *  CSV_VALUE
+         *  OP_CHECKSEQUENCEVERIFY
+         *  OP_DROP
+         *  OP_M
+         *  PUBKEYS...N
+         *  OP_N
+         * OP_ENDIF
+         * OP_CHECKMULTISIG
+         */
+
         int expectedCsvValueLength = hasDeprecatedFormat ? 2 : BigInteger.valueOf(csvValue).toByteArray().length;
         byte[] serializedCsvValue = hasDeprecatedFormat ?
             Utils.unsignedLongToByteArrayBE(csvValue, expectedCsvValueLength) :

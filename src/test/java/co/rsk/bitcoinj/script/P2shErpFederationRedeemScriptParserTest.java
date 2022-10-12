@@ -334,6 +334,25 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script erpRedeemScript,
         Long csvValue) {
 
+        /***
+         * Expected structure:
+         * OP_NOTIF
+         *  OP_M
+         *  PUBKEYS...N
+         *  OP_N
+         *  OP_CHECKMULTISIG
+         * OP_ELSE
+         *  OP_PUSHBYTES
+         *  CSV_VALUE
+         *  OP_CHECKSEQUENCEVERIFY
+         *  OP_DROP
+         *  OP_M
+         *  PUBKEYS...N
+         *  OP_N
+         *  OP_CHECKMULTISIG
+         * OP_ENDIF
+         */
+
         byte[] serializedCsvValue = Utils.signedLongToByteArrayLE(csvValue);
 
         byte[] script = erpRedeemScript.getProgram();
