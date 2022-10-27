@@ -138,6 +138,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
         }
 
         RawGeneratedRedeemScript[] generatedScripts = new ObjectMapper().readValue(rawRedeemScripts, RawGeneratedRedeemScript[].class);
+
         for (RawGeneratedRedeemScript generatedScript : generatedScripts) {
             Script bitcoinjScript = FastBridgeP2shErpRedeemScriptParser.createFastBridgeP2shErpRedeemScript(
                     generatedScript.powpegScript,
