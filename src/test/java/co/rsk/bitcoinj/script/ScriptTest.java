@@ -667,6 +667,57 @@ public class ScriptTest {
         );
     }
 
+    @Test
+    public void createEmptyInputScript_p2sh_erp_redeemScript() {
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L
+        );
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+
+        // The expected P2sh Erp input script structure is:
+        // First element: OP_0 - Belonging to the standard of BTC
+        // M elements OP_0 - Belonging to M/N amount of signatures
+        // OP_0 - Belonging to ERP
+        // Last element: Program of redeem script
+
+        assertInputScriptStructure(
+            inputScript.getChunks(),
+            5,
+            4,
+            redeemScript.getProgram()
+        );
+    }
+
+    @Test
+    public void createEmptyInputScript_fast_bridge_p2sh_erp_redeemScript() {
+        Script redeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
+            btcECKeyList,
+            erpFedECKeyList,
+            500L,
+            Sha256Hash.of(new byte[]{1}).getBytes()
+        );
+
+        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+
+        // The expected P2sh Erp input script structure is:
+        // First element: OP_0 - Belonging to the standard of BTC
+        // M elements OP_0 - Belonging to M/N amount of signatures
+        // OP_0 - Belonging to ERP
+        // Last element: Program of redeem script
+
+        assertInputScriptStructure(
+            inputScript.getChunks(),
+            5,
+            4,
+            redeemScript.getProgram()
+        );
+    }
+
     private void assertInputScriptStructure(
         List<ScriptChunk> chunks,
         int expectedChunksSize,

@@ -438,13 +438,9 @@ public class Script {
             checkArgument(redeemScript != null, "Redeem script required to create P2SH input script");
             Script emptyInputScript = ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
 
-            // Validate if redeem script is ERP or Fast Bridge ERP.
+            // Validate if redeem script is ERP type.
             // If so, recreate empty input script adding a OP_0 before redeem script.
-            List<ScriptChunk> chunks = redeemScript.getChunks();
-            boolean isFastBridgeErp = FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(chunks);
-            boolean isErp = RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
-
-            if (isErp || isFastBridgeErp) {
+            if (isErpType(redeemScript)) {
                 ScriptBuilder builder = new ScriptBuilder();
                 List<ScriptChunk> inputScriptChunks = emptyInputScript.getChunks();
                 List<ScriptChunk> chunksWithoutRedeem = inputScriptChunks.subList(0, inputScriptChunks.size() -1);
@@ -460,6 +456,16 @@ public class Script {
         } else {
             throw new ScriptException("Do not understand script type: " + this);
         }
+    }
+
+    private boolean isErpType(Script redeemScript) {
+        List<ScriptChunk> chunks = redeemScript.getChunks();
+        boolean isFastBridgeErp = FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(chunks);
+        boolean isErp = RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
+        boolean isFastBridgeP2shErp = FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(chunks);
+        boolean isP2shErp = RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
+
+        return isFastBridgeErp || isErp || isFastBridgeP2shErp || isP2shErp;
     }
 
     /**
