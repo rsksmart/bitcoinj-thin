@@ -124,7 +124,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
     }
 
     @Test
-    public void getErpRedeemScript_compareOtherImplementation_P2SHERPFederation() throws IOException {
+    public void createFastBridgeP2shErpRedeemScript_compareAgainstOtherImplementation() throws IOException {
 
         byte[] rawRedeemScripts;
         try {
