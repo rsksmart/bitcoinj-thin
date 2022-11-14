@@ -1,16 +1,13 @@
 package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -141,29 +138,29 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
 
         for (RawGeneratedRedeemScript generatedScript : generatedScripts) {
             Script bitcoinjScript = FastBridgeP2shErpRedeemScriptParser.createFastBridgeP2shErpRedeemScript(
-                    generatedScript.powpegScript,
-                    generatedScript.derivationHash
-
+                generatedScript.powpegScript,
+                generatedScript.derivationHash
             );
 
-            Script alternativeScript = generatedScript.script;
-            Assert.assertEquals(alternativeScript, bitcoinjScript);
+            Script expectedScript = generatedScript.expectedScript;
+            Assert.assertEquals(expectedScript, bitcoinjScript);
         }
     }
 
     private static class RawGeneratedRedeemScript {
         Script powpegScript;
         Sha256Hash derivationHash;
-        Script script;
+        Script expectedScript;
 
         @JsonCreator
-        public RawGeneratedRedeemScript(@JsonProperty("powpegScript") String powpegScript,
-                                        @JsonProperty("derivationHash") String derivationHash,
-                                        @JsonProperty("script") String script) {
+        public RawGeneratedRedeemScript(
+            @JsonProperty("powpegScript") String powpegScript,
+            @JsonProperty("derivationHash") String derivationHash,
+            @JsonProperty("script") String expectedScript
+        ) {
             this.powpegScript = new Script(Hex.decode(powpegScript));
             this.derivationHash = Sha256Hash.wrap(Hex.decode(derivationHash));
-            this.script = new Script(Hex.decode(script));
+            this.expectedScript = new Script(Hex.decode(expectedScript));
         }
     }
-
 }
