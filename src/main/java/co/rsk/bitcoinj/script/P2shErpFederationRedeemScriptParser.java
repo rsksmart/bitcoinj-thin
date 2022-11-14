@@ -108,7 +108,7 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
 
         if (csvValue <= 0 || csvValue > MAX_CSV_VALUE) {
             String message = String.format(
-                "Provided csv value %d must be larger than 0 and lower than %d",
+                "Provided csv value %d must be between 0 and %d",
                 csvValue,
                 MAX_CSV_VALUE
             );
