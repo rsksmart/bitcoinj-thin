@@ -4,7 +4,6 @@ import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig
 
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -42,7 +41,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         // Validate the obtained redeem script has a valid format
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
             String message = "Standard redeem script obtained from ERP redeem script has an invalid structure";
-            logger.debug("[extractStandardRedeemScriptChunksFromErpRedeemScript] {}", message);
+            logger.debug("[extractStandardRedeemScriptChunksFromErpRedeemScript] {} {}", message, chunksForRedeem);
             throw new VerificationException(message);
         }
 
