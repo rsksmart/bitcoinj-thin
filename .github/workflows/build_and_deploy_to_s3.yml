@@ -1,0 +1,58 @@
+name: Build and Publish to S3
+
+on:
+  push:
+    tags:
+      - '**'
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends file unzip maven git strip-nondeterminism python3-pip
+          pip install yq
+
+      - name: Set environment variables
+        run: |
+          ARTIFACT_ID="$(cat pom.xml | xq . | jq -r  '.project.artifactId')"
+          ARTIFACT_VERSION="$(cat pom.xml | xq . | jq -r  '.project.version')"
+          ARTIFACT_NAME="${ARTIFACT_ID}-${ARTIFACT_VERSION}.jar"
+          ARTIFACT_POM_NAME="${ARTIFACT_ID}-${ARTIFACT_VERSION}.pom"
+          echo "artifact_id=${ARTIFACT_ID}" >> $GITHUB_ENV
+          echo "artifact_version=${ARTIFACT_VERSION}" >> $GITHUB_ENV
+          echo "artifact_name=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          echo "artifact_pom_name=${ARTIFACT_POM_NAME}" >> $GITHUB_ENV
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Prepare artifacts to upload 
+        run: |
+          mkdir to_upload
+          strip-nondeterminism ./target/${{ env.artifact_name }}
+          mv ./target/${{ env.artifact_name }}  to_upload/${{ env.artifact_name }}
+          cp pom.xml to_upload/${{ env.artifact_pom_name }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Upload to S3
+        run: |
+          UPLOAD_PREFIX="co/rsk/bitcoinj/${{ env.artifact_id }}/${{ env.artifact_version }}"
+          aws s3 sync --acl public-read  to_upload/ s3://${{ secrets.ARTIFACT_BUCKET }}/${UPLOAD_PREFIX}/ 
