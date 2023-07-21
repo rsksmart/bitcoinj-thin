@@ -17,6 +17,7 @@
 package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcTransaction;
+import co.rsk.bitcoinj.core.Sha256Hash;
 import com.google.common.collect.Lists;
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -413,6 +414,23 @@ public class ScriptBuilder {
     public static Script createP2SHOutputScript(Script redeemScript) {
         byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
         return ScriptBuilder.createP2SHOutputScript(hash);
+    }
+
+    /**
+     * Creates a P2SH-P2WSH scriptPubKey for the given redeem script.
+     */
+    public static Script createP2SHP2WSHOutputScript(Script redeemScript) {
+
+        byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
+
+        Script witnessScript = new ScriptBuilder()
+            .number(ScriptOpCodes.OP_0)
+            .data(redeemScriptHash)
+            .build();
+
+        byte[] outputScriptHash = Utils.hash160(witnessScript.getProgram());
+
+        return ScriptBuilder.createP2SHOutputScript(outputScriptHash);
     }
 
     /**
