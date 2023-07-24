@@ -263,12 +263,8 @@ public class Utils {
     }
 
     /**
-     * Calculates RIPEMD160(SHA256(input)). This is used in Address calculations.
+     * Hash160 calculates RIPEMD160(SHA256(input)). This is used in Address calculations.
      */
-    public static byte[] sha256hash160(byte[] input) {
-        byte[] sha256 = Sha256Hash.hash(input);
-        return hash160(sha256);
-    }
 
     public static byte[] hash160(byte[] input) {
         return digestRipeMd160(Sha256Hash.hash(input));
@@ -277,9 +273,9 @@ public class Utils {
     public static byte[] digestRipeMd160(byte[] sha256) {
         RIPEMD160Digest digest = new RIPEMD160Digest();
         digest.update(sha256, 0, sha256.length);
-        byte[] ripmemdHash = new byte[20];
-        digest.doFinal(ripmemdHash, 0);
-        return ripmemdHash;
+        byte[] ripemdHash = new byte[20];
+        digest.doFinal(ripemdHash, 0);
+        return ripemdHash;
     }
 
     /**

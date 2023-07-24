@@ -10,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
-public class P2shP2WSHScriptTest {
+public class P2shP2wshScriptTest {
 
     @Test
     public void getAddressFromP2shP2wshScript() {
@@ -20,15 +20,15 @@ public class P2shP2WSHScriptTest {
             "0346f033b8652a17d319d3ecbbbf20fd2cd663a6548173b9419d8228eef095012e"
         }).stream().map(k -> BtcECKey.fromPublicOnly(Hex.decode(k))).collect(Collectors.toList());
 
-        Script redeemNuestro = new ScriptBuilder().createRedeemScript(
+        Script redeemScript = new ScriptBuilder().createRedeemScript(
             keys.size() / 2 + 1,
             keys
         );
 
-        Script p2SHP2WSHOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemNuestro);
+        Script p2shP2wshOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
         Address segwitAddress = Address.fromP2SHScript(
             NetworkParameters.fromID(NetworkParameters.ID_TESTNET),
-            p2SHP2WSHOutputScript
+            p2shP2wshOutputScript
         );
 
         Assert.assertEquals("2NCQHJJuG2iQjN2Be3QYXwWvFgS6AZ4MEkL", segwitAddress.toBase58());

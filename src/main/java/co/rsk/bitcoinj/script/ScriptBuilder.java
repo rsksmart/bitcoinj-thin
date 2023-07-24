@@ -412,7 +412,7 @@ public class ScriptBuilder {
      * Creates a scriptPubKey for the given redeem script.
      */
     public static Script createP2SHOutputScript(Script redeemScript) {
-        byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
+        byte[] hash = Utils.hash160(redeemScript.getProgram());
         return ScriptBuilder.createP2SHOutputScript(hash);
     }
 
@@ -420,16 +420,12 @@ public class ScriptBuilder {
      * Creates a P2SH-P2WSH scriptPubKey for the given redeem script.
      */
     public static Script createP2SHP2WSHOutputScript(Script redeemScript) {
-
         byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
-
         Script witnessScript = new ScriptBuilder()
             .number(ScriptOpCodes.OP_0)
             .data(redeemScriptHash)
             .build();
-
         byte[] outputScriptHash = Utils.hash160(witnessScript.getProgram());
-
         return ScriptBuilder.createP2SHOutputScript(outputScriptHash);
     }
 

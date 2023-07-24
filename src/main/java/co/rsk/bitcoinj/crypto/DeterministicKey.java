@@ -212,7 +212,7 @@ public class DeterministicKey extends BtcECKey {
      * Returns RIPE-MD160(SHA256(pub key bytes)).
      */
     public byte[] getIdentifier() {
-        return Utils.sha256hash160(getPubKey());
+        return Utils.hash160(getPubKey());
     }
 
     /** Returns the first 32 bits of the result of {@link #getIdentifier()}. */
