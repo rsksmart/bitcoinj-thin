@@ -425,8 +425,8 @@ public class ScriptBuilder {
             .number(ScriptOpCodes.OP_0)
             .data(redeemScriptHash)
             .build();
-        byte[] outputScriptHash = Utils.hash160(witnessScript.getProgram());
-        return ScriptBuilder.createP2SHOutputScript(outputScriptHash);
+
+        return ScriptBuilder.createP2SHOutputScript(witnessScript);
     }
 
     /**
