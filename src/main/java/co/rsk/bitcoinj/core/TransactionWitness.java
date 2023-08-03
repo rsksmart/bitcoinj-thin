@@ -61,8 +61,20 @@ public class TransactionWitness {
     public static TransactionWitness createWitnessScript(Script witnessScript, List<TransactionSignature> signatures) {
         List<byte[]> pushes = new ArrayList<>(signatures.size() + 2);
         pushes.add(new byte[] {});
-        for (TransactionSignature signature : signatures)
+        for (TransactionSignature signature : signatures) {
             pushes.add(signature.encodeToBitcoin());
+        }
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
+    }
+
+    public static TransactionWitness createWitnessErpScript(Script witnessScript, List<TransactionSignature> signatures) {
+        List<byte[]> pushes = new ArrayList<>(signatures.size() + 3);
+        pushes.add(new byte[] {});
+        for (TransactionSignature signature : signatures) {
+            pushes.add(signature.encodeToBitcoin());
+        }
+        pushes.add(new byte[] {});
         pushes.add(witnessScript.getProgram());
         return TransactionWitness.of(pushes);
     }

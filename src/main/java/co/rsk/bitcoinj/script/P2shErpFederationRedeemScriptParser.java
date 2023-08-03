@@ -84,6 +84,29 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
         return erpRedeemScript;
     }
 
+    public static Script createP2shP2wshErpRedeemScript(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue
+    ) {
+        byte[] serializedCsvValue = Utils.signedLongToByteArrayLE(csvValue);
+
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+
+        Script erpP2shP2wshRedeemScript = scriptBuilder
+            .op(ScriptOpCodes.OP_0NOTEQUAL)
+            .op(ScriptOpCodes.OP_NOTIF)
+            .addChunks(defaultFederationRedeemScript.getChunks())
+            .op(ScriptOpCodes.OP_ELSE)
+            .data(serializedCsvValue)
+            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(erpFederationRedeemScript.getChunks())
+            .op(ScriptOpCodes.OP_ENDIF)
+            .build();
+        return erpP2shP2wshRedeemScript;
+    }
+
     public static boolean isP2shErpFed(List<ScriptChunk> chunks) {
         return RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
     }
