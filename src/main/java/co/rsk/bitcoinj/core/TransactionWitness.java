@@ -74,7 +74,7 @@ public class TransactionWitness {
         for (TransactionSignature signature : signatures) {
             pushes.add(signature.encodeToBitcoin());
         }
-        pushes.add(new byte[] {});
+        pushes.add(new byte[] {}); // OP_NOTIF argument. If a 0 is set it will validate against the standard keys, if a 1 is set it will validate against the emergency keys
         pushes.add(witnessScript.getProgram());
         return TransactionWitness.of(pushes);
     }
