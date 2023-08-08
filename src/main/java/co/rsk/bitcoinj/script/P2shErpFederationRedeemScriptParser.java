@@ -94,7 +94,6 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
         Script erpP2shP2wshRedeemScript = scriptBuilder
-            .op(ScriptOpCodes.OP_0NOTEQUAL)
             .op(ScriptOpCodes.OP_NOTIF)
             .addChunks(defaultFederationRedeemScript.getChunks())
             .op(ScriptOpCodes.OP_ELSE)
