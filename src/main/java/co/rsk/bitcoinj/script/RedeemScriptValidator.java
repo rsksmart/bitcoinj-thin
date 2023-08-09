@@ -192,16 +192,30 @@ public class RedeemScriptValidator {
         List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
         int redeemScriptSize = redeemScript.getProgram().length;
 
-        int requiredStandardSignatures = Integer.parseInt(redeemScript.getChunks().get(1).toString());
+        int requiredStandardSignatures = 0;
         int requiredEmergencySignatures = 0;
+
+        byte[] requiredStandardSignaturesData = redeemScript.getChunks().get(1).data;
+        if (requiredStandardSignaturesData == null) {
+            requiredStandardSignatures = Integer.parseInt(redeemScript.getChunks().get(1).toString());
+        } else {
+            requiredStandardSignatures = redeemScript.getChunks().get(1).data[0];
+        }
 
         for (int i = 2; i < redeemScriptChunks.size(); i++) {
             ScriptChunk chunk = redeemScriptChunks.get(i);
             if (chunk.equalsOpCode(ScriptOpCodes.OP_DROP)) {
-                requiredEmergencySignatures = Integer.parseInt(redeemScript.getChunks().get(i+1).toString());
+                byte[] requiredEmergencySignaturesData = redeemScript.getChunks().get(i+1).data;
+                if (requiredEmergencySignaturesData == null) {
+                    requiredEmergencySignatures = Integer.parseInt(redeemScript.getChunks().get(i+1).toString());
+                } else {
+                    requiredEmergencySignatures = redeemScript.getChunks().get(i+1).data[0];
+                }
                 break;
             }
         }
+
+        // had to add those "== null" because of the length of the data.
 
         int maxRequiredSignatures = Math.max(requiredStandardSignatures, requiredEmergencySignatures);
         int maxWitnessSignaturesSize = maxRequiredSignatures * 72; // signature bytes size is 71 or 72
