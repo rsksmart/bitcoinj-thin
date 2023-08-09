@@ -103,6 +103,28 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
             .addChunks(erpFederationRedeemScript.getChunks())
             .op(ScriptOpCodes.OP_ENDIF)
             .build();
+
+
+        // Validate the created redeem script has a valid structure
+        if (!RedeemScriptValidator.hasP2shErpRedeemScriptStructure(erpP2shP2wshRedeemScript.getChunks())) {
+            String message = String.format(
+                "Created redeem script has an invalid structure, not P2SH-P2WSH ERP redeem script. Redeem script created: %s",
+                erpP2shP2wshRedeemScript
+            );
+            logger.debug("[createErpRedeemScript] {}", message);
+            throw new VerificationException(message);
+        }
+
+        // Validate the created redeem script has a valid size
+        if (!RedeemScriptValidator.hasWitnessScriptAllowed(erpP2shP2wshRedeemScript)) {
+            String message = String.format(
+                "Created redeem script has an invalid witness size, higher than script size accepted. Redeem script created: %s",
+                erpP2shP2wshRedeemScript
+            );
+            logger.debug("[createErpRedeemScript] {}", message);
+            throw new VerificationException(message);
+        }
+
         return erpP2shP2wshRedeemScript;
     }
 

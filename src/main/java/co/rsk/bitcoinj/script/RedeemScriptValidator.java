@@ -188,6 +188,27 @@ public class RedeemScriptValidator {
             hasStandardRedeemScriptStructure(erpFedRedeemScript.getChunks());
     }
 
+    protected static boolean hasWitnessScriptAllowed(Script redeemScript) {
+        List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
+        int redeemScriptSize = redeemScript.getProgram().length;
+
+        int requiredStandardSignatures = Integer.parseInt(redeemScript.getChunks().get(1).toString());
+        int requiredEmergencySignatures = 0;
+
+        for (int i = 2; i < redeemScriptChunks.size(); i++) {
+            ScriptChunk chunk = redeemScriptChunks.get(i);
+            if (chunk.equalsOpCode(ScriptOpCodes.OP_DROP)) {
+                requiredEmergencySignatures = Integer.parseInt(redeemScript.getChunks().get(i+1).toString());
+                break;
+            }
+        }
+
+        int maxRequiredSignatures = Math.max(requiredStandardSignatures, requiredEmergencySignatures);
+        int maxWitnessSignaturesSize = maxRequiredSignatures * 72; // signature bytes size is 71 or 72
+
+        return (redeemScriptSize + maxWitnessSignaturesSize + 2 < 10000); // the witness also has an OP_0 and a minimal byte, so we add 2 more bytes to the size
+    }
+
     protected static boolean hasFastBridgePrefix(List<ScriptChunk> chunks) {
         ScriptChunk firstChunk = chunks.get(0);
 
