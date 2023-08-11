@@ -74,7 +74,7 @@ public class TransactionWitness {
         for (TransactionSignature signature : signatures) {
             pushes.add(signature.encodeToBitcoin());
         }
-        pushes.add(new byte[0]); // OP_NOTIF argument. If a 0 is set it will validate against the standard keys, if a 1 is set it will validate against the emergency keys
+        pushes.add(new byte[] {}); // OP_NOTIF argument. If an empty vector is set it will validate against the standard keys, if a 1 is set it will validate against the emergency keys
         pushes.add(witnessScript.getProgram());
         return TransactionWitness.of(pushes);
     }
@@ -85,7 +85,7 @@ public class TransactionWitness {
         for (TransactionSignature signature : signatures) {
             pushes.add(signature.encodeToBitcoin());
         }
-        pushes.add(new byte[1]); // OP_NOTIF argument. If a 0 is set it will validate against the standard keys, if a 1 is set it will validate against the emergency keys
+        pushes.add(new byte[] {1}); // OP_NOTIF argument. If an empty vector is set it will validate against the standard keys, if a 1 is set it will validate against the emergency keys
         pushes.add(witnessScript.getProgram());
         return TransactionWitness.of(pushes);
     }
