@@ -1,6 +1,0 @@
-#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Wed Jul 26 16:08:40 ART 2023
-bitcoinj-thin-0.14.4-rsk-14-SNAPSHOT-bundled.jar>=
-bitcoinj-thin-0.14.4-rsk-14-SNAPSHOT-sources.jar>=
-bitcoinj-thin-0.14.4-rsk-14-SNAPSHOT.jar>=
-bitcoinj-thin-0.14.4-rsk-14-SNAPSHOT.pom>=

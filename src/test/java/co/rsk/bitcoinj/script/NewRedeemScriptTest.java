@@ -1,23 +1,24 @@
 package co.rsk.bitcoinj.script;
 
-import co.rsk.bitcoinj.core.*;
-import co.rsk.bitcoinj.crypto.TransactionSignature;
-import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
+import static co.rsk.bitcoinj.script.Script.ALL_VERIFY_FLAGS;
 
-import java.nio.charset.StandardCharsets;
+import co.rsk.bitcoinj.core.Address;
+import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.BtcTransaction;
+import co.rsk.bitcoinj.core.Coin;
+import co.rsk.bitcoinj.core.NetworkParameters;
+import co.rsk.bitcoinj.core.Sha256Hash;
+import co.rsk.bitcoinj.crypto.TransactionSignature;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
+import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
 public class NewRedeemScriptTest {
     @Test
-    void spendFromP2shP2wshAddressWithNewRedeem() {
+    public void spendFromP2shP2wshAddressWithNewRedeem() {
         NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_TESTNET);
-        long activationDelay = 30;
 
         // Created with GenNodeKeyId using seed 'fed1'
         byte[] publicKeyBytes = Hex.decode("043267e382e076cbaa199d49ea7362535f95b135de181caf66b391f541bf39ab0e75b8577faac2183782cb0d76820cf9f356831d216e99d886f8a6bc47fe696939");
@@ -37,7 +38,7 @@ public class NewRedeemScriptTest {
         List<BtcECKey> keys = Arrays.asList(btcKey1, btcKey2, btcKey3);
         List<BtcECKey> privateKeys =  Arrays.asList(fed1PrivKey, fed2PrivKey, fed3PrivKey);
 
-        Script redeemScript = new ScriptBuilder().createNewRedeemScript( keys.size() / 2 + 1, keys);
+        Script redeemScript = new ScriptBuilder().createNewRedeemScript(keys.size() / 2 + 1, keys);
 
         Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Address legacyAddress = Address.fromP2SHScript(
@@ -47,7 +48,7 @@ public class NewRedeemScriptTest {
         System.out.println(legacyAddress);
 
 
-        Sha256Hash fundTxHash = Sha256Hash.wrap("27d02abaf5a508d17db3ed612cc0d9cd2859d53b3ce30b0535711eddcac0c992");
+        Sha256Hash fundTxHash = Sha256Hash.wrap("7728d0ad5126afe126fe39243da57a42d66effdadda0f5825fafbd51ac1bb7ef");
         int outputIndex = 0;
         Address destinationAddress = Address.fromBase58(networkParameters, "msgc5Gtz2L9MVhXPDrFRCYPa16QgoZ2EjP"); // testnet
         Coin value = Coin.valueOf(10_000);
@@ -83,14 +84,14 @@ public class NewRedeemScriptTest {
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
         Script scriptSig = scriptBuilder
-                                .number(0)
-                                .data(signatures.get(0).encodeToBitcoin())
+                                .data(TransactionSignature.dummy().encodeToBitcoin())
                                 .data(signatures.get(1).encodeToBitcoin())
+                                .data(signatures.get(0).encodeToBitcoin())
                                 .data(redeemScript.getProgram())
                                 .build();
 
         spendTx.getInput(0).setScriptSig(scriptSig);
-        scriptSig.correctlySpends(spendTx, 0, spendTx.getOutput(0).getScriptPubKey());
+        scriptSig.correctlySpends(spendTx, 0, p2shOutputScript, ALL_VERIFY_FLAGS);
 
         // Uncomment to print the raw tx in console and broadcast https://blockstream.info/testnet/tx/push
         System.out.println(Hex.toHexString(spendTx.bitcoinSerialize()));

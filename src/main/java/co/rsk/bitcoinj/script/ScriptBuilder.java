@@ -297,7 +297,7 @@ public class ScriptBuilder {
             builder.op(OP_ADD);
         }
         builder.number(threshold);
-        builder.op(OP_NUMEQUALVERIFY);
+        builder.op(OP_EQUAL);
         return builder.build();
     }
 
