@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>postgresql</groupId>
+  <artifactId>postgresql</artifactId>
+  <packaging>jar</packaging>
+  <name>PostgreSQL JDBC Driver</name>
+  <version>9.1-901.jdbc4</version>
+  <description>The PostgreSQL Driver JDBC4</description>
+  <url>http://jdbc.postgresql.org</url>
+  <developers>
+    <developer>
+      <id>davecramer</id>
+      <name>Dave Cramer</name>
+    </developer>
+    <developer>
+      <id>jurka</id>
+      <name>Kris Jurka</name>
+    </developer>
+    <developer>
+      <id>oliver</id>
+      <name>Oliver Jowett</name>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>BSD License</name>
+      <url>http://jdbc.postgresql.org/license.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:cvs:pserver:anonymous@cvs.pgfoundry.org:/cvsroot/jdbc:pgjdbc</connection>
+    <url>http://cvs.pgfoundry.org/cgi-bin/cvsweb.cgi/jdbc/pgjdbc/</url>
+  </scm>
+</project>

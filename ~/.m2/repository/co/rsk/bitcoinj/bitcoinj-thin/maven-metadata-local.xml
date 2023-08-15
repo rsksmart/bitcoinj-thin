@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>co.rsk.bitcoinj</groupId>
+  <artifactId>bitcoinj-thin</artifactId>
+  <versioning>
+    <versions>
+      <version>0.14.4-rsk-14-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20230726190625</lastUpdated>
+  </versioning>
+</metadata>

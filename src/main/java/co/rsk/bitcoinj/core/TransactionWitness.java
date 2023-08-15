@@ -60,7 +60,7 @@ public class TransactionWitness {
 
     public static TransactionWitness createWitnessScript(Script witnessScript, List<TransactionSignature> signatures) {
         List<byte[]> pushes = new ArrayList<>(signatures.size() + 2);
-        pushes.add(new byte[] {});
+        //pushes.add(new byte[] {});
         for (TransactionSignature signature : signatures) {
             pushes.add(signature.encodeToBitcoin());
         }

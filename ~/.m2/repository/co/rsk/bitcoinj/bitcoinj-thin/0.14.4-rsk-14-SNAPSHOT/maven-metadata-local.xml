@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>co.rsk.bitcoinj</groupId>
+  <artifactId>bitcoinj-thin</artifactId>
+  <versioning>
+    <lastUpdated>20230726190625</lastUpdated>
+    <snapshot>
+      <localCopy>true</localCopy>
+    </snapshot>
+    <snapshotVersions>
+      <snapshotVersion>
+        <classifier>sources</classifier>
+        <extension>jar</extension>
+        <value>0.14.4-rsk-14-SNAPSHOT</value>
+        <updated>20230726190625</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <classifier>bundled</classifier>
+        <extension>jar</extension>
+        <value>0.14.4-rsk-14-SNAPSHOT</value>
+        <updated>20230726190625</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>jar</extension>
+        <value>0.14.4-rsk-14-SNAPSHOT</value>
+        <updated>20230726190625</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>0.14.4-rsk-14-SNAPSHOT</value>
+        <updated>20230726190625</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+  <version>0.14.4-rsk-14-SNAPSHOT</version>
+</metadata>

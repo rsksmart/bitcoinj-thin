@@ -282,6 +282,25 @@ public class ScriptBuilder {
         return builder.build();
     }
 
+    /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
+    public static Script createNewMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
+        checkArgument(threshold > 0);
+        checkArgument(threshold <= pubkeys.size());
+        ScriptBuilder builder = new ScriptBuilder();
+        BtcECKey firstKey = pubkeys.get(0);
+        builder.data(firstKey.getPubKey());
+        builder.op(OP_CHECKSIG);
+        for (int i = 1; i < pubkeys.size(); i ++) {
+            builder.op(OP_SWAP);
+            builder.data(pubkeys.get(i).getPubKey());
+            builder.op(OP_CHECKSIG);
+            builder.op(OP_ADD);
+        }
+        builder.number(threshold);
+        builder.op(OP_NUMEQUALVERIFY);
+        return builder.build();
+    }
+
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
     public static Script createMultiSigInputScript(List<TransactionSignature> signatures) {
         List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
@@ -446,6 +465,12 @@ public class ScriptBuilder {
         pubkeys = new ArrayList<BtcECKey>(pubkeys);
         Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
+    }
+
+    public static Script createNewRedeemScript(int threshold, List<BtcECKey> pubkeys) {
+        pubkeys = new ArrayList<BtcECKey>(pubkeys);
+        Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
+        return ScriptBuilder.createNewMultiSigOutputScript(threshold, pubkeys);
     }
 
     /**
