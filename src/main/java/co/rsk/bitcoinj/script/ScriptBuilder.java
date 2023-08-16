@@ -282,22 +282,22 @@ public class ScriptBuilder {
         return builder.build();
     }
 
-    /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
+    /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKSIG, OP_SWAP and OP_ADD. */
     public static Script createNewMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0);
         checkArgument(threshold <= pubkeys.size());
         ScriptBuilder builder = new ScriptBuilder();
-        BtcECKey firstKey = pubkeys.get(0);
-        builder.data(firstKey.getPubKey());
+        BtcECKey lastKey = pubkeys.get(pubkeys.size() - 1);
+        builder.data(lastKey.getPubKey());
         builder.op(OP_CHECKSIG);
-        for (int i = 1; i < pubkeys.size(); i ++) {
+        for (int i = pubkeys.size() - 2; i >= 0; i --) {
             builder.op(OP_SWAP);
             builder.data(pubkeys.get(i).getPubKey());
             builder.op(OP_CHECKSIG);
             builder.op(OP_ADD);
         }
         builder.number(threshold);
-        builder.op(OP_EQUAL);
+        builder.op(OP_NUMEQUAL);
         return builder.build();
     }
 

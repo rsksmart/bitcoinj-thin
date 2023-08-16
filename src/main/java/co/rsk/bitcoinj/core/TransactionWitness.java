@@ -68,6 +68,20 @@ public class TransactionWitness {
         return TransactionWitness.of(pushes);
     }
 
+
+    public static TransactionWitness createWitnessScriptWithNewRedeem(Script witnessScript, List<TransactionSignature> thresholdSignatures, int signaturesSize) {
+        int zeroSignaturesSize = signaturesSize - thresholdSignatures.size();
+        List<byte[]> pushes = new ArrayList<>(signaturesSize + 1);
+        for (int i = 0; i < thresholdSignatures.size(); i++) {
+            pushes.add(thresholdSignatures.get(i).encodeToBitcoin());
+        }
+        for (int i = 0; i < zeroSignaturesSize; i ++) {
+            pushes.add(new byte[0]);
+        }
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
+    }
+
     public static TransactionWitness createWitnessErpScript(Script witnessScript, List<TransactionSignature> signatures) {
         List<byte[]> pushes = new ArrayList<>(signatures.size() + 3);
         pushes.add(new byte[] {});
