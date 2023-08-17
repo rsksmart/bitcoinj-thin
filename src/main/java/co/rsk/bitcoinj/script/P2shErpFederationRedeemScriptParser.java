@@ -133,6 +133,43 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
         return erpP2shP2wshRedeemScript;
     }
 
+    public static Script createErpP2shP2wshNewRedeemScript(
+        Script defaultFederationRedeemScript,
+        Script erpFederationRedeemScript,
+        Long csvValue) {
+
+/*        validateErpRedeemScriptValues(
+            defaultFederationRedeemScript,
+            erpFederationRedeemScript,
+            csvValue
+        );*/
+        byte[] serializedCsvValue = Utils.signedLongToByteArrayLE(csvValue);
+
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+
+        Script erpRedeemScript = scriptBuilder
+            .op(ScriptOpCodes.OP_NOTIF)
+            .addChunks(defaultFederationRedeemScript.getChunks())
+            .op(ScriptOpCodes.OP_ELSE)
+            .data(serializedCsvValue)
+            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(erpFederationRedeemScript.getChunks())
+            .op(ScriptOpCodes.OP_ENDIF)
+            .build();
+
+/*        // Validate the created redeem script has a valid structure
+        if (!RedeemScriptValidator.hasErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
+            String message = String.format(
+                "Created redeem script has an invalid structure, not ERP redeem script. Redeem script created: %s",
+                erpRedeemScript
+            );
+            logger.debug("[createErpRedeemScript] {}", message);
+            throw new VerificationException(message);
+        }*/
+        return erpRedeemScript;
+    }
+
     public static boolean isP2shErpFed(List<ScriptChunk> chunks) {
         return RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
     }
