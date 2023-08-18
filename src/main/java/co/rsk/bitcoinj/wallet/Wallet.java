@@ -398,7 +398,7 @@ public class Wallet
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
             Coin availableBalance = getBalance(BalanceType.AVAILABLE_SPENDABLE);
             builder.append("Wallet containing ").append(estimatedBalance.toFriendlyString()).append(" (spendable: ")
-                    .append(availableBalance.toFriendlyString()).append(") in:\n");
+                .append(availableBalance.toFriendlyString()).append(") in:\n");
             if (!watchedScripts.isEmpty()) {
                 builder.append("\nWatched scripts:\n");
                 for (Script script : watchedScripts) {
@@ -576,7 +576,7 @@ public class Wallet
             }
 
             log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
-                    value.toFriendlyString(), req.feePerKb.toFriendlyString());
+                value.toFriendlyString(), req.feePerKb.toFriendlyString());
 
             // If any inputs have already been added, we don't need to get their value from wallet
             Coin totalInput = Coin.ZERO;
@@ -611,9 +611,12 @@ public class Wallet
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
             List<Coin> updatedOutputValues = null;
+            boolean isSegwit = false;
+            //req.tx.hasWitness();
+            log.info("isSegwit? {}", isSegwit);
             if (!req.emptyWallet) {
                 // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates);
+                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates, isSegwit);
                 bestCoinSelection = feeCalculation.bestCoinSelection;
                 bestChangeOutput = feeCalculation.bestChangeOutput;
                 updatedOutputValues = feeCalculation.updatedOutputValues;
@@ -914,7 +917,7 @@ public class Wallet
     //region Fee calculation code
 
     public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
-                                       boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
+                                       boolean needAtLeastReferenceFee, List<TransactionOutput> candidates, boolean isSegwit) throws InsufficientMoneyException {
         FeeCalculation result;
         Coin fee = Coin.ZERO;
         while (true) {
@@ -931,14 +934,14 @@ public class Wallet
             }
             for (int i = 0; i < req.tx.getOutputs().size(); i++) {
                 TransactionOutput output = new TransactionOutput(params, tx,
-                        req.tx.getOutputs().get(i).bitcoinSerialize(), 0);
+                    req.tx.getOutputs().get(i).bitcoinSerialize(), 0);
                 if (req.recipientsPayFees) {
                     // Subtract fee equally from each selected recipient
                     output.setValue(output.getValue().subtract(fee.divide(req.tx.getOutputs().size())));
                     // first receiver pays the remainder not divisible by output count
                     if (i == 0) {
                         output.setValue(
-                                output.getValue().subtract(fee.divideAndRemainder(req.tx.getOutputs().size())[1])); // Subtract fee equally from each selected recipient
+                            output.getValue().subtract(fee.divideAndRemainder(req.tx.getOutputs().size())[1])); // Subtract fee equally from each selected recipient
                     }
                     result.updatedOutputValues.add(output.getValue());
                     if (output.getMinNonDustValue().isGreaterThan(output.getValue())) {
@@ -996,10 +999,19 @@ public class Wallet
                 checkState(input.getScriptBytes().length == 0);
             }
 
-            int size = tx.unsafeBitcoinSerialize().length;
-            size += estimateBytesForSigning(selection);
+            int size;
+            if (isSegwit) {
+                size = calculateTxVirtualSize(tx);
+                log.info("Since isSegwit {} the size is {}", isSegwit, size);
+            }
+            else {
+                size = tx.unsafeBitcoinSerialize().length;
+                size += estimateBytesForSigning(selection);
+                log.info("Since isSegwit {} the size is {}", isSegwit, size);
+            }
 
             Coin feePerKb = req.feePerKb;
+            log.info("feePerKb {}", feePerKb);
             if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
                 feePerKb = BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE;
             }
@@ -1015,6 +1027,46 @@ public class Wallet
         }
         return result;
 
+    }
+
+    public static int calculateTxBaseSize(BtcTransaction spendTx) {
+        int baseSize = 0;
+
+        int inputsQuantity = spendTx.getInputs().size();
+        for (int i = 0; i < inputsQuantity; i++) {
+            byte[] input = spendTx.getInput(i).bitcoinSerialize();
+            baseSize += input.length;
+        }
+
+        int outputsQuantity = spendTx.getOutputs().size();
+        for (int i = 0; i < outputsQuantity; i++) {
+            byte[] output = spendTx.getOutput(i).bitcoinSerialize();
+            baseSize += output.length;
+        }
+
+        baseSize += 4; // version size
+        baseSize += 1; // marker size
+        baseSize += 1; // flag size
+        baseSize += 4; // locktime size
+
+        return baseSize;
+    }
+
+    public static int calculateTxWeight(BtcTransaction spendTx) {
+        int txTotalSize = spendTx.bitcoinSerialize().length;
+        int txBaseSize = calculateTxBaseSize(spendTx);
+
+        // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
+        int txWeight = txTotalSize + (3 * txBaseSize);
+        return txWeight;
+    }
+
+    public static int calculateTxVirtualSize(BtcTransaction spendTx) {
+        double txWeight = calculateTxWeight(spendTx);
+
+        // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
+        int txVirtualSize = (int) Math.ceil(txWeight / 4);
+        return txVirtualSize;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
