@@ -40,7 +40,6 @@ import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.script.*;
 import co.rsk.bitcoinj.signers.*;
 import org.slf4j.*;
-import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.*;
 import java.util.*;
@@ -572,7 +571,6 @@ public class Wallet
             checkArgument(!req.completed, "Given SendRequest has already been completed.");
             // Calculate the amount of value we need to import.
             Coin value = Coin.ZERO;
-
             for (TransactionOutput output : req.tx.getOutputs()) {
                 value = value.add(output.getValue());
             }
@@ -1023,8 +1021,6 @@ public class Wallet
 
             if (!fee.isLessThan(feeNeeded)) {
                 // Done, enough fee included.
-                System.out.println("fee is" + fee);
-                System.out.println("result is" + result);
                 break;
             }
 
@@ -1040,10 +1036,9 @@ public class Wallet
 
         int inputsQuantity = spendTx.getInputs().size();
         for (int i = 0; i < inputsQuantity; i++) {
-            TransactionInput input = spendTx.getInput(i);
-            byte[] inputSerialized = input.bitcoinSerialize();
-            baseSize += inputSerialized.length;
-            // at this time the scriptSig is empty = 00. so we should count its bytes manually and remove the byte from the empty one.
+            byte[] input = spendTx.getInput(i).bitcoinSerialize();
+            baseSize += input.length;
+            // at this time the scriptSig for every input is empty = 00. so we should count its bytes manually and remove the byte from the empty one.
             baseSize += 36 - 1;
         }
 
