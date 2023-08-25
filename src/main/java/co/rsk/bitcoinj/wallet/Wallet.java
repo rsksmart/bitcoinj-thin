@@ -1002,9 +1002,9 @@ public class Wallet
 
             baseSize = calculateTxBaseSize(tx, req.isSegwit);
             totalSize = baseSize + estimateBytesForSigning(selection);
+            totalSize += bytesToAdd(tx);
 
             if (req.isSegwit) {
-                totalSize += bytesToAdd(tx); // im pretty sure this should be added for legacy too. is not related to witness but to the total transaction size
                 size = calculateWitnessTxVirtualSize(baseSize, totalSize);
                 log.info("The tx is segwit so the size is {} ", size);
             }
@@ -1081,7 +1081,7 @@ public class Wallet
         bytes += 1; // outputs quantity bytes size
         bytes += 1; // empty vector before signatures bytes size
         bytes += 1; // op_notif value bytes size
-        bytes += 4; // 4 bytes before the redeem
+        bytes += 4; // 3 or 4 bytes before the redeem are added. count them like 4
 
         return bytes;
     }
