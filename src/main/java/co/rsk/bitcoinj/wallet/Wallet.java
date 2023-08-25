@@ -40,6 +40,7 @@ import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.script.*;
 import co.rsk.bitcoinj.signers.*;
 import org.slf4j.*;
+import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.*;
 import java.util.*;
@@ -571,6 +572,7 @@ public class Wallet
             checkArgument(!req.completed, "Given SendRequest has already been completed.");
             // Calculate the amount of value we need to import.
             Coin value = Coin.ZERO;
+
             for (TransactionOutput output : req.tx.getOutputs()) {
                 value = value.add(output.getValue());
             }
@@ -611,12 +613,9 @@ public class Wallet
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
             List<Coin> updatedOutputValues = null;
-            boolean isSegwit = false;
-            //req.tx.hasWitness();
-            log.info("isSegwit? {}", isSegwit);
             if (!req.emptyWallet) {
                 // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates, isSegwit);
+                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates);
                 bestCoinSelection = feeCalculation.bestCoinSelection;
                 bestChangeOutput = feeCalculation.bestChangeOutput;
                 updatedOutputValues = feeCalculation.updatedOutputValues;
@@ -917,7 +916,7 @@ public class Wallet
     //region Fee calculation code
 
     public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
-                                       boolean needAtLeastReferenceFee, List<TransactionOutput> candidates, boolean isSegwit) throws InsufficientMoneyException {
+                                       boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
         FeeCalculation result;
         Coin fee = Coin.ZERO;
         while (true) {
@@ -1000,18 +999,23 @@ public class Wallet
             }
 
             int size;
-            if (isSegwit) {
-                size = calculateTxVirtualSize(tx);
-                log.info("Since isSegwit {} the size is {}", isSegwit, size);
+            int totalSize;
+            int baseSize;
+
+            baseSize = calculateTxBaseSize(tx, req.isSegwit);
+            totalSize = baseSize + estimateBytesForSigning(selection);
+
+            if (req.isSegwit) {
+                totalSize += bytesToAdd(tx); // im pretty sure this should be added for legacy too. is not related to witness but to the total transaction size
+                size = calculateWitnessTxVirtualSize(baseSize, totalSize);
+                log.info("The tx is segwit so the size is {} ", size);
             }
             else {
-                size = tx.unsafeBitcoinSerialize().length;
-                size += estimateBytesForSigning(selection);
-                log.info("Since isSegwit {} the size is {}", isSegwit, size);
+                size = totalSize;
+                log.info("The tx is not segwit so the size is {} ", size);
             }
 
             Coin feePerKb = req.feePerKb;
-            log.info("feePerKb {}", feePerKb);
             if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
                 feePerKb = BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE;
             }
@@ -1019,6 +1023,8 @@ public class Wallet
 
             if (!fee.isLessThan(feeNeeded)) {
                 // Done, enough fee included.
+                System.out.println("fee is" + fee);
+                System.out.println("result is" + result);
                 break;
             }
 
@@ -1029,13 +1035,16 @@ public class Wallet
 
     }
 
-    public static int calculateTxBaseSize(BtcTransaction spendTx) {
+    public static int calculateTxBaseSize(BtcTransaction spendTx, boolean isSegwit) {
         int baseSize = 0;
 
         int inputsQuantity = spendTx.getInputs().size();
         for (int i = 0; i < inputsQuantity; i++) {
-            byte[] input = spendTx.getInput(i).bitcoinSerialize();
-            baseSize += input.length;
+            TransactionInput input = spendTx.getInput(i);
+            byte[] inputSerialized = input.bitcoinSerialize();
+            baseSize += inputSerialized.length;
+            // at this time the scriptSig is empty = 00. so we should count its bytes manually and remove the byte from the empty one.
+            baseSize += 36 - 1;
         }
 
         int outputsQuantity = spendTx.getOutputs().size();
@@ -1045,28 +1054,41 @@ public class Wallet
         }
 
         baseSize += 4; // version size
-        baseSize += 1; // marker size
-        baseSize += 1; // flag size
         baseSize += 4; // locktime size
+
+        if (isSegwit) {
+            baseSize += 1; // marker size
+            baseSize += 1; // flag size
+        }
 
         return baseSize;
     }
 
-    public static int calculateTxWeight(BtcTransaction spendTx) {
-        int txTotalSize = spendTx.bitcoinSerialize().length;
-        int txBaseSize = calculateTxBaseSize(spendTx);
+    public static int calculateWitnessTxWeight(int txBaseSize, int txTotalSize) {
 
         // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
         int txWeight = txTotalSize + (3 * txBaseSize);
         return txWeight;
     }
 
-    public static int calculateTxVirtualSize(BtcTransaction spendTx) {
-        double txWeight = calculateTxWeight(spendTx);
+    public static int calculateWitnessTxVirtualSize(int txBaseSize, int txTotalSize) {
+        double txWeight = calculateWitnessTxWeight(txBaseSize, txTotalSize);
 
         // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
         int txVirtualSize = (int) Math.ceil(txWeight / 4);
         return txVirtualSize;
+    }
+
+    public static int bytesToAdd(BtcTransaction tx) {
+        int bytes = 0;
+
+        bytes += 1; // inputs quantity bytes size
+        bytes += 1; // outputs quantity bytes size
+        bytes += 1; // empty vector before signatures bytes size
+        bytes += 1; // op_notif value bytes size
+        bytes += 4; // 4 bytes before the redeem
+
+        return bytes;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
