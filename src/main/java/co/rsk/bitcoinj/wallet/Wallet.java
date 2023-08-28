@@ -996,8 +996,22 @@ public class Wallet
                 checkState(input.getScriptBytes().length == 0);
             }
 
-            int size = tx.unsafeBitcoinSerialize().length;
-            size += estimateBytesForSigning(selection);
+            int size;
+            int totalSize;
+            int baseSize;
+
+            baseSize = calculateTxBaseSize(tx, req.isSegwit);
+            totalSize = baseSize + estimateBytesForSigning(selection);
+            totalSize += bytesToAdd(tx);
+
+            if (req.isSegwit) {
+                size = calculateWitnessTxVirtualSize(baseSize, totalSize);
+                log.info("The tx is segwit so the size is {} ", size);
+            }
+            else {
+                size = totalSize;
+                log.info("The tx is not segwit so the size is {} ", size);
+            }
 
             Coin feePerKb = req.feePerKb;
             if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
@@ -1015,6 +1029,61 @@ public class Wallet
         }
         return result;
 
+    }
+
+    public static int calculateTxBaseSize(BtcTransaction spendTx, boolean isSegwit) {
+        int baseSize = 0;
+
+        int inputsQuantity = spendTx.getInputs().size();
+        for (int i = 0; i < inputsQuantity; i++) {
+            byte[] input = spendTx.getInput(i).bitcoinSerialize();
+            baseSize += input.length;
+            // at this time the scriptSig for every input is empty = 00. so we should count its bytes manually and remove the byte from the empty one.
+            baseSize += 36 - 1;
+        }
+
+        int outputsQuantity = spendTx.getOutputs().size();
+        for (int i = 0; i < outputsQuantity; i++) {
+            byte[] output = spendTx.getOutput(i).bitcoinSerialize();
+            baseSize += output.length;
+        }
+
+        baseSize += 4; // version size
+        baseSize += 4; // locktime size
+
+        if (isSegwit) {
+            baseSize += 1; // marker size
+            baseSize += 1; // flag size
+        }
+
+        return baseSize;
+    }
+
+    public static int calculateWitnessTxWeight(int txBaseSize, int txTotalSize) {
+
+        // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
+        int txWeight = txTotalSize + (3 * txBaseSize);
+        return txWeight;
+    }
+
+    public static int calculateWitnessTxVirtualSize(int txBaseSize, int txTotalSize) {
+        double txWeight = calculateWitnessTxWeight(txBaseSize, txTotalSize);
+
+        // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
+        int txVirtualSize = (int) Math.ceil(txWeight / 4);
+        return txVirtualSize;
+    }
+
+    public static int bytesToAdd(BtcTransaction tx) {
+        int bytes = 0;
+
+        bytes += 1; // inputs quantity bytes size
+        bytes += 1; // outputs quantity bytes size
+        bytes += 1; // empty vector before signatures bytes size
+        bytes += 1; // op_notif value bytes size
+        bytes += 4; // 3 or 4 bytes before the redeem are added. count them like 4
+
+        return bytes;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
