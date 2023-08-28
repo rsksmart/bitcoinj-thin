@@ -432,7 +432,7 @@ public class BtcECKey {
     /** Gets the hash160 form of the public key (as seen in addresses). */
     public byte[] getPubKeyHash() {
         if (pubKeyHash == null)
-            pubKeyHash = Utils.sha256hash160(this.pub.getEncoded());
+            pubKeyHash = Utils.hash160(this.pub.getEncoded());
         return pubKeyHash;
     }
 

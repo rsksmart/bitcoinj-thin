@@ -18,7 +18,9 @@
 package co.rsk.bitcoinj.core;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -230,5 +232,34 @@ public class UtilsTest {
         reversedConversion = Utils.reverseBytes(conversion); // Turn into BE
         obtainedValue = new BigInteger(reversedConversion).longValue();
         assertEquals(value, obtainedValue);
-    }
+    };
+
+    @Test
+    public void hash160() {
+
+        List<byte[]> inputs = Arrays.asList(
+                Hex.decode(""),
+                Hex.decode("abcd"),
+                Hex.decode("00"),
+                Hex.decode("01"),
+                Hex.decode("0000"),
+                Hex.decode("ffff")
+        );
+        List<byte[]> expectedHashes = Arrays.asList(
+                Hex.decode("b472a266d0bd89c13706a4132ccfb16f7c3b9fcb"),
+                Hex.decode("4671c47a9d20c240a291661520d4af51df08fb0b"),
+                Hex.decode("9f7fd096d37ed2c0e3f7f0cfc924beef4ffceb68"),
+                Hex.decode("c51b66bced5e4491001bd702669770dccf440982"),
+                Hex.decode("e6c41bcc570872e88e58db7c940dc8d399e72aef"),
+                Hex.decode("e6abebacc6bf964f5131e80b241e3fe14bc3e156")
+        );
+
+        for (int i = 0; i < inputs.size(); i++) {
+            byte[] input = inputs.get(i);
+            byte[] expectedHash = expectedHashes.get(i);
+
+            byte[] hashResult = Utils.hash160(input);
+            assertArrayEquals(expectedHash, hashResult);
+        }
+    };
 }
