@@ -282,6 +282,25 @@ public class ScriptBuilder {
         return builder.build();
     }
 
+    /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKSIG, OP_SWAP and OP_ADD. */
+    public static Script createNewMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
+        checkArgument(threshold > 0);
+        checkArgument(threshold <= pubkeys.size());
+        ScriptBuilder builder = new ScriptBuilder();
+        BtcECKey lastKey = pubkeys.get(pubkeys.size() - 1);
+        builder.data(lastKey.getPubKey());
+        builder.op(OP_CHECKSIG);
+        for (int i = pubkeys.size() - 2; i >= 0; i --) {
+            builder.op(OP_SWAP);
+            builder.data(pubkeys.get(i).getPubKey());
+            builder.op(OP_CHECKSIG);
+            builder.op(OP_ADD);
+        }
+        builder.number(threshold);
+        builder.op(OP_NUMEQUAL);
+        return builder.build();
+    }
+
     /** Create a program that satisfies an OP_CHECKMULTISIG program. */
     public static Script createMultiSigInputScript(List<TransactionSignature> signatures) {
         List<byte[]> sigs = new ArrayList<byte[]>(signatures.size());
@@ -446,6 +465,16 @@ public class ScriptBuilder {
         pubkeys = new ArrayList<BtcECKey>(pubkeys);
         Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
+    }
+
+    /**
+     * Creates redeem script with new structure with given public keys and threshold. Given public keys will be placed in
+     * redeem script in the lexicographical sorting order.
+     */
+    public static Script createNewRedeemScript(int threshold, List<BtcECKey> pubkeys) {
+        pubkeys = new ArrayList<BtcECKey>(pubkeys);
+        Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
+        return ScriptBuilder.createNewMultiSigOutputScript(threshold, pubkeys);
     }
 
     /**

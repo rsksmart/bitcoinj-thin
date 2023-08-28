@@ -58,17 +58,7 @@ public class TransactionWitness {
         return witness;
     }
 
-    public static TransactionWitness createWitnessScript(Script witnessScript, List<TransactionSignature> signatures) {
-        List<byte[]> pushes = new ArrayList<>(signatures.size() + 2);
-        pushes.add(new byte[] {});
-        for (TransactionSignature signature : signatures) {
-            pushes.add(signature.encodeToBitcoin());
-        }
-        pushes.add(witnessScript.getProgram());
-        return TransactionWitness.of(pushes);
-    }
-
-    public static TransactionWitness createWitnessErpScript(Script witnessScript, List<TransactionSignature> signatures) {
+    public static TransactionWitness createWitnessErpStandardScript(Script witnessScript, List<TransactionSignature> signatures) {
         List<byte[]> pushes = new ArrayList<>(signatures.size() + 3);
         pushes.add(new byte[] {});
         for (TransactionSignature signature : signatures) {
@@ -86,6 +76,42 @@ public class TransactionWitness {
             pushes.add(signature.encodeToBitcoin());
         }
         pushes.add(new byte[] {1}); // OP_NOTIF argument. If an empty vector is set it will validate against the standard keys, if a 1 is set it will validate against the emergency keys
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
+    }
+
+    public static TransactionWitness createWitnessErpStandardNewScript(Script witnessScript, List<TransactionSignature> thresholdSignatures, int signaturesSize) {
+        int zeroSignaturesSize = signaturesSize - thresholdSignatures.size();
+        List<byte[]> pushes = new ArrayList<>(signaturesSize + 2);
+
+        // signatures to be used
+        for (int i = 0; i < thresholdSignatures.size(); i++) {
+            pushes.add(thresholdSignatures.get(i).encodeToBitcoin());
+        }
+
+        // empty signatures
+        for (int i = 0; i < zeroSignaturesSize; i ++) {
+            pushes.add(new byte[0]);
+        }
+        pushes.add(new byte[] {}); // OP_NOTIF argument
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
+    }
+
+    public static TransactionWitness createWitnessErpEmergencyNewScript(Script witnessScript, List<TransactionSignature> thresholdSignatures, int signaturesSize) {
+        int zeroSignaturesSize = signaturesSize - thresholdSignatures.size();
+        List<byte[]> pushes = new ArrayList<>(signaturesSize + 2);
+
+        // signatures to be used
+        for (int i = 0; i < thresholdSignatures.size(); i++) {
+            pushes.add(thresholdSignatures.get(i).encodeToBitcoin());
+        }
+
+        // empty signatures
+        for (int i = 0; i < zeroSignaturesSize; i ++) {
+            pushes.add(new byte[0]);
+        }
+        pushes.add(new byte[] {1}); // OP_NOTIF argument
         pushes.add(witnessScript.getProgram());
         return TransactionWitness.of(pushes);
     }

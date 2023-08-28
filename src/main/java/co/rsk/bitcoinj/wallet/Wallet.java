@@ -40,6 +40,7 @@ import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.script.*;
 import co.rsk.bitcoinj.signers.*;
 import org.slf4j.*;
+import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.*;
 import java.util.*;
@@ -1038,8 +1039,11 @@ public class Wallet
         for (int i = 0; i < inputsQuantity; i++) {
             byte[] input = spendTx.getInput(i).bitcoinSerialize();
             baseSize += input.length;
-            // at this time the scriptSig for every input is empty = 00. so we should count its bytes manually and remove the byte from the empty one.
-            baseSize += 36 - 1;
+
+            baseSize += 4; // redeem script size in hexa - is not always 4 but approximately.
+            if (isSegwit) {
+                baseSize += 36 - 1; // at this time the scriptSig for every input is empty = 00. so we should count its bytes manually and remove the byte from the empty one.
+            }
         }
 
         int outputsQuantity = spendTx.getOutputs().size();
@@ -1047,9 +1051,6 @@ public class Wallet
             byte[] output = spendTx.getOutput(i).bitcoinSerialize();
             baseSize += output.length;
         }
-
-        baseSize += 4; // version size
-        baseSize += 4; // locktime size
 
         if (isSegwit) {
             baseSize += 1; // marker size
@@ -1077,11 +1078,10 @@ public class Wallet
     public static int bytesToAdd(BtcTransaction tx) {
         int bytes = 0;
 
+        bytes += 4; // version size
         bytes += 1; // inputs quantity bytes size
         bytes += 1; // outputs quantity bytes size
-        bytes += 1; // empty vector before signatures bytes size
-        bytes += 1; // op_notif value bytes size
-        bytes += 4; // 3 or 4 bytes before the redeem are added. count them like 4
+        bytes += 4; // locktime size
 
         return bytes;
     }
