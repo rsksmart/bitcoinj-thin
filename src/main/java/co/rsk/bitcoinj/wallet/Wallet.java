@@ -398,7 +398,7 @@ public class Wallet
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
             Coin availableBalance = getBalance(BalanceType.AVAILABLE_SPENDABLE);
             builder.append("Wallet containing ").append(estimatedBalance.toFriendlyString()).append(" (spendable: ")
-                .append(availableBalance.toFriendlyString()).append(") in:\n");
+                    .append(availableBalance.toFriendlyString()).append(") in:\n");
             if (!watchedScripts.isEmpty()) {
                 builder.append("\nWatched scripts:\n");
                 for (Script script : watchedScripts) {
@@ -576,7 +576,7 @@ public class Wallet
             }
 
             log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
-                value.toFriendlyString(), req.feePerKb.toFriendlyString());
+                    value.toFriendlyString(), req.feePerKb.toFriendlyString());
 
             // If any inputs have already been added, we don't need to get their value from wallet
             Coin totalInput = Coin.ZERO;
