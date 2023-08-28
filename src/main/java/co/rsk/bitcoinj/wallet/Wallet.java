@@ -931,14 +931,14 @@ public class Wallet
             }
             for (int i = 0; i < req.tx.getOutputs().size(); i++) {
                 TransactionOutput output = new TransactionOutput(params, tx,
-                    req.tx.getOutputs().get(i).bitcoinSerialize(), 0);
+                        req.tx.getOutputs().get(i).bitcoinSerialize(), 0);
                 if (req.recipientsPayFees) {
                     // Subtract fee equally from each selected recipient
                     output.setValue(output.getValue().subtract(fee.divide(req.tx.getOutputs().size())));
                     // first receiver pays the remainder not divisible by output count
                     if (i == 0) {
                         output.setValue(
-                            output.getValue().subtract(fee.divideAndRemainder(req.tx.getOutputs().size())[1])); // Subtract fee equally from each selected recipient
+                                output.getValue().subtract(fee.divideAndRemainder(req.tx.getOutputs().size())[1])); // Subtract fee equally from each selected recipient
                     }
                     result.updatedOutputValues.add(output.getValue());
                     if (output.getMinNonDustValue().isGreaterThan(output.getValue())) {
