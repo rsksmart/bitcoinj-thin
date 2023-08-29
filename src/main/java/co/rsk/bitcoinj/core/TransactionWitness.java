@@ -60,7 +60,11 @@ public class TransactionWitness {
 
     public static TransactionWitness createWitnessErpStandardScript(Script witnessScript, List<TransactionSignature> signatures) {
         List<byte[]> pushes = new ArrayList<>(signatures.size() + 3);
-        pushes.add(new byte[] {});
+        // the +3 is related to:
+        // first empty byte necessary to avoid OP_CHECKMULTISIG's bug,
+        // the empty byte for OP_NOTIF argument,
+        // the redeem script push
+        pushes.add(new byte[] {}); // OP_0
         for (TransactionSignature signature : signatures) {
             pushes.add(signature.encodeToBitcoin());
         }
@@ -71,7 +75,12 @@ public class TransactionWitness {
 
     public static TransactionWitness createWitnessErpEmergencyScript(Script witnessScript, List<TransactionSignature> signatures) {
         List<byte[]> pushes = new ArrayList<>(signatures.size() + 3);
-        pushes.add(new byte[] {});
+        // the +3 is related to:
+        // first empty byte necessary to avoid OP_CHECKMULTISIG's bug,
+        // the empty byte for OP_NOTIF argument,
+        // the redeem script push
+
+        pushes.add(new byte[] {}); // OP_0
         for (TransactionSignature signature : signatures) {
             pushes.add(signature.encodeToBitcoin());
         }
@@ -81,8 +90,13 @@ public class TransactionWitness {
     }
 
     public static TransactionWitness createWitnessErpStandardNewScript(Script witnessScript, List<TransactionSignature> thresholdSignatures, int signaturesSize) {
+        // with this new script structure, we need to add valid and invalid signatures
+        // in the -reverse- order the public keys appear in it
+
         int zeroSignaturesSize = signaturesSize - thresholdSignatures.size();
         List<byte[]> pushes = new ArrayList<>(signaturesSize + 2);
+        // since we are not using OP_CHECKMULTISIG anymore, we don't need to push a first empty byte
+        // so we add +2 pushes, related to the OP_NOTIF and the redeem script
 
         // signatures to be used
         for (int i = 0; i < thresholdSignatures.size(); i++) {
@@ -99,8 +113,13 @@ public class TransactionWitness {
     }
 
     public static TransactionWitness createWitnessErpEmergencyNewScript(Script witnessScript, List<TransactionSignature> thresholdSignatures, int signaturesSize) {
+        // with this new script structure, we need to add valid and invalid signatures
+        // in the inverse order the public keys appear in it
+
         int zeroSignaturesSize = signaturesSize - thresholdSignatures.size();
         List<byte[]> pushes = new ArrayList<>(signaturesSize + 2);
+        // since we are not using OP_CHECKMULTISIG anymore, we don't need to push a first empty byte
+        // so we add +2 pushes, related to the OP_NOTIF and the redeem script
 
         // signatures to be used
         for (int i = 0; i < thresholdSignatures.size(); i++) {
