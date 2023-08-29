@@ -96,7 +96,7 @@ public class Script {
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
-    public static final int SIG_SIZE = 75;
+    public static final int SIG_SIZE = 75; // pretty sure this should be 73.
     /** Max number of sigops allowed in a standard p2sh redeem script */
     public static final int MAX_P2SH_SIGOPS = 15;
 
@@ -325,7 +325,7 @@ public class Script {
      */
     @Deprecated
     public Address getFromAddress(NetworkParameters params) throws ScriptException {
-        return new Address(params, Utils.sha256hash160(getPubKey()));
+        return new Address(params, Utils.hash160(getPubKey()));
     }
 
     /**
@@ -610,7 +610,12 @@ public class Script {
         if (isPayToScriptHash()) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
             checkArgument(redeemScript != null, "P2SH script requires redeemScript to be spent");
-            return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.getProgram().length;
+            int bytesRequired = redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE;
+            bytesRequired += redeemScript.getProgram().length;
+            bytesRequired += 1; // 1 byte for first empty byte
+            bytesRequired += 1; // 1 byte for op_notif argument
+            bytesRequired += 5; // redeemScript bytes-size in hexa (approx)
+            return bytesRequired;
         } else if (isSentToMultiSig()) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
             return getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + 1;
@@ -1263,7 +1268,7 @@ public class Script {
                 case OP_HASH160:
                     if (stack.size() < 1)
                         throw new ScriptException("Attempted OP_HASH160 on an empty stack");
-                    stack.add(Utils.sha256hash160(stack.pollLast()));
+                    stack.add(Utils.hash160(stack.pollLast()));
                     break;
                 case OP_HASH256:
                     if (stack.size() < 1)

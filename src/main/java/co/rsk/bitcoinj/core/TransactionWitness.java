@@ -1,10 +1,12 @@
 package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.crypto.TransactionSignature;
+import co.rsk.bitcoinj.script.Script;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TransactionWitness {
     static TransactionWitness empty = new TransactionWitness(0);
@@ -13,10 +15,20 @@ public class TransactionWitness {
         return empty;
     }
 
-    private List<byte[]> pushes;
+    private final List<byte[]> pushes;
 
     public TransactionWitness(int pushCount) {
         pushes = new ArrayList<byte[]>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
+    }
+
+    public static TransactionWitness of(List<byte[]> pushes) {
+        return new TransactionWitness(pushes);
+    }
+
+    private TransactionWitness(List<byte[]> pushes) {
+        for (byte[] push : pushes)
+            Objects.requireNonNull(push);
+        this.pushes = pushes;
     }
 
     public byte[] getPush(int i) {
@@ -44,6 +56,83 @@ public class TransactionWitness {
         witness.setPush(0, sigBytes);
         witness.setPush(1, pubKeyBytes);
         return witness;
+    }
+
+    public static TransactionWitness createWitnessErpStandardScript(Script witnessScript, List<TransactionSignature> signatures) {
+        List<byte[]> pushes = new ArrayList<>(signatures.size() + 3);
+        // the +3 is related to:
+        // first empty byte necessary to avoid OP_CHECKMULTISIG's bug,
+        // the empty byte for OP_NOTIF argument,
+        // the redeem script push
+        pushes.add(new byte[] {}); // OP_0
+        for (TransactionSignature signature : signatures) {
+            pushes.add(signature.encodeToBitcoin());
+        }
+        pushes.add(new byte[] {}); // OP_NOTIF argument. If an empty vector is set it will validate against the standard keys, if a 1 is set it will validate against the emergency keys
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
+    }
+
+    public static TransactionWitness createWitnessErpEmergencyScript(Script witnessScript, List<TransactionSignature> signatures) {
+        List<byte[]> pushes = new ArrayList<>(signatures.size() + 3);
+        // the +3 is related to:
+        // first empty byte necessary to avoid OP_CHECKMULTISIG's bug,
+        // the empty byte for OP_NOTIF argument,
+        // the redeem script push
+
+        pushes.add(new byte[] {}); // OP_0
+        for (TransactionSignature signature : signatures) {
+            pushes.add(signature.encodeToBitcoin());
+        }
+        pushes.add(new byte[] {1}); // OP_NOTIF argument. If an empty vector is set it will validate against the standard keys, if a 1 is set it will validate against the emergency keys
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
+    }
+
+    public static TransactionWitness createWitnessErpStandardNewScript(Script witnessScript, List<TransactionSignature> thresholdSignatures, int signaturesSize) {
+        // with this new script structure, we need to add valid and invalid signatures
+        // in the -reverse- order the public keys appear in it
+
+        int zeroSignaturesSize = signaturesSize - thresholdSignatures.size();
+        List<byte[]> pushes = new ArrayList<>(signaturesSize + 2);
+        // since we are not using OP_CHECKMULTISIG anymore, we don't need to push a first empty byte
+        // so we add +2 pushes, related to the OP_NOTIF and the redeem script
+
+        // signatures to be used
+        for (int i = 0; i < thresholdSignatures.size(); i++) {
+            pushes.add(thresholdSignatures.get(i).encodeToBitcoin());
+        }
+
+        // empty signatures
+        for (int i = 0; i < zeroSignaturesSize; i ++) {
+            pushes.add(new byte[0]);
+        }
+        pushes.add(new byte[] {}); // OP_NOTIF argument
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
+    }
+
+    public static TransactionWitness createWitnessErpEmergencyNewScript(Script witnessScript, List<TransactionSignature> thresholdSignatures, int signaturesSize) {
+        // with this new script structure, we need to add valid and invalid signatures
+        // in the inverse order the public keys appear in it
+
+        int zeroSignaturesSize = signaturesSize - thresholdSignatures.size();
+        List<byte[]> pushes = new ArrayList<>(signaturesSize + 2);
+        // since we are not using OP_CHECKMULTISIG anymore, we don't need to push a first empty byte
+        // so we add +2 pushes, related to the OP_NOTIF and the redeem script
+
+        // signatures to be used
+        for (int i = 0; i < thresholdSignatures.size(); i++) {
+            pushes.add(thresholdSignatures.get(i).encodeToBitcoin());
+        }
+
+        // empty signatures
+        for (int i = 0; i < zeroSignaturesSize; i ++) {
+            pushes.add(new byte[0]);
+        }
+        pushes.add(new byte[] {1}); // OP_NOTIF argument
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
     }
 
     public byte[] getScriptBytes() {

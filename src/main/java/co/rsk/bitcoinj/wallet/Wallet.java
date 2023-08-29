@@ -40,6 +40,7 @@ import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.script.*;
 import co.rsk.bitcoinj.signers.*;
 import org.slf4j.*;
+import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.*;
 import java.util.*;
@@ -996,8 +997,22 @@ public class Wallet
                 checkState(input.getScriptBytes().length == 0);
             }
 
-            int size = tx.unsafeBitcoinSerialize().length;
-            size += estimateBytesForSigning(selection);
+            int size;
+            int totalSize;
+            int baseSize;
+
+            baseSize = calculateTxBaseSize(tx, req.isSegwit);
+            totalSize = baseSize + estimateBytesForSigning(selection);
+            totalSize += 1 + 1; // 1 byte before inputs + 1 byte before outputs
+
+            if (req.isSegwit) {
+                size = calculateWitnessTxVirtualSize(baseSize, totalSize);
+                log.info("The tx is segwit so the size is {} ", size);
+            }
+            else {
+                size = totalSize;
+                log.info("The tx is not segwit so the size is {} ", size);
+            }
 
             Coin feePerKb = req.feePerKb;
             if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
@@ -1015,6 +1030,52 @@ public class Wallet
         }
         return result;
 
+    }
+
+    public static int calculateTxBaseSize(BtcTransaction spendTx, boolean isSegwit) {
+        int baseSize = 0;
+
+        int inputsQuantity = spendTx.getInputs().size();
+        for (int i = 0; i < inputsQuantity; i++) {
+            byte[] input = spendTx.getInput(i).bitcoinSerialize();
+            System.out.println(Hex.toHexString(input));
+            baseSize += input.length;
+
+            if (isSegwit) {
+                baseSize += 36 - 1; // at this time the scriptSig for every input is empty = 00. so we should count its bytes manually and remove the byte from the empty one.
+            }
+        }
+
+        int outputsQuantity = spendTx.getOutputs().size();
+        for (int i = 0; i < outputsQuantity; i++) {
+            byte[] output = spendTx.getOutput(i).bitcoinSerialize();
+            System.out.println(Hex.toHexString(output));
+            baseSize += output.length;
+        }
+
+        baseSize += 4; // version
+        if (isSegwit) {
+            baseSize += 1; // marker size
+            baseSize += 1; // flag size
+        }
+        baseSize += 4; // locktime
+
+        return baseSize;
+    }
+
+    public static int calculateWitnessTxWeight(int txBaseSize, int txTotalSize) {
+
+        // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
+        int txWeight = txTotalSize + (3 * txBaseSize);
+        return txWeight;
+    }
+
+    public static int calculateWitnessTxVirtualSize(int txBaseSize, int txTotalSize) {
+        double txWeight = calculateWitnessTxWeight(txBaseSize, txTotalSize);
+
+        // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
+        int txVirtualSize = (int) Math.ceil(txWeight / 4);
+        return txVirtualSize;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {

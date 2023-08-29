@@ -107,7 +107,7 @@ public class ScriptTest {
         byte[] sigProgBytes = Hex.decode(sigProg);
         Script script = new Script(sigProgBytes);
         // Test we can extract the from address.
-        byte[] hash160 = Utils.sha256hash160(script.getPubKey());
+        byte[] hash160 = Utils.hash160(script.getPubKey());
         Address a = new Address(PARAMS, hash160);
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", a.toString());
     }
