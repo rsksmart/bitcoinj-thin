@@ -1003,7 +1003,7 @@ public class Wallet
 
             baseSize = calculateTxBaseSize(tx, req.isSegwit);
             totalSize = baseSize + estimateBytesForSigning(selection);
-            totalSize += bytesToAdd(tx);
+            totalSize += 1 + 1; // 1 byte before inputs + 1 byte before outputs
 
             if (req.isSegwit) {
                 size = calculateWitnessTxVirtualSize(baseSize, totalSize);
@@ -1040,7 +1040,6 @@ public class Wallet
             byte[] input = spendTx.getInput(i).bitcoinSerialize();
             baseSize += input.length;
 
-            baseSize += 4; // redeem script size in hexa - is not always 4 but approximately.
             if (isSegwit) {
                 baseSize += 36 - 1; // at this time the scriptSig for every input is empty = 00. so we should count its bytes manually and remove the byte from the empty one.
             }
@@ -1052,10 +1051,12 @@ public class Wallet
             baseSize += output.length;
         }
 
+        baseSize += 4; // version
         if (isSegwit) {
             baseSize += 1; // marker size
             baseSize += 1; // flag size
         }
+        baseSize += 4; // locktime
 
         return baseSize;
     }
@@ -1073,17 +1074,6 @@ public class Wallet
         // As described in https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#transaction-size-calculations
         int txVirtualSize = (int) Math.ceil(txWeight / 4);
         return txVirtualSize;
-    }
-
-    public static int bytesToAdd(BtcTransaction tx) {
-        int bytes = 0;
-
-        bytes += 4; // version size
-        bytes += 1; // inputs quantity bytes size
-        bytes += 1; // outputs quantity bytes size
-        bytes += 4; // locktime size
-
-        return bytes;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
