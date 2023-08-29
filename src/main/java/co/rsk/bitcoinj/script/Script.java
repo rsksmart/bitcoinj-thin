@@ -610,7 +610,12 @@ public class Script {
         if (isPayToScriptHash()) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
             checkArgument(redeemScript != null, "P2SH script requires redeemScript to be spent");
-            return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.getProgram().length + 3 + 1 + 1; // 1 byte for first empty byte, 1 byte for op_notif argument
+            int bytesRequired = redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE;
+            bytesRequired += redeemScript.getProgram().length;
+            bytesRequired += 1; // 1 byte for first empty byte
+            bytesRequired += 1; // 1 byte for op_notif argument
+            bytesRequired += 5; // redeemScript bytes-size in hexa (approx)
+            return bytesRequired;
         } else if (isSentToMultiSig()) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
             return getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + 1;

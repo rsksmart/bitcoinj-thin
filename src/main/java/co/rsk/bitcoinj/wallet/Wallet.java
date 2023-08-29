@@ -1038,6 +1038,7 @@ public class Wallet
         int inputsQuantity = spendTx.getInputs().size();
         for (int i = 0; i < inputsQuantity; i++) {
             byte[] input = spendTx.getInput(i).bitcoinSerialize();
+            System.out.println(Hex.toHexString(input));
             baseSize += input.length;
 
             if (isSegwit) {
@@ -1048,6 +1049,7 @@ public class Wallet
         int outputsQuantity = spendTx.getOutputs().size();
         for (int i = 0; i < outputsQuantity; i++) {
             byte[] output = spendTx.getOutput(i).bitcoinSerialize();
+            System.out.println(Hex.toHexString(output));
             baseSize += output.length;
         }
 
