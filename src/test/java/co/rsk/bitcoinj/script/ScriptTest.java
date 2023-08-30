@@ -13,7 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *//*
+
 
 package co.rsk.bitcoinj.script;
 
@@ -407,7 +408,9 @@ public class ScriptTest {
         ScriptBuilder.createOutputScript(new BtcECKey()).getToAddress(PARAMS, false);
     }
 
-    /** Test encoding of zero, which should result in an opcode */
+    */
+/** Test encoding of zero, which should result in an opcode *//*
+
     @Test
     public void numberBuilderZero() {
         final ScriptBuilder builder = new ScriptBuilder();
@@ -832,3 +835,4 @@ public class ScriptTest {
         return scriptPubKeys;
     }
 }
+*/

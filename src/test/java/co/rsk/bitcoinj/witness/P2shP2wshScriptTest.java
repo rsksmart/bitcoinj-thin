@@ -43,7 +43,7 @@ public class P2shP2wshScriptTest {
         Script redeemScript = P2shP2wshErpFederationRedeemScriptParser.createP2shP2wshErpRedeemScript(standardRedeem, emergencyRedeem, activationDelay);
 
         Script p2shP2wshOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
-        Address segwitAddress = Address.fromP2SHScript(
+        LegacyAddress segwitAddress = LegacyAddress.fromP2SHScript(
             networkParameters,
             p2shP2wshOutputScript
         );
@@ -53,7 +53,7 @@ public class P2shP2wshScriptTest {
         Coin value = Coin.valueOf(10_000);
         int outputIndex = 0;
         Coin fee = Coin.valueOf(1_000);
-        Address receiver = Address.fromBase58(networkParameters,"msgc5Gtz2L9MVhXPDrFRCYPa16QgoZ2EjP");
+        LegacyAddress receiver = LegacyAddress.fromBase58(networkParameters,"msgc5Gtz2L9MVhXPDrFRCYPa16QgoZ2EjP");
 
         BtcTransaction spendTx = new BtcTransaction(networkParameters);
         spendTx.addInput(fundTxHash, outputIndex, new Script(new byte[]{}));
@@ -122,7 +122,7 @@ public class P2shP2wshScriptTest {
         Script redeemScript = P2shP2wshErpFederationRedeemScriptParser.createP2shP2wshErpRedeemScript(standardRedeem, emergencyRedeem, activationDelay);
 
         Script p2shP2wshOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
-        Address segwitAddress = Address.fromP2SHScript(
+        LegacyAddress segwitAddress = LegacyAddress.fromP2SHScript(
             networkParameters,
             p2shP2wshOutputScript
         );
@@ -132,7 +132,7 @@ public class P2shP2wshScriptTest {
         Coin value = Coin.valueOf(10_000);
         int outputIndex = 0;
         Coin fee = Coin.valueOf(1_000);
-        Address receiver = Address.fromBase58(networkParameters,"msgc5Gtz2L9MVhXPDrFRCYPa16QgoZ2EjP");
+        LegacyAddress receiver = LegacyAddress.fromBase58(networkParameters,"msgc5Gtz2L9MVhXPDrFRCYPa16QgoZ2EjP");
 
         BtcTransaction spendTx = new BtcTransaction(networkParameters);
         spendTx.addInput(fundTxHash, outputIndex, new Script(new byte[]{}));
@@ -204,7 +204,7 @@ public class P2shP2wshScriptTest {
         Script redeemScript = P2shP2wshErpFederationRedeemScriptParser.createP2shP2wshErpRedeemScriptWithFlyover(standardRedeem, emergencyRedeem, flyoverDerivationPath, activationDelay);
 
         Script p2shP2wshOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
-        Address segwitAddress = Address.fromP2SHScript(
+        LegacyAddress segwitAddress = LegacyAddress.fromP2SHScript(
             networkParameters,
             p2shP2wshOutputScript
         );
@@ -214,7 +214,7 @@ public class P2shP2wshScriptTest {
         Coin value = Coin.valueOf(10_000);
         int outputIndex = 0;
         Coin fee = Coin.valueOf(1_000);
-        Address receiver = Address.fromBase58(networkParameters,"msgc5Gtz2L9MVhXPDrFRCYPa16QgoZ2EjP");
+        LegacyAddress receiver = LegacyAddress.fromBase58(networkParameters,"msgc5Gtz2L9MVhXPDrFRCYPa16QgoZ2EjP");
 
         BtcTransaction spendTx = new BtcTransaction(networkParameters);
         spendTx.addInput(fundTxHash, outputIndex, new Script(new byte[]{}));

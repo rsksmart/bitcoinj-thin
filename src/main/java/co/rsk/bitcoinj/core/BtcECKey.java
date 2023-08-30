@@ -472,8 +472,8 @@ public class BtcECKey {
      * Returns the address that corresponds to the public part of this ECKey. Note that an address is derived from
      * the RIPEMD-160 hash of the public key and is not the public key itself (which is too large to be convenient).
      */
-    public Address toAddress(NetworkParameters params) {
-        return new Address(params, getPubKeyHash());
+    public LegacyAddress toAddress(NetworkParameters params) {
+        return new LegacyAddress(params, getPubKeyHash());
     }
 
     /**

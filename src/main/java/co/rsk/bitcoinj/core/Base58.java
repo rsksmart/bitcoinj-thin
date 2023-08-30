@@ -132,6 +132,20 @@ public class Base58 {
         // Return decoded data (including original number of leading zeros).
         return Arrays.copyOfRange(decoded, outputStart - zeros, decoded.length);
     }
+
+    public static String encodeChecked(int version, byte[] payload) {
+        if (version < 0 || version > 255)
+            throw new IllegalArgumentException("Version not in range.");
+
+        // A stringified buffer is:
+        // 1 byte version + data bytes + 4 bytes check code (a truncated hash)
+        byte[] addressBytes = new byte[1 + payload.length + 4];
+        addressBytes[0] = (byte) version;
+        System.arraycopy(payload, 0, addressBytes, 1, payload.length);
+        byte[] checksum = Sha256Hash.hashTwice(addressBytes, 0, payload.length + 1);
+        System.arraycopy(checksum, 0, addressBytes, payload.length + 1, 4);
+        return Base58.encode(addressBytes);
+    }
     
     public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
         return new BigInteger(1, decode(input));

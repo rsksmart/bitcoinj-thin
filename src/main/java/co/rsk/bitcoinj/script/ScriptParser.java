@@ -32,16 +32,16 @@ public class ScriptParser {
                     // Read some bytes of data, where how many is the opcode value itself.
                     dataToRead = opcode;
                 } else if (opcode == OP_PUSHDATA1) {
-                    if (bis.available() < 1) throw new ScriptException("Unexpected end of script");
+                    if (bis.available() < 1) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
                     dataToRead = bis.read();
                 } else if (opcode == OP_PUSHDATA2) {
                     // Read a short, then read that many bytes of data.
-                    if (bis.available() < 2) throw new ScriptException("Unexpected end of script");
+                    if (bis.available() < 2) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
                     dataToRead = bis.read() | (bis.read() << 8);
                 } else if (opcode == OP_PUSHDATA4) {
                     // Read a uint32, then read that many bytes of data.
                     // Though this is allowed, because its value cannot be > 520, it should never actually be used
-                    if (bis.available() < 4) throw new ScriptException("Unexpected end of script");
+                    if (bis.available() < 4) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
                     dataToRead = ((long)bis.read()) | (((long)bis.read()) << 8) | (((long)bis.read()) << 16) | (((long)bis.read()) << 24);
                 }
 
@@ -50,7 +50,7 @@ public class ScriptParser {
                     chunk = new ScriptChunk(opcode, null, startLocationInProgram);
                 } else {
                     if (dataToRead > bis.available())
-                        throw new ScriptException("Push of data element that is larger than remaining data");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Push of data element that is larger than remaining data");
                     byte[] data = new byte[(int)dataToRead];
                     checkState(dataToRead == 0 || bis.read(data, 0, (int)dataToRead) == dataToRead);
                     chunk = new ScriptChunk(opcode, data, startLocationInProgram);

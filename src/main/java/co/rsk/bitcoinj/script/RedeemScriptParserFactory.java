@@ -103,7 +103,7 @@ public class RedeemScriptParserFactory {
                 if (result.getException().isPresent()) {
                     String message = String.format("Error trying to parse inner script. %s", result.getException().get());
                     logger.debug("[extractRedeemScriptFromChunks] {}", message);
-                    throw new ScriptException(message);
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, message);
                 }
                 return new ParseResult(result.getChunks(), ScriptType.P2SH);
             }

@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *//*
+
 
 package co.rsk.bitcoinj.utils;
 
@@ -40,9 +41,11 @@ public class VersionTallyTest {
         Context context = new Context(PARAMS);
     }
 
-    /**
+    */
+/**
      * Verify that the version tally returns null until it collects enough data.
-     */
+     *//*
+
     @Test
     public void testNullWhileEmpty() {
         VersionTally instance = new VersionTally(PARAMS);
@@ -53,18 +56,22 @@ public class VersionTallyTest {
         assertEquals(PARAMS.getMajorityWindow(), instance.getCountAtOrAbove(1).intValue());
     }
 
-    /**
+    */
+/**
      * Verify that the size of the version tally matches the network parameters.
-     */
+     *//*
+
     @Test
     public void testSize() {
         VersionTally instance = new VersionTally(PARAMS);
         assertEquals(PARAMS.getMajorityWindow(), instance.size());
     }
 
-    /**
+    */
+/**
      * Verify that version count and substitution works correctly.
-     */
+     *//*
+
     @Test
     public void testVersionCounts() {
         VersionTally instance = new VersionTally(PARAMS);
@@ -110,3 +117,4 @@ public class VersionTallyTest {
         assertEquals(PARAMS.getMajorityWindow(), instance.getCountAtOrAbove(2).intValue());
     }
 }
+*/

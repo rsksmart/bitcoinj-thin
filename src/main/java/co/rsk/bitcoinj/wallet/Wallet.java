@@ -17,26 +17,9 @@
 
 package co.rsk.bitcoinj.wallet;
 
+import co.rsk.bitcoinj.core.*;
 import com.google.common.collect.*;
 import net.jcip.annotations.*;
-import co.rsk.bitcoinj.core.BtcAbstractBlockChain;
-import co.rsk.bitcoinj.core.Address;
-import co.rsk.bitcoinj.core.BtcBlockChain;
-import co.rsk.bitcoinj.core.Coin;
-import co.rsk.bitcoinj.core.Context;
-import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.InsufficientMoneyException;
-import co.rsk.bitcoinj.core.NetworkParameters;
-import co.rsk.bitcoinj.core.ScriptException;
-import co.rsk.bitcoinj.core.Sha256Hash;
-import co.rsk.bitcoinj.core.BtcTransaction;
-import co.rsk.bitcoinj.core.TransactionBag;
-import co.rsk.bitcoinj.core.TransactionInput;
-import co.rsk.bitcoinj.core.TransactionOutput;
-import co.rsk.bitcoinj.core.UTXO;
-import co.rsk.bitcoinj.core.UTXOProvider;
-import co.rsk.bitcoinj.core.UTXOProviderException;
-import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.script.*;
 import co.rsk.bitcoinj.signers.*;
 import org.slf4j.*;
@@ -162,7 +145,7 @@ public class Wallet
     /**
      * Return true if we are watching this address.
      */
-    public boolean isAddressWatched(Address address) {
+    public boolean isAddressWatched(LegacyAddress address) {
         Script script = ScriptBuilder.createOutputScript(address);
         return isWatchedScript(script);
     }
@@ -170,7 +153,7 @@ public class Wallet
     /**
      * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
      */
-    public boolean addWatchedAddress(final Address address) {
+    public boolean addWatchedAddress(final LegacyAddress address) {
         long now = Utils.currentTimeMillis() / 1000;
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
@@ -181,7 +164,7 @@ public class Wallet
      * @param creationTime creation time in seconds since the epoch, for scanning the blockchain
      * @return whether the address was added successfully (not already present)
      */
-    public boolean addWatchedAddress(final Address address, long creationTime) {
+    public boolean addWatchedAddress(final LegacyAddress address, long creationTime) {
         return addWatchedAddresses(Lists.newArrayList(address), creationTime) == 1;
     }
 
@@ -191,10 +174,10 @@ public class Wallet
      *
      * @return how many addresses were added successfully
      */
-    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
+    public int addWatchedAddresses(final List<LegacyAddress> addresses, long creationTime) {
         List<Script> scripts = Lists.newArrayList();
 
-        for (Address address : addresses) {
+        for (LegacyAddress address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
             script.setCreationTimeSeconds(creationTime);
             scripts.add(script);
@@ -235,7 +218,7 @@ public class Wallet
      *
      * @return true if successful
      */
-    public boolean removeWatchedAddress(final Address address) {
+    public boolean removeWatchedAddress(final LegacyAddress address) {
         return removeWatchedAddresses(ImmutableList.of(address));
     }
 
@@ -244,10 +227,10 @@ public class Wallet
      *
      * @return true if successful
      */
-    public boolean removeWatchedAddresses(final List<Address> addresses) {
+    public boolean removeWatchedAddresses(final List<LegacyAddress> addresses) {
         List<Script> scripts = Lists.newArrayList();
 
-        for (Address address : addresses) {
+        for (LegacyAddress address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
             scripts.add(script);
         }
@@ -962,7 +945,7 @@ public class Wallet
                 // The value of the inputs is greater than what we want to send. Just like in real life then,
                 // we need to take back some coins ... this is called "change". Add another output that sends the change
                 // back to us. The address comes either from the request or currentChangeAddress() as a default.
-                Address changeAddress = req.changeAddress;
+                LegacyAddress changeAddress = req.changeAddress;
                 TransactionOutput changeOutput = new TransactionOutput(params, tx, change, changeAddress);
                 if (req.recipientsPayFees && changeOutput.isDust()) {
                     // We do not move dust-change to fees, because the sender would end up paying more than requested.

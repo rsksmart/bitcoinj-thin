@@ -54,7 +54,7 @@ public class Utils {
     public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
     public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
 
-    private static final Joiner SPACE_JOINER = Joiner.on(" ");
+    public static final Joiner SPACE_JOINER = Joiner.on(" ");
 
     /**
      * Max initial size of variable length arrays or ArrayLists.
@@ -143,6 +143,11 @@ public class Utils {
         out[offset + 7] = (byte) (0xFF & (val >> 56));
     }
 
+    public static void uint16ToByteStreamLE(int val, OutputStream stream) throws IOException {
+        stream.write((int) (0xFF & val));
+        stream.write((int) (0xFF & (val >> 8)));
+    }
+
     public static void uint32ToByteStreamLE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
@@ -228,12 +233,39 @@ public class Utils {
         return rev;
     }
 
+    public static long readUint32FromStream(InputStream is) {
+        try {
+            return (is.read() & 0xffl) |
+                ((is.read() & 0xffl) << 8) |
+                ((is.read() & 0xffl) << 16) |
+                ((is.read() & 0xffl) << 24);
+        } catch (IOException x) {
+            throw new RuntimeException(x);
+        }
+    }
+
+    public static int readUint16FromStream(InputStream is) {
+        try {
+            return (is.read() & 0xff) |
+                ((is.read() & 0xff) << 8);
+        } catch (IOException x) {
+            throw new RuntimeException(x);
+        }
+    }
+
     /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
     public static long readUint32(byte[] bytes, int offset) {
         return (bytes[offset] & 0xffl) |
                 ((bytes[offset + 1] & 0xffl) << 8) |
                 ((bytes[offset + 2] & 0xffl) << 16) |
                 ((bytes[offset + 3] & 0xffl) << 24);
+    }
+
+
+    /** Parse 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in little endian format. */
+    public static int readUint16(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xff) |
+            ((bytes[offset + 1] & 0xff) << 8);
     }
 
     /** Parse 8 bytes from the byte array (starting at the offset) as signed 64-bit integer in little endian format. */
@@ -700,5 +732,12 @@ public class Utils {
                 String.format("%d can not be represented with %d bytes", number, numBytes)
             );
         }
+    }
+
+    public static String toString(List<byte[]> stack) {
+        List<String> parts = new ArrayList<>(stack.size());
+        for (byte[] push : stack)
+            parts.add('[' + HEX.encode(push) + ']');
+        return SPACE_JOINER.join(parts);
     }
 }

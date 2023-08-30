@@ -34,7 +34,7 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public List<BtcECKey> getPubKeys() {
-        throw new ScriptException("Only usable for multisig scripts.");
+        throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Only usable for multisig scripts.");
     }
 
     @Override
@@ -44,6 +44,6 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public Script extractStandardRedeemScript() {
-        throw new ScriptException("Only usable for multisig scripts.");
+        throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Only usable for multisig scripts.");
     }
 }

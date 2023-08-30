@@ -16,12 +16,8 @@
 
 package co.rsk.bitcoinj.script;
 
-import co.rsk.bitcoinj.core.BtcTransaction;
-import co.rsk.bitcoinj.core.Sha256Hash;
+import co.rsk.bitcoinj.core.*;
 import com.google.common.collect.Lists;
-import co.rsk.bitcoinj.core.Address;
-import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 
 import javax.annotation.Nullable;
@@ -47,6 +43,11 @@ public class ScriptBuilder {
     /** Creates a fresh ScriptBuilder with an empty program. */
     public ScriptBuilder() {
         chunks = Lists.newLinkedList();
+    }
+
+    /** Creates an empty script. */
+    public static Script createEmpty() {
+        return new ScriptBuilder().build();
     }
 
     /** Creates a fresh ScriptBuilder with the given program as the starting point. */
@@ -223,7 +224,7 @@ public class ScriptBuilder {
     }
 
     /** Creates a scriptPubKey that encodes payment to the given address. */
-    public static Script createOutputScript(Address to) {
+    public static Script createOutputScript(LegacyAddress to) {
         if (to.isP2SHAddress()) {
             // OP_HASH160 <scriptHash> OP_EQUAL
             return new ScriptBuilder()
@@ -433,6 +434,17 @@ public class ScriptBuilder {
     public static Script createP2SHOutputScript(Script redeemScript) {
         byte[] hash = Utils.hash160(redeemScript.getProgram());
         return ScriptBuilder.createP2SHOutputScript(hash);
+    }
+
+    public static Script createP2PKHOutputScript(byte[] hash) {
+        checkArgument(hash.length == LegacyAddress.LENGTH);
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.op(OP_DUP);
+        builder.op(OP_HASH160);
+        builder.data(hash);
+        builder.op(OP_EQUALVERIFY);
+        builder.op(OP_CHECKSIG);
+        return builder.build();
     }
 
     /**

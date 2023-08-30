@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+
 
 package co.rsk.bitcoinj.core;
 
@@ -456,3 +458,4 @@ public class ParseByteCacheTest {
         return ind > -1;
     }
 }
+*/

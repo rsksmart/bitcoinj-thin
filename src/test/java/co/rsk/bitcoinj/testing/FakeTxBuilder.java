@@ -13,7 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *//*
+
 
 package co.rsk.bitcoinj.testing;
 
@@ -32,12 +33,16 @@ import static co.rsk.bitcoinj.core.Coin.*;
 import static com.google.common.base.Preconditions.checkState;
 
 public class FakeTxBuilder {
-    /** Create a fake transaction, without change. */
+    */
+/** Create a fake transaction, without change. *//*
+
     public static BtcTransaction createFakeTx(final NetworkParameters params) {
         return createFakeTxWithoutChangeAddress(params, Coin.COIN, new BtcECKey().toAddress(params));
     }
 
-    /** Create a fake transaction, without change. */
+    */
+/** Create a fake transaction, without change. *//*
+
     public static BtcTransaction createFakeTxWithoutChange(final NetworkParameters params, final TransactionOutput output) {
         BtcTransaction prevTx = FakeTxBuilder.createFakeTx(params, Coin.COIN, new BtcECKey().toAddress(params));
         BtcTransaction tx = new BtcTransaction(params);
@@ -46,7 +51,9 @@ public class FakeTxBuilder {
         return tx;
     }
 
-    /** Create a fake coinbase transaction. */
+    */
+/** Create a fake coinbase transaction. *//*
+
     public static BtcTransaction createFakeCoinbaseTx(final NetworkParameters params) {
         TransactionOutPoint outpoint = new TransactionOutPoint(params, -1, Sha256Hash.ZERO_HASH);
         TransactionInput input = new TransactionInput(params, null, new byte[0], outpoint);
@@ -60,10 +67,12 @@ public class FakeTxBuilder {
         return tx;
     }
 
-    /**
+    */
+/**
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
-     */
+     *//*
+
     public static BtcTransaction createFakeTxWithChangeAddress(NetworkParameters params, Coin value, Address to, Address changeOutput) {
         BtcTransaction t = new BtcTransaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
@@ -82,10 +91,12 @@ public class FakeTxBuilder {
         return roundTripTransaction(params, t);
     }
 
-    /**
+    */
+/**
      * Create a fake TX for unit tests, for use with unit tests that need greater control. One outputs, 2 random inputs,
      * split randomly to create randomness.
-     */
+     *//*
+
     public static BtcTransaction createFakeTxWithoutChangeAddress(NetworkParameters params, Coin value, Address to) {
         BtcTransaction t = new BtcTransaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
@@ -118,18 +129,22 @@ public class FakeTxBuilder {
         return roundTripTransaction(params, t);
     }
 
-    /**
+    */
+/**
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
-     */
+     *//*
+
     public static BtcTransaction createFakeTx(NetworkParameters params, Coin value, Address to) {
         return createFakeTxWithChangeAddress(params, value, to, new BtcECKey().toAddress(params));
     }
 
-    /**
+    */
+/**
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
-     */
+     *//*
+
     public static BtcTransaction createFakeTx(NetworkParameters params, Coin value, BtcECKey to) {
         BtcTransaction t = new BtcTransaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
@@ -147,9 +162,11 @@ public class FakeTxBuilder {
         return roundTripTransaction(params, t);
     }
 
-    /**
+    */
+/**
      * Transaction[0] is a feeder transaction, supplying BTC to Transaction[1]
-     */
+     *//*
+
     public static BtcTransaction[] createFakeTx(NetworkParameters params, Coin value,
                                                 Address to, Address from) {
         // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the
@@ -178,9 +195,11 @@ public class FakeTxBuilder {
         return new BtcTransaction[]{roundTripTransaction(params, prevTx), roundTripTransaction(params,t)};
     }
 
-    /**
+    */
+/**
      * Roundtrip a transaction so that it appears as if it has just come from the wire
-     */
+     *//*
+
     public static BtcTransaction roundTripTransaction(NetworkParameters params, BtcTransaction tx) {
         try {
             MessageSerializer bs = params.getDefaultSerializer();
@@ -196,10 +215,12 @@ public class FakeTxBuilder {
         public BtcTransaction t1, t2, prevTx;
     }
 
-    /**
+    */
+/**
      * Creates two transactions that spend the same (fake) output. t1 spends to "to". t2 spends somewhere else.
      * The fake output goes to the same address as t2.
-     */
+     *//*
+
     public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
         DoubleSpends doubleSpends = new DoubleSpends();
         Coin value = COIN;
@@ -233,13 +254,17 @@ public class FakeTxBuilder {
         public BtcBlock block;
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
+    */
+/** Emulates receiving a valid block that builds on top of the chain. *//*
+
     public static BlockPair createFakeBlock(BtcBlockStore blockStore, long version,
                                             long timeSeconds, BtcTransaction... transactions) {
         return createFakeBlock(blockStore, version, timeSeconds, 0, transactions);
     }
 
-    /** Emulates receiving a valid block */
+    */
+/** Emulates receiving a valid block *//*
+
     public static BlockPair createFakeBlock(BtcBlockStore blockStore, StoredBlock previousStoredBlock, long version,
                                             long timeSeconds, int height,
                                             BtcTransaction... transactions) {
@@ -269,7 +294,9 @@ public class FakeTxBuilder {
         return createFakeBlock(blockStore, previousStoredBlock, BtcBlock.BLOCK_VERSION_BIP66, Utils.currentTimeSeconds(), height, transactions);
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
+    */
+/** Emulates receiving a valid block that builds on top of the chain. *//*
+
     public static BlockPair createFakeBlock(BtcBlockStore blockStore, long version, long timeSeconds, int height, BtcTransaction... transactions) {
         try {
             return createFakeBlock(blockStore, blockStore.getChainHead(), version, timeSeconds, height, transactions);
@@ -278,13 +305,17 @@ public class FakeTxBuilder {
         }
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
+    */
+/** Emulates receiving a valid block that builds on top of the chain. *//*
+
     public static BlockPair createFakeBlock(BtcBlockStore blockStore, int height,
                                             BtcTransaction... transactions) {
         return createFakeBlock(blockStore, BtcBlock.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), height, transactions);
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
+    */
+/** Emulates receiving a valid block that builds on top of the chain. *//*
+
     public static BlockPair createFakeBlock(BtcBlockStore blockStore, BtcTransaction... transactions) {
         return createFakeBlock(blockStore, BtcBlock.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), 0, transactions);
     }
@@ -316,3 +347,4 @@ public class FakeTxBuilder {
         return b;
     }
 }
+*/

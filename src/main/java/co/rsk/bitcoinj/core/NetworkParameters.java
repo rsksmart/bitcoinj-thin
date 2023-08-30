@@ -67,6 +67,7 @@ public abstract class NetworkParameters {
     protected int addressHeader;
     protected int p2shHeader;
     protected int dumpedPrivateKeyHeader;
+    protected String segwitAddressHrp;
     protected int interval;
     protected int targetTimespan;
     protected int bip32HeaderPub;
@@ -305,6 +306,10 @@ public abstract class NetworkParameters {
      */
     public int getAddressHeader() {
         return addressHeader;
+    }
+
+    public String getSegwitAddressHrp() {
+        return segwitAddressHrp;
     }
 
     /**

@@ -23,13 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.math.BigInteger;
 import java.util.Date;
 
-import co.rsk.bitcoinj.core.Address;
-import co.rsk.bitcoinj.core.Coin;
-import co.rsk.bitcoinj.core.Context;
-import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.NetworkParameters;
-import co.rsk.bitcoinj.core.BtcTransaction;
-import co.rsk.bitcoinj.core.TransactionOutput;
+import co.rsk.bitcoinj.core.*;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
 import co.rsk.bitcoinj.wallet.Wallet.MissingSigsMode;
@@ -74,7 +68,7 @@ public class SendRequest {
      * don't really control as it depends on who sent you money), and the value being sent somewhere else. The
      * change address should be selected from this wallet, normally. <b>If null this will be chosen for you.</b>
      */
-    public Address changeAddress = null;
+    public LegacyAddress changeAddress = null;
 
     /**
      * <p>A transaction can have a fee attached, which is defined as the difference between the input values
@@ -157,7 +151,7 @@ public class SendRequest {
      * <p>Be very careful when value is smaller than {@link BtcTransaction#MIN_NONDUST_OUTPUT} as the transaction will
      * likely be rejected by the network in this case.</p>
      */
-    public static SendRequest to(Address destination, Coin value) {
+    public static SendRequest to(LegacyAddress destination, Coin value) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = destination.getParameters();
         checkNotNull(parameters, "Address is for an unknown network");
@@ -188,7 +182,7 @@ public class SendRequest {
         return req;
     }
 
-    public static SendRequest emptyWallet(Address destination) {
+    public static SendRequest emptyWallet(LegacyAddress destination) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = destination.getParameters();
         checkNotNull(parameters, "Address is for an unknown network");

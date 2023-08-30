@@ -85,7 +85,7 @@ public class TransactionOutput extends ChildMessage {
      * something like {@link Coin#valueOf(int, int)}. Typically you would use
      * {@link BtcTransaction#addOutput(Coin, Address)} instead of creating a TransactionOutput directly.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable BtcTransaction parent, Coin value, Address to) {
+    public TransactionOutput(NetworkParameters params, @Nullable BtcTransaction parent, Coin value, LegacyAddress to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 

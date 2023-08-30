@@ -45,6 +45,23 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TransactionInput extends ChildMessage {
     /** Magic sequence number that indicates there is no sequence number. */
     public static final long NO_SEQUENCE = 0xFFFFFFFFL;
+
+    /**
+     * BIP68: If this flag set, sequence is NOT interpreted as a relative lock-time.
+     */
+    public static final long SEQUENCE_LOCKTIME_DISABLE_FLAG = 1L << 31;
+
+    /**
+     * BIP68: If sequence encodes a relative lock-time and this flag is set, the relative lock-time has units of 512
+     * seconds, otherwise it specifies blocks with a granularity of 1.
+     */
+    public static final long SEQUENCE_LOCKTIME_TYPE_FLAG = 1L << 22;
+
+    /**
+     * BIP68: If sequence encodes a relative lock-time, this mask is applied to extract that lock-time from the sequence
+     * field.
+     */
+    public static final long SEQUENCE_LOCKTIME_MASK = 0x0000ffff;
     private static final byte[] EMPTY_ARRAY = new byte[0];
     // Magic outpoint index that indicates the input is in fact unconnected.
     private static final long UNCONNECTED = 0xFFFFFFFFL;
@@ -181,14 +198,14 @@ public class TransactionInput extends ChildMessage {
      * "from address" is not well defined in Bitcoin and you should not assume that senders of a transaction can
      * actually receive coins on the same address they used to sign (e.g. this is not true for shared wallets).
      */
-    @Deprecated
-    public Address getFromAddress() throws ScriptException {
+/*    @Deprecated
+    public LegacyAddress getFromAddress() throws ScriptException {
         if (isCoinBase()) {
             throw new ScriptException(
                     "This is a coinbase transaction which generates new coins. It does not have a from address.");
         }
         return getScriptSig().getFromAddress(params);
-    }
+    }*/
 
     /**
      * Sequence numbers allow participants in a multi-party transaction signing protocol to create new versions of the

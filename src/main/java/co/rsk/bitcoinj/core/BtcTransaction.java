@@ -18,10 +18,7 @@
 package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.crypto.TransactionSignature;
-import co.rsk.bitcoinj.script.Script;
-import co.rsk.bitcoinj.script.ScriptBuilder;
-import co.rsk.bitcoinj.script.ScriptOpCodes;
-import co.rsk.bitcoinj.script.ScriptPattern;
+import co.rsk.bitcoinj.script.*;
 import co.rsk.bitcoinj.signers.TransactionSigner;
 import co.rsk.bitcoinj.wallet.Wallet;
 
@@ -30,7 +27,6 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -920,7 +916,7 @@ public class BtcTransaction extends ChildMessage {
         else if (scriptPubKey.isSentToAddress())
             input.setScriptSig(ScriptBuilder.createInputScript(txSig, sigKey));
         else
-            throw new ScriptException("Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
         return input;
     }
 
@@ -976,7 +972,7 @@ public class BtcTransaction extends ChildMessage {
     /**
      * Creates an output based on the given address and value, adds it to this transaction, and returns the new output.
      */
-    public TransactionOutput addOutput(Coin value, Address address) {
+    public TransactionOutput addOutput(Coin value, LegacyAddress address) {
         return addOutput(new TransactionOutput(params, this, value, address));
     }
 

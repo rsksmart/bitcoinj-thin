@@ -1,5 +1,6 @@
 package co.rsk.bitcoinj.testing;
 
+import co.rsk.bitcoinj.core.LegacyAddress;
 import com.google.common.collect.ImmutableList;
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.NetworkParameters;
@@ -43,7 +44,7 @@ public class PubKeyDerivationTest {
         Script redeemScript = ScriptBuilder.createRedeemScript(2, keys);
         Script script = ScriptBuilder.createP2SHOutputScript(redeemScript);
 
-        Address multisig = Address.fromP2SHScript(params, script);
+        Address multisig = LegacyAddress.fromP2SHScript(params, script);
         assertEquals("3KwuACPswasN8iHybeJ7Vfs5rUBwQ5Y8UY", multisig.toString());
     }
 
