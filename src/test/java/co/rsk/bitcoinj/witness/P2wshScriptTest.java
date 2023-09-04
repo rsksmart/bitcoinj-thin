@@ -40,12 +40,9 @@ public class P2wshScriptTest {
             Script emergencyRedeem = new ScriptBuilder().createRedeemScript(emergencyKeys.size()/2+1, emergencyKeys);
             Script redeemScript = P2shP2wshErpFederationRedeemScriptParser.createP2shP2wshErpRedeemScript(standardRedeem, emergencyRedeem, activationDelay);
 
-            Script p2shP2wshOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
             byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
-            Script scriptPubKey = new ScriptBuilder().number(OP_0).data(redeemScriptHash).build();
-
-            SegwitAddress segwitNativeAddress = SegwitAddress.fromHash(networkParameters, scriptPubKey.getChunks().get(1).data);
-            System.out.println(segwitNativeAddress.toString());
+            SegwitAddress segwitNativeAddress = SegwitAddress.fromHash(networkParameters, redeemScriptHash);
+            System.out.println(segwitNativeAddress);
 
             Sha256Hash fundTxHash = Sha256Hash.wrap("ffb564302f3b3ad8a8ba7960645074bf7bbbc3befcd68c37693e5626705bb349");
             Coin value = Coin.valueOf(10_000);
