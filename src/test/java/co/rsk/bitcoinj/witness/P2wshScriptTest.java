@@ -16,7 +16,7 @@ import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
 
 public class P2wshScriptTest {
         @Test
-        void spendFromP2wshErpFedStandard() {
+        public void spendFromP2wshErpFedStandard() {
             NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_TESTNET);
             long activationDelay = 30;
 
@@ -44,12 +44,13 @@ public class P2wshScriptTest {
             byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
             Script scriptPubKey = new ScriptBuilder().number(OP_0).data(redeemScriptHash).build();
 
-            SegwitAddress segwitNativeAddress = SegwitAddress.fromHash(networkParameters, scriptPubKey.getProgram());
+            SegwitAddress segwitNativeAddress = SegwitAddress.fromHash(networkParameters, scriptPubKey.getChunks().get(1).data);
+            System.out.println(segwitNativeAddress.toString());
 
-            Sha256Hash fundTxHash = Sha256Hash.wrap("214bed3040e1432bf23b6126a7e8ffc83ba7da4d54fe899ee12510f878444ea1");
+            Sha256Hash fundTxHash = Sha256Hash.wrap("ffb564302f3b3ad8a8ba7960645074bf7bbbc3befcd68c37693e5626705bb349");
             Coin value = Coin.valueOf(10_000);
             int outputIndex = 0;
-            Coin fee = Coin.valueOf(1_000);
+            Coin fee = Coin.valueOf(5_000);
             LegacyAddress receiver = LegacyAddress.fromBase58(networkParameters,"msgc5Gtz2L9MVhXPDrFRCYPa16QgoZ2EjP");
 
             BtcTransaction spendTx = new BtcTransaction(networkParameters);
@@ -94,7 +95,7 @@ public class P2wshScriptTest {
         }
 
         @Test
-        void spendFromP2shP2wshErpFedEmergency() {
+        public void spendFromP2shP2wshErpFedEmergency() {
             NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_TESTNET);
             long activationDelay = 30;
 
@@ -174,7 +175,7 @@ public class P2wshScriptTest {
         }
 
         @Test
-        void spendFromP2shP2wshErpFedStandardWithFlyover() throws Exception {
+        public void spendFromP2shP2wshErpFedStandardWithFlyover() throws Exception {
             NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_TESTNET);
             long activationDelay = 30;
 
