@@ -37,7 +37,6 @@ public class RedeemScriptParserFactory {
             logger.debug("[get] Return FastBridgeRedeemScriptParser");
             return new FastBridgeParser(
                 result.scriptType,
-                RedeemScriptParser.MultiSigType.FAST_BRIDGE_MULTISIG,
                 result.internalScript,
                 chunks
             );
@@ -62,7 +61,6 @@ public class RedeemScriptParserFactory {
             logger.debug("[get] Return FastBridgeP2shErpRedeemScriptParser");
             return new FastBridgeParser(
                 result.scriptType,
-                RedeemScriptParser.MultiSigType.FAST_BRIDGE_P2SH_ERP_FED,
                 result.internalScript,
                 chunks
             );
@@ -79,7 +77,6 @@ public class RedeemScriptParserFactory {
             logger.debug("[get] Return FastBridgeErpRedeemScriptParser");
             return new FastBridgeParser(
                 result.scriptType,
-                RedeemScriptParser.MultiSigType.FAST_BRIDGE_ERP_FED,
                 result.internalScript,
                 chunks
             );

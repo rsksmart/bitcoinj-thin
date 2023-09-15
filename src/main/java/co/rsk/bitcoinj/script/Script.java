@@ -454,6 +454,7 @@ public class Script {
 
             return emptyInputScript;
         } else {
+            System.out.println("hola");
             throw new ScriptException("Do not understand script type: " + this);
         }
     }

@@ -28,7 +28,7 @@ public class FastBridgeRedeemScriptParserTest {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
 
         Script obtainedRedeemScript = FastBridgeParser.extractStandardRedeemScript(
-            fastBridgeRedeemScript
+            fastBridgeRedeemScript.getChunks()
         );
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
