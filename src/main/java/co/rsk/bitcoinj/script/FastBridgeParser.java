@@ -9,38 +9,42 @@ import java.util.List;
 
 public class FastBridgeParser extends StandardRedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(FastBridgeParser.class);
-    private static MultiSigType type = null;
+    protected final MultiSigType multiSigType;
     protected final byte[] derivationHash;
 
     public FastBridgeParser(
         ScriptType scriptType,
+        MultiSigType type,
         List<ScriptChunk> redeemScriptChunks,
         List<ScriptChunk> rawChunks
     ) {
         super(
             scriptType,
-            extractStandardRedeemScript(redeemScriptChunks).getChunks(),
+            redeemScriptChunks,
             rawChunks
         );
-        //this.multiSigType = determineMultiSigType();
+        this.multiSigType = type;
         this.derivationHash = redeemScriptChunks.get(0).data;
     }
 
     public byte[] getDerivationHash() {
         return derivationHash;
     }
-    public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
+    public static Script extractStandardRedeemScript(Script redeemScript) {
+        List<ScriptChunk> chunks = redeemScript.getChunks();
+
         if (isFastBridgeMultiSig(chunks)) {
-            type = MultiSigType.FAST_BRIDGE_MULTISIG;
-            return new Script(chunks);
+            //type = MultiSigType.FAST_BRIDGE_MULTISIG;
+            return StandardRedeemScriptParser
+                .extractStandardRedeemScript(chunks.subList(2, chunks.size()));
         }
         if (isFastBridgeErpFed(chunks)) {
-            type = MultiSigType.FAST_BRIDGE_ERP_FED;
+            //type = MultiSigType.FAST_BRIDGE_ERP_FED;
             return ErpFederationRedeemScriptParser.
                 extractStandardRedeemScript(chunks.subList(2, chunks.size()));
         }
         if (isFastBridgeP2shErpFed(chunks)) {
-            type = MultiSigType.FAST_BRIDGE_P2SH_ERP_FED;
+            //type = MultiSigType.FAST_BRIDGE_P2SH_ERP_FED;
             return P2shErpFederationRedeemScriptParser.
                 extractStandardRedeemScript(chunks.subList(2, chunks.size()));
         }
@@ -50,9 +54,9 @@ public class FastBridgeParser extends StandardRedeemScriptParser {
         throw new VerificationException(message);
     }
 
-    private MultiSigType determineMultiSigType() {
+/*    private MultiSigType determineMultiSigType() {
         return type;
-    }
+    }*/
 
     public static Script createFastBridgeRedeemScript(
         Script redeemScript,
