@@ -33,9 +33,9 @@ public class RedeemScriptParserFactory {
             return new NoRedeemScriptParser();
         }
 
-        if (FastBridgeParser.isFastBridgeMultiSig(result.internalScript)) {
+        if (FlyoverRedeemScriptParser.isFastBridgeMultiSig(result.internalScript)) {
             logger.debug("[get] Return FastBridgeRedeemScriptParser");
-            return new FastBridgeParser(
+            return new FlyoverRedeemScriptParser(
                 result.scriptType,
                 result.internalScript,
                 chunks
@@ -57,9 +57,9 @@ public class RedeemScriptParserFactory {
                 chunks
             );
         }
-        if (FastBridgeParser.isFastBridgeP2shErpFed(result.internalScript)) {
+        if (FlyoverRedeemScriptParser.isFastBridgeP2shErpFed(result.internalScript)) {
             logger.debug("[get] Return FastBridgeP2shErpRedeemScriptParser");
-            return new FastBridgeParser(
+            return new FlyoverRedeemScriptParser(
                 result.scriptType,
                 result.internalScript,
                 chunks
@@ -73,9 +73,9 @@ public class RedeemScriptParserFactory {
                 chunks
             );
         }
-        if (FastBridgeParser.isFastBridgeErpFed(result.internalScript)) {
+        if (FlyoverRedeemScriptParser.isFastBridgeErpFed(result.internalScript)) {
             logger.debug("[get] Return FastBridgeErpRedeemScriptParser");
-            return new FastBridgeParser(
+            return new FlyoverRedeemScriptParser(
                 result.scriptType,
                 result.internalScript,
                 chunks

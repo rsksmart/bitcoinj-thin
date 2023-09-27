@@ -27,7 +27,7 @@ public class FastBridgeRedeemScriptParserTest {
 
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
 
-        Script obtainedRedeemScript = FastBridgeParser.extractStandardRedeemScript(
+        Script obtainedRedeemScript = FlyoverRedeemScriptParser.extractStandardRedeemScript(
             fastBridgeRedeemScript.getChunks()
         );
 
@@ -54,7 +54,7 @@ public class FastBridgeRedeemScriptParserTest {
             publicKeys
         );
 
-        Script obtainedRedeemScript = FastBridgeParser.createFastBridgeRedeemScript(
+        Script obtainedRedeemScript = FlyoverRedeemScriptParser.createFastBridgeRedeemScript(
             redeemScript,
             derivationArgumentsHash
         );
@@ -69,19 +69,19 @@ public class FastBridgeRedeemScriptParserTest {
             publicKeys
         );
 
-        FastBridgeParser.createFastBridgeRedeemScript(fastBridgeRedeemScript, data);
+        FlyoverRedeemScriptParser.createFastBridgeRedeemScript(fastBridgeRedeemScript, data);
     }
 
     @Test(expected = VerificationException.class)
     public void createMultiSigFastBridgeRedeemScript_null_derivation_arguments_hash() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
-        FastBridgeParser.createFastBridgeRedeemScript(redeemScript, null);
+        FlyoverRedeemScriptParser.createFastBridgeRedeemScript(redeemScript, null);
     }
 
     @Test(expected = VerificationException.class)
     public void createMultiSigFastBridgeRedeemScript_zero_hash_as_derivation_arguments_hash() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
-        FastBridgeParser.createFastBridgeRedeemScript(redeemScript, Sha256Hash.ZERO_HASH);
+        FlyoverRedeemScriptParser.createFastBridgeRedeemScript(redeemScript, Sha256Hash.ZERO_HASH);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class FastBridgeRedeemScriptParserTest {
         );
 
         RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
-        FastBridgeParser fastBridgeRedeemScriptParser = (FastBridgeParser) parser;
+        FlyoverRedeemScriptParser fastBridgeRedeemScriptParser = (FlyoverRedeemScriptParser) parser;
 
         Assert.assertArrayEquals(fastBridgeRedeemScriptParser.getDerivationHash(), data);
     }

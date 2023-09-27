@@ -43,7 +43,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
             defaultRedeemScriptKeys
         );
 
-        Script obtainedRedeemScript = FastBridgeParser.extractStandardRedeemScript(
+        Script obtainedRedeemScript = FlyoverRedeemScriptParser.extractStandardRedeemScript(
             fastBridgeP2shErpRedeemScript.getChunks()
         );
 
@@ -56,7 +56,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
             defaultRedeemScriptKeys
         );
 
-        FastBridgeParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
+        FlyoverRedeemScriptParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
             derivationArgumentsHash.getBytes()
         );
 
-        Script obtainedRedeemScript = FastBridgeParser.createFastBridgeRedeemScript(
+        Script obtainedRedeemScript = FlyoverRedeemScriptParser.createFastBridgeRedeemScript(
             erpRedeemScript,
             derivationArgumentsHash
         );
@@ -93,7 +93,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
 
-        Assert.assertTrue(FastBridgeParser.isFastBridgeP2shErpFed(
+        Assert.assertTrue(FlyoverRedeemScriptParser.isFastBridgeP2shErpFed(
             fastBridgeP2shErpRedeemScript.getChunks())
         );
     }
@@ -107,7 +107,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
 
-        Assert.assertFalse(FastBridgeParser.isFastBridgeP2shErpFed(
+        Assert.assertFalse(FlyoverRedeemScriptParser.isFastBridgeP2shErpFed(
             fastBridgeErpRedeemScript.getChunks())
         );
     }
@@ -118,7 +118,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
             defaultRedeemScriptKeys
         );
 
-        Assert.assertFalse(FastBridgeParser.isFastBridgeP2shErpFed(
+        Assert.assertFalse(FlyoverRedeemScriptParser.isFastBridgeP2shErpFed(
             customRedeemScript.getChunks())
         );
     }
@@ -137,7 +137,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
         RawGeneratedRedeemScript[] generatedScripts = new ObjectMapper().readValue(rawRedeemScripts, RawGeneratedRedeemScript[].class);
 
         for (RawGeneratedRedeemScript generatedScript : generatedScripts) {
-            Script bitcoinjScript = FastBridgeParser.createFastBridgeRedeemScript(
+            Script bitcoinjScript = FlyoverRedeemScriptParser.createFastBridgeRedeemScript(
                 generatedScript.powpegScript,
                 generatedScript.derivationHash
             );

@@ -7,11 +7,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class FastBridgeParser extends StandardRedeemScriptParser {
-    private static final Logger logger = LoggerFactory.getLogger(FastBridgeParser.class);
+public class FlyoverRedeemScriptParser extends StandardRedeemScriptParser {
+    private static final Logger logger = LoggerFactory.getLogger(FlyoverRedeemScriptParser.class);
     protected final byte[] derivationHash;
 
-    public FastBridgeParser(
+    public FlyoverRedeemScriptParser(
         ScriptType scriptType,
         List<ScriptChunk> redeemScriptChunks,
         List<ScriptChunk> rawChunks
@@ -21,27 +21,7 @@ public class FastBridgeParser extends StandardRedeemScriptParser {
             redeemScriptChunks,
             rawChunks
         );
-
-        // the idea of this was to not have to call the extract function and check the type again
-        // so when we call an instance of FastBridgeParser, the multisigType and the redeemScriptChunks are calculated asap
-        // and when we call just the extract function from outside, it does the multisig type verification
-
-        List<ScriptChunk> subChunks = redeemScriptChunks.subList(2, redeemScriptChunks.size());
-        if (isFastBridgeMultiSig(redeemScriptChunks)) {
-            this.multiSigType = MultiSigType.FAST_BRIDGE_MULTISIG;
-            this.redeemScriptChunks = StandardRedeemScriptParser
-                .extractStandardRedeemScript(subChunks).getChunks();
-        }
-        if (isFastBridgeErpFed(redeemScriptChunks)) {
-            this.multiSigType = MultiSigType.FAST_BRIDGE_ERP_FED;
-            this.redeemScriptChunks = ErpFederationRedeemScriptParser.
-                extractStandardRedeemScript(subChunks).getChunks();
-        }
-        if (isFastBridgeP2shErpFed(redeemScriptChunks)) {
-            this.multiSigType = MultiSigType.FAST_BRIDGE_P2SH_ERP_FED;
-            this.redeemScriptChunks = P2shErpFederationRedeemScriptParser.
-                extractStandardRedeemScript(subChunks).getChunks();
-        }
+        this.multiSigType = MultiSigType.FAST_BRIDGE;
         this.derivationHash = redeemScriptChunks.get(0).data;
     }
 
@@ -49,18 +29,21 @@ public class FastBridgeParser extends StandardRedeemScriptParser {
         return derivationHash;
     }
 
-    public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
-        if (isFastBridgeMultiSig(chunks)) {
+    public Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
+
+        List<ScriptChunk> chunksWithoutFlyover = chunks.subList(2, chunks.size());
+
+        if (isMultiSig(chunksWithoutFlyover)) {
             return StandardRedeemScriptParser
-                .extractStandardRedeemScript(chunks.subList(2, chunks.size()));
+                .extractStandardRedeemScript();
         }
-        if (isFastBridgeErpFed(chunks)) {
+        if (isErpFed(chunksWithoutFlyover)) {
             return ErpFederationRedeemScriptParser.
-                extractStandardRedeemScript(chunks.subList(2, chunks.size()));
+                extractStandardRedeemScript(chunksWithoutFlyover);
         }
-        if (isFastBridgeP2shErpFed(chunks)) {
+        if (isP2shErpFed(chunksWithoutFlyover)) {
             return P2shErpFederationRedeemScriptParser.
-                extractStandardRedeemScript(chunks.subList(2, chunks.size()));
+                extractStandardRedeemScript(chunksWithoutFlyover);
         }
 
         String message = "Provided redeem script has unknown structure";
@@ -94,6 +77,16 @@ public class FastBridgeParser extends StandardRedeemScriptParser {
             .op(ScriptOpCodes.OP_DROP)
             .addChunks(chunks)
             .build();
+    }
+
+    public boolean isMultiSig(List<ScriptChunk> chunksWithoutFlyover) {
+        return RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksWithoutFlyover);
+    }
+    public boolean isErpFed(List<ScriptChunk> chunksWithoutFlyover) {
+        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunksWithoutFlyover);
+    }
+    public boolean isP2shErpFed(List<ScriptChunk> chunksWithoutFlyover) {
+        return RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunksWithoutFlyover);
     }
 
     public static boolean isFastBridgeMultiSig(List<ScriptChunk> chunks) {
