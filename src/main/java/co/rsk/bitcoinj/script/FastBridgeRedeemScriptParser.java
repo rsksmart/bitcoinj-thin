@@ -30,7 +30,7 @@ public class FastBridgeRedeemScriptParser extends StandardRedeemScriptParser {
     }
 
     public static Script extractStandardRedeemScript(Script redeemScript) {
-        return ScriptBuilder.createRedeemScript(
+        return ScriptBuilder.createStandardMultisigRedeemScript(
             redeemScript.getNumberOfSignaturesRequiredToSpend(),
             redeemScript.getPubKeys()
         );

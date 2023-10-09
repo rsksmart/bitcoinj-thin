@@ -40,7 +40,7 @@ public class PubKeyDerivationTest {
 
         List<BtcECKey> keys = ImmutableList.of((BtcECKey) key1, (BtcECKey) key0, (BtcECKey) key2);
 
-        Script redeemScript = ScriptBuilder.createRedeemScript(2, keys);
+        Script redeemScript = ScriptBuilder.createStandardMultisigRedeemScript(2, keys);
         Script script = ScriptBuilder.createP2SHOutputScript(redeemScript);
 
         Address multisig = Address.fromP2SHScript(params, script);

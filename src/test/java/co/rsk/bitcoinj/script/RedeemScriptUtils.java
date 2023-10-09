@@ -11,14 +11,14 @@ import java.util.List;
 public class RedeemScriptUtils {
 
     protected static Script createStandardRedeemScript(List<BtcECKey> publicKeys) {
-        return ScriptBuilder.createRedeemScript(publicKeys.size() / 2 + 1, publicKeys);
+        return ScriptBuilder.createStandardMultisigRedeemScript(publicKeys.size() / 2 + 1, publicKeys);
     }
 
     protected static Script createFastBridgeRedeemScript(
         byte[] derivationArgumentsHashBytes,
         List<BtcECKey> publicKeys
     ) {
-        Script redeem = ScriptBuilder.createRedeemScript(
+        Script redeem = ScriptBuilder.createStandardMultisigRedeemScript(
             publicKeys.size() / 2 + 1,
             publicKeys
         );
@@ -74,7 +74,7 @@ public class RedeemScriptUtils {
     }
 
     protected static Script createCustomRedeemScript(List<BtcECKey> publicKeys) {
-        Script redeem = ScriptBuilder.createRedeemScript(
+        Script redeem = ScriptBuilder.createStandardMultisigRedeemScript(
             publicKeys.size() / 2 + 1,
             publicKeys
         );
@@ -91,12 +91,12 @@ public class RedeemScriptUtils {
         List<BtcECKey> emergencyRedeemScriptKeys,
         Long csvValue
     ) {
-        Script defaultFedRedeemScript = ScriptBuilder.createRedeemScript(
+        Script defaultFedRedeemScript = ScriptBuilder.createStandardMultisigRedeemScript(
             defaultRedeemScriptKeys.size() / 2 + 1,
             defaultRedeemScriptKeys
         );
 
-        Script erpFedRedeemScript = ScriptBuilder.createRedeemScript(
+        Script erpFedRedeemScript = ScriptBuilder.createStandardMultisigRedeemScript(
             emergencyRedeemScriptKeys.size() / 2 + 1,
             emergencyRedeemScriptKeys
         );
@@ -122,12 +122,12 @@ public class RedeemScriptUtils {
         List<BtcECKey> emergencyRedeemScriptKeys,
         Long csvValue
     ) {
-        Script defaultFedRedeemScript = ScriptBuilder.createRedeemScript(
+        Script defaultFedRedeemScript = ScriptBuilder.createStandardMultisigRedeemScript(
             defaultRedeemScriptKeys.size() / 2 + 1,
             defaultRedeemScriptKeys
         );
 
-        Script erpFedRedeemScript = ScriptBuilder.createRedeemScript(
+        Script erpFedRedeemScript = ScriptBuilder.createStandardMultisigRedeemScript(
             emergencyRedeemScriptKeys.size() / 2 + 1,
             emergencyRedeemScriptKeys
         );

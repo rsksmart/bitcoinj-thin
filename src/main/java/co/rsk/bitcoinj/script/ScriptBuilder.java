@@ -420,7 +420,7 @@ public class ScriptBuilder {
      * redeem script in the lexicographical sorting order.
      */
     public static Script createP2SHOutputScript(int threshold, List<BtcECKey> pubkeys) {
-        Script redeemScript = createRedeemScript(threshold, pubkeys);
+        Script redeemScript = createStandardMultisigRedeemScript(threshold, pubkeys);
         return createP2SHOutputScript(redeemScript);
     }
 
@@ -428,7 +428,7 @@ public class ScriptBuilder {
      * Creates redeem script with given public keys and threshold. Given public keys will be placed in
      * redeem script in the lexicographical sorting order.
      */
-    public static Script createRedeemScript(int threshold, List<BtcECKey> pubkeys) {
+    public static Script createStandardMultisigRedeemScript(int threshold, List<BtcECKey> pubkeys) {
         pubkeys = new ArrayList<BtcECKey>(pubkeys);
         Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
