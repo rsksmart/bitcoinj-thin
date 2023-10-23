@@ -11,13 +11,13 @@ import org.junit.Test;
 public class FlyoverRedeemScriptParserTest {
 
     private Script redeemScript;
-    Sha256Hash derivationHash;
+    byte[] derivationHash;
 
     @Before
     public void setUp() {
         List<BtcECKey> publicKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
         redeemScript = ScriptBuilder.createRedeemScript(publicKeys.size() / 2 + 1, publicKeys);
-        derivationHash = Sha256Hash.of(new byte[]{1});
+        derivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
     }
 
     @Test
@@ -60,7 +60,7 @@ public class FlyoverRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createFlyoverRedeemScriptWithZeroHashDerivationHashThrowsError() {
-        FlyoverRedeemScriptParser.createFlyoverRedeemScript(redeemScript, Sha256Hash.ZERO_HASH);
+        FlyoverRedeemScriptParser.createFlyoverRedeemScript(redeemScript, Sha256Hash.ZERO_HASH.getBytes());
     }
 
     @Test
@@ -71,6 +71,6 @@ public class FlyoverRedeemScriptParserTest {
         );
         byte[] obtainedDerivationHash = flyoverRedeemScriptParser.getDerivationHash();
 
-        Assert.assertArrayEquals(obtainedDerivationHash, derivationHash.getBytes());
+        Assert.assertArrayEquals(obtainedDerivationHash, derivationHash);
     }
 }
