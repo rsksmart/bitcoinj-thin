@@ -33,6 +33,17 @@ public class RedeemScriptParserFactory {
             return new NoRedeemScriptParser();
         }
 
+        if (RedeemScriptValidator.hasFastBridgePrefix(result.internalScript)) {
+            ScriptBuilder scriptBuilder = new ScriptBuilder();
+            Script redeemScript = scriptBuilder
+                .addChunks(result.internalScript)
+                .build();
+            Script redeemScriptWithoutFlyover = FlyoverRedeemScriptParser.extractRedeemScript(redeemScript);
+
+            logger.debug("[get] Return RedeemScriptParser from flyover redeem script");
+            return get(redeemScriptWithoutFlyover.getChunks());
+        }
+
         if (FastBridgeRedeemScriptParser.isFastBridgeMultiSig(result.internalScript)) {
             logger.debug("[get] Return FastBridgeRedeemScriptParser");
             return new FastBridgeRedeemScriptParser(
