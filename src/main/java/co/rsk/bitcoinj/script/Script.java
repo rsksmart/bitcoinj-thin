@@ -109,7 +109,6 @@ public class Script {
     // Creation time of the associated keys in seconds since the epoch.
     private long creationTimeSeconds;
 
-    private RedeemScriptParser redeemScriptParser;
 
     /** Creates an empty script that serializes to nothing. */
     private Script() {
@@ -120,7 +119,6 @@ public class Script {
     Script(List<ScriptChunk> chunks) {
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
         creationTimeSeconds = Utils.currentTimeSeconds();
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
     }
 
     /**
@@ -132,15 +130,12 @@ public class Script {
         program = programBytes;
         parse(programBytes);
         creationTimeSeconds = 0;
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
-
     }
 
     public Script(byte[] programBytes, long creationTimeSeconds) throws ScriptException {
         program = programBytes;
         parse(programBytes);
         this.creationTimeSeconds = creationTimeSeconds;
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
     }
 
     public long getCreationTimeSeconds() {
@@ -460,9 +455,9 @@ public class Script {
 
     private boolean isErpType(Script redeemScript) {
         List<ScriptChunk> chunks = redeemScript.getChunks();
-        boolean isFastBridgeErp = FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(chunks);
+        boolean isFastBridgeErp = RedeemScriptParserFactory.isFastBridgeErpFed(chunks);
         boolean isErp = RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
-        boolean isFastBridgeP2shErp = FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(chunks);
+        boolean isFastBridgeP2shErp = RedeemScriptParserFactory.isFastBridgeP2shErpFed(chunks);
         boolean isP2shErp = RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
 
         return isFastBridgeErp || isErp || isFastBridgeP2shErp || isP2shErp;
@@ -489,7 +484,7 @@ public class Script {
      * Returns the index where a signature by the key should be inserted. Only applicable to
      * a P2SH scriptSig.
      */
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
+/*    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
         return this.redeemScriptParser.getSigInsertionIndex(hash, signingKey);
     }
 
@@ -503,7 +498,7 @@ public class Script {
 
     public List<BtcECKey> getPubKeys() throws ScriptException {
         return this.redeemScriptParser.getPubKeys();
-    }
+    }*/
 
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
 
@@ -591,7 +586,7 @@ public class Script {
     public int getNumberOfSignaturesRequiredToSpend() {
         if (this.isSentToMultiSig()) {
             // for M of N CHECKMULTISIG script we will need M signatures to spend
-            return redeemScriptParser.getM();
+            return RedeemScriptParserFactory.get(this).getM();
         } else if (isSentToAddress() || isSentToRawPubKey()) {
             // pay-to-address and pay-to-pubkey require single sig
             return 1;
@@ -650,11 +645,11 @@ public class Script {
                (program[22] & 0xff) == OP_EQUAL;
     }
 
-    /**
+/*    *//**
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
     public boolean isSentToMultiSig() {
-        return !redeemScriptParser.getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
+        return !RedeemScriptParserFactory.get(this).getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
     }
 
     public boolean isSentToCLTVPaymentChannel() {
