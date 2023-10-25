@@ -455,9 +455,9 @@ public class Script {
 
     private boolean isErpType(Script redeemScript) {
         List<ScriptChunk> chunks = redeemScript.getChunks();
-        boolean isFastBridgeErp = RedeemScriptParserFactory.isFastBridgeErpFed(chunks);
+        boolean isFastBridgeErp = FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(chunks);
         boolean isErp = RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
-        boolean isFastBridgeP2shErp = RedeemScriptParserFactory.isFastBridgeP2shErpFed(chunks);
+        boolean isFastBridgeP2shErp = FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(chunks);
         boolean isP2shErp = RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
 
         return isFastBridgeErp || isErp || isFastBridgeP2shErp || isP2shErp;
@@ -484,21 +484,21 @@ public class Script {
      * Returns the index where a signature by the key should be inserted. Only applicable to
      * a P2SH scriptSig.
      */
-/*    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return this.redeemScriptParser.getSigInsertionIndex(hash, signingKey);
+    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
+        return RedeemScriptParserFactory.get(this.getChunks()).getSigInsertionIndex(hash, signingKey);
     }
 
     public int findKeyInRedeem(BtcECKey key) {
-        return this.redeemScriptParser.findKeyInRedeem(key);
+        return RedeemScriptParserFactory.get(this.getChunks()).findKeyInRedeem(key);
     }
 
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return this.redeemScriptParser.findSigInRedeem(signatureBytes, hash);
+        return RedeemScriptParserFactory.get(this.getChunks()).findSigInRedeem(signatureBytes, hash);
     }
 
     public List<BtcECKey> getPubKeys() throws ScriptException {
-        return this.redeemScriptParser.getPubKeys();
-    }*/
+        return RedeemScriptParserFactory.get(this.getChunks()).getPubKeys();
+    }
 
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
 
@@ -586,7 +586,7 @@ public class Script {
     public int getNumberOfSignaturesRequiredToSpend() {
         if (this.isSentToMultiSig()) {
             // for M of N CHECKMULTISIG script we will need M signatures to spend
-            return RedeemScriptParserFactory.get(this).getM();
+            return RedeemScriptParserFactory.get(this.getChunks()).getM();
         } else if (isSentToAddress() || isSentToRawPubKey()) {
             // pay-to-address and pay-to-pubkey require single sig
             return 1;
@@ -649,7 +649,7 @@ public class Script {
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
     public boolean isSentToMultiSig() {
-        return !RedeemScriptParserFactory.get(this).getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
+        return !RedeemScriptParserFactory.get(this.getChunks()).getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
     }
 
     public boolean isSentToCLTVPaymentChannel() {
