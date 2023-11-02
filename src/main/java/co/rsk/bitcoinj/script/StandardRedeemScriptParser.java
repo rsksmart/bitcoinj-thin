@@ -6,33 +6,21 @@ import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     protected MultiSigType multiSigType;
-    protected ScriptType scriptType;
-    // In case of P2SH represents a scriptSig, where the last chunk is the redeem script (either standard or extended)
-    protected List<ScriptChunk> rawChunks;
-    // Standard redeem script
     protected List<ScriptChunk> redeemScriptChunks;
 
     public StandardRedeemScriptParser(
-        ScriptType scriptType,
-        List<ScriptChunk> redeemScriptChunks,
-        List<ScriptChunk> rawChunks
+        List<ScriptChunk> redeemScriptChunks
     ) {
         this.multiSigType = MultiSigType.STANDARD_MULTISIG;
-        this.scriptType = scriptType;
         this.redeemScriptChunks = redeemScriptChunks;
-
-        this.rawChunks = Collections.unmodifiableList(new ArrayList<>(rawChunks));
     }
 
     @Override
@@ -41,40 +29,9 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public ScriptType getScriptType() {
-        return this.scriptType;
-    }
-
-    @Override
     public int getM() {
         checkArgument(redeemScriptChunks.get(0).isOpCode());
         return Script.decodeFromOpN(redeemScriptChunks.get(0).opcode);
-    }
-
-    @Override
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
-        // and any placeholder OP_0 sigs.
-        List<ScriptChunk> existingChunks = rawChunks.subList(1, rawChunks.size() - 1);
-        Script redeemScript = new Script(this.redeemScriptChunks);
-
-        int sigCount = 0;
-        int myIndex = redeemScript.findKeyInRedeem(signingKey);
-        Iterator chunkIterator = existingChunks.iterator();
-
-        while(chunkIterator.hasNext()) {
-            ScriptChunk chunk = (ScriptChunk) chunkIterator.next();
-            if (chunk.opcode != 0) {
-                Preconditions.checkNotNull(chunk.data);
-                if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash)) {
-                    return sigCount;
-                }
-
-                ++sigCount;
-            }
-        }
-
-        return sigCount;
     }
 
     @Override

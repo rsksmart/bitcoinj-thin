@@ -13,19 +13,10 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public ScriptType getScriptType() {
-        return ScriptType.UNDEFINED;
-    }
-
-    @Override
     public int getM() {
         return -1;
     }
 
-    @Override
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return 0;
-    }
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
