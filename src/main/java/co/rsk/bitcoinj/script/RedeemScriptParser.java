@@ -16,19 +16,11 @@ public interface RedeemScriptParser {
         FAST_BRIDGE_P2SH_ERP_FED
     }
 
-    enum ScriptType {
-        P2SH,
-        REDEEM_SCRIPT,
-        UNDEFINED
-    }
 
     MultiSigType getMultiSigType();
 
-    ScriptType getScriptType();
 
     int getM();
-
-    int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey);
 
     int findKeyInRedeem(BtcECKey key);
 
