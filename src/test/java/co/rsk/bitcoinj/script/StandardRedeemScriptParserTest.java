@@ -69,7 +69,7 @@ public class StandardRedeemScriptParserTest {
 
         byte[] txSigEncoded = txSig.encodeToBitcoin();
 
-        int sigIndex = parser.getSigInsertionIndex(sigHash, ecKey1);
+        int sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey1);
         Assert.assertEquals(0, sigIndex);
 
         inputScript = ScriptBuilder.updateScriptWithSignature(
@@ -82,7 +82,7 @@ public class StandardRedeemScriptParserTest {
 
         parser = RedeemScriptParserFactory.get(inputScript.getChunks());
 
-        sigIndex = parser.getSigInsertionIndex(sigHash, ecKey2);
+        sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
         Assert.assertEquals(1, sigIndex);
     }
 
@@ -123,7 +123,7 @@ public class StandardRedeemScriptParserTest {
         );
         byte[] txSigEncoded = txSig.encodeToBitcoin();
 
-        int sigIndex = parser.getSigInsertionIndex(sigHash, ecKey1);
+        int sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey1);
         Assert.assertEquals(0, sigIndex);
 
         inputScript = ScriptBuilder.updateScriptWithSignature(
@@ -136,7 +136,7 @@ public class StandardRedeemScriptParserTest {
 
         parser = RedeemScriptParserFactory.get(inputScript.getChunks());
 
-        sigIndex = parser.getSigInsertionIndex(sigHash, ecKey2);
+        sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
         Assert.assertEquals(1, sigIndex);
     }
 
