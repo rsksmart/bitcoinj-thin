@@ -15,14 +15,10 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
     public ErpFederationRedeemScriptParser(
-        ScriptType scriptType,
-        List<ScriptChunk> redeemScriptChunks,
-        List<ScriptChunk> rawChunks
+        List<ScriptChunk> redeemScriptChunks
     ) {
         super(
-            scriptType,
-            extractStandardRedeemScript(redeemScriptChunks).getChunks(),
-            rawChunks
+            extractStandardRedeemScript(redeemScriptChunks).getChunks()
         );
         this.multiSigType = MultiSigType.ERP_FED;
     }

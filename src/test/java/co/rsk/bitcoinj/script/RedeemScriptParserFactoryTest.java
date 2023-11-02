@@ -4,7 +4,6 @@ import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
-import co.rsk.bitcoinj.script.RedeemScriptParser.ScriptType;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +36,6 @@ public class RedeemScriptParserFactoryTest {
 
         RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_MULTISIG, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.REDEEM_SCRIPT, parser.getScriptType());
     }
 
     @Test
@@ -46,7 +44,6 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.STANDARD_MULTISIG, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.REDEEM_SCRIPT, parser.getScriptType());
     }
 
     @Test
@@ -60,7 +57,6 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.ERP_FED, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.REDEEM_SCRIPT, parser.getScriptType());
     }
 
     @Test
@@ -75,7 +71,6 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_ERP_FED, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.REDEEM_SCRIPT, parser.getScriptType());
     }
 
     @Test
@@ -89,7 +84,6 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.P2SH_ERP_FED, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.REDEEM_SCRIPT, parser.getScriptType());
     }
 
     @Test
@@ -104,7 +98,6 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_P2SH_ERP_FED, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.REDEEM_SCRIPT, parser.getScriptType());
     }
 
     @Test
@@ -121,10 +114,11 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeRedeemScript);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
+        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
+        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_MULTISIG, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
     }
 
     @Test
@@ -137,10 +131,11 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
+        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
+        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.STANDARD_MULTISIG, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
     }
 
     @Test
@@ -157,10 +152,11 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, erpRedeemScript);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
+        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
+        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.ERP_FED, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
     }
 
     @Test
@@ -178,10 +174,11 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeErpRedeemScript);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
+        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
+        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_ERP_FED, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
     }
 
     @Test
@@ -198,10 +195,11 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, p2shErpRedeemScript);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
+        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
+        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.P2SH_ERP_FED, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
     }
 
     @Test
@@ -219,10 +217,11 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeP2shErpRedeemScript);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
+        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
+        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_P2SH_ERP_FED, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.P2SH, parser.getScriptType());
     }
 
     @Test
@@ -239,7 +238,6 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.NO_MULTISIG_TYPE, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.UNDEFINED, parser.getScriptType());
     }
 
     @Test
@@ -250,6 +248,5 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(erpTestnetRedeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.NO_MULTISIG_TYPE, parser.getMultiSigType());
-        Assert.assertEquals(ScriptType.UNDEFINED, parser.getScriptType());
     }
 }
