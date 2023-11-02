@@ -11,14 +11,10 @@ public class FastBridgeP2shErpRedeemScriptParser extends StandardRedeemScriptPar
     private static final Logger logger = LoggerFactory.getLogger(FastBridgeP2shErpRedeemScriptParser.class);
 
     public FastBridgeP2shErpRedeemScriptParser(
-        ScriptType scriptType,
-        List<ScriptChunk> redeemScriptChunks,
-        List<ScriptChunk> rawChunks
+        List<ScriptChunk> redeemScriptChunks
     ) {
         super(
-            scriptType,
-            extractStandardRedeemScript(redeemScriptChunks).getChunks(),
-            rawChunks
+            extractStandardRedeemScript(redeemScriptChunks).getChunks()
         );
         this.multiSigType = MultiSigType.FAST_BRIDGE_P2SH_ERP_FED;
     }
