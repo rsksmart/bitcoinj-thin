@@ -14,18 +14,18 @@ public class FastBridgeRedeemScriptParserTest {
 
     @Before
     public void setUp() {
-        publicKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+        publicKeys = RedeemScriptTestUtils.getDefaultRedeemScriptKeys();
     }
 
     @Test
     public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_fb_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             publicKeys
         );
 
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
+        Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(publicKeys);
 
         Script obtainedRedeemScript = FastBridgeRedeemScriptParser.extractStandardRedeemScript(
             fastBridgeRedeemScript
@@ -36,7 +36,7 @@ public class FastBridgeRedeemScriptParserTest {
 
     @Test
     public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_std_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(publicKeys);
         Script obtainedRedeemScript = FastBridgeRedeemScriptParser.extractStandardRedeemScript(redeemScript);
 
         Assert.assertEquals(redeemScript, obtainedRedeemScript);
@@ -44,10 +44,10 @@ public class FastBridgeRedeemScriptParserTest {
 
     @Test
     public void createMultiSigFastBridgeRedeemScript_valid_parameters() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(publicKeys);
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
 
-        Script expectedFastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script expectedFastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             derivationArgumentsHash.getBytes(),
             publicKeys
         );
@@ -62,7 +62,7 @@ public class FastBridgeRedeemScriptParserTest {
     @Test(expected = VerificationException.class)
     public void createMultiSigFastBridgeRedeemScript_fb_redeem_script() {
         Sha256Hash data = Sha256Hash.of(new byte[]{1});
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data.getBytes(),
             publicKeys
         );
@@ -72,20 +72,20 @@ public class FastBridgeRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createMultiSigFastBridgeRedeemScript_null_derivation_arguments_hash() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(publicKeys);
         FastBridgeRedeemScriptParser.createMultiSigFastBridgeRedeemScript(redeemScript, null);
     }
 
     @Test(expected = VerificationException.class)
     public void createMultiSigFastBridgeRedeemScript_zero_hash_as_derivation_arguments_hash() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(publicKeys);
         FastBridgeRedeemScriptParser.createMultiSigFastBridgeRedeemScript(redeemScript, Sha256Hash.ZERO_HASH);
     }
 
     @Test
     public void getDerivationArgumentsHash_from_fast_bridge_multiSig() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             publicKeys
         );
@@ -99,7 +99,7 @@ public class FastBridgeRedeemScriptParserTest {
     @Test
     public void isFastBridgeMultisig() {
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             derivationArgumentsHash.getBytes(),
             publicKeys
         );
@@ -109,7 +109,7 @@ public class FastBridgeRedeemScriptParserTest {
 
     @Test
     public void isFastBridgeMultisig_falseWithCustomRedeemScrip() {
-        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(publicKeys);
+        Script customRedeemScript = RedeemScriptTestUtils.createCustomRedeemScript(publicKeys);
 
         Assert.assertFalse(FastBridgeRedeemScriptParser.isFastBridgeMultiSig(customRedeemScript.getChunks()));
     }

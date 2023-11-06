@@ -11,6 +11,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static co.rsk.bitcoinj.script.RedeemScriptUtils.extractRedeemScriptParserFromInputScript;
+
 public class RedeemScriptParserFactoryTest {
 
     private List<BtcECKey> defaultRedeemScriptKeys;
@@ -22,14 +24,14 @@ public class RedeemScriptParserFactoryTest {
 
     @Before
     public void setUp() {
-        defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
-        emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+        defaultRedeemScriptKeys = RedeemScriptTestUtils.getDefaultRedeemScriptKeys();
+        emergencyRedeemScriptKeys = RedeemScriptTestUtils.getEmergencyRedeemScriptKeys();
     }
 
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_multiSig_chunk() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             defaultRedeemScriptKeys
         );
@@ -40,7 +42,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_standard_multiSig_chunk() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.STANDARD_MULTISIG, parser.getMultiSigType());
@@ -48,7 +50,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_erp_multiSig_chunk() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -61,7 +63,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_erp_fast_bridge_multiSig_chunk() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -75,7 +77,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_p2sh_erp_multiSig_chunk() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -88,7 +90,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_p2sh_erp_multiSig_chunk() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -103,7 +105,7 @@ public class RedeemScriptParserFactoryTest {
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_P2SH_chunk() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             defaultRedeemScriptKeys
         );
@@ -114,16 +116,14 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeRedeemScript);
-        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
-        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
+        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_MULTISIG, parser.getMultiSigType());
     }
 
     @Test
     public void create_RedeemScriptParser_object_from_standard_P2SH_chunk() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
 
         Script spk = ScriptBuilder.createP2SHOutputScript(
             2,
@@ -131,16 +131,14 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
-        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
-        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
+        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
 
         Assert.assertEquals(MultiSigType.STANDARD_MULTISIG, parser.getMultiSigType());
     }
 
     @Test
     public void create_RedeemScriptParser_object_from_erp_P2SH_chunk() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -152,16 +150,14 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, erpRedeemScript);
-        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
-        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
+        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
 
         Assert.assertEquals(MultiSigType.ERP_FED, parser.getMultiSigType());
     }
 
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_erp_P2SH_chunk() {
-        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script fastBridgeErpRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -174,16 +170,14 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeErpRedeemScript);
-        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
-        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
+        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_ERP_FED, parser.getMultiSigType());
     }
 
     @Test
     public void create_RedeemScriptParser_object_from_p2sh_erp_P2SH_chunk() {
-        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+        Script p2shErpRedeemScript = RedeemScriptTestUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -195,16 +189,14 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, p2shErpRedeemScript);
-        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
-        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
+        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
 
         Assert.assertEquals(MultiSigType.P2SH_ERP_FED, parser.getMultiSigType());
     }
 
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_p2sh_erp_P2SH_chunk() {
-        Script fastBridgeP2shErpRedeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
+        Script fastBridgeP2shErpRedeemScript = RedeemScriptTestUtils.createFastBridgeP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -217,16 +209,14 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeP2shErpRedeemScript);
-        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
-        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
+        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_P2SH_ERP_FED, parser.getMultiSigType());
     }
 
     @Test
     public void create_RedeemScriptParser_object_from_custom_redeem_script_no_multiSig() {
-        Script redeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptTestUtils.createCustomRedeemScript(defaultRedeemScriptKeys);
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.NO_MULTISIG_TYPE, parser.getMultiSigType());
@@ -249,4 +239,11 @@ public class RedeemScriptParserFactoryTest {
 
         Assert.assertEquals(MultiSigType.NO_MULTISIG_TYPE, parser.getMultiSigType());
     }
+    
+/*    private RedeemScriptParser extractRedeemScriptParserFromInputScript(Script inputScript) {
+        // Last chunk of input script is the redeem script
+        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
+        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
+        return RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
+    }*/
 }
