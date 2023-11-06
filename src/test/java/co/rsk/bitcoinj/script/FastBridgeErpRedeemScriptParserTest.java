@@ -15,22 +15,22 @@ public class FastBridgeErpRedeemScriptParserTest {
 
     @Before
     public void setUp() {
-        defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
-        emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+        defaultRedeemScriptKeys = RedeemScriptTestUtils.getDefaultRedeemScriptKeys();
+        emergencyRedeemScriptKeys = RedeemScriptTestUtils.getEmergencyRedeemScriptKeys();
     }
 
     @Test
     public void extractStandardRedeemScript_fromFastBridgeErpRedeemScript() {
         Long csvValue = 100L;
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script fastBridgeErpRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             csvValue,
             derivationArgumentsHash.getBytes()
         );
 
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys);
 
         Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(
@@ -42,7 +42,7 @@ public class FastBridgeErpRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void extractStandardRedeemScript_fromStandardRedeemScript_fail() {
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys);
 
         FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
@@ -50,7 +50,7 @@ public class FastBridgeErpRedeemScriptParserTest {
 
     @Test
     public void createFastBridgeErpRedeemScript_from_Erp_redeem_script() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             5063L
@@ -58,7 +58,7 @@ public class FastBridgeErpRedeemScriptParserTest {
 
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
 
-        Script expectedRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script expectedRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             5063L,
@@ -75,7 +75,7 @@ public class FastBridgeErpRedeemScriptParserTest {
 
     @Test
     public void isFastBridgeErpFed() {
-        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script fastBridgeErpRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             200L,
@@ -87,7 +87,7 @@ public class FastBridgeErpRedeemScriptParserTest {
 
     @Test
     public void isFastBridgeErpFed_falseWithCustomRedeemScript() {
-        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
+        Script customRedeemScript = RedeemScriptTestUtils.createCustomRedeemScript(
             defaultRedeemScriptKeys);
 
         Assert.assertFalse(FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(customRedeemScript.getChunks()));
