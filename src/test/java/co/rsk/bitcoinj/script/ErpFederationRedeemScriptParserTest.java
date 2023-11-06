@@ -16,18 +16,18 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Before
     public void setUp() {
-        defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
-        emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+        defaultRedeemScriptKeys = RedeemScriptTestUtils.getDefaultRedeemScriptKeys();
+        emergencyRedeemScriptKeys = RedeemScriptTestUtils.getEmergencyRedeemScriptKeys();
     }
 
     @Test
     public void extractStandardRedeemScript_fromErpRedeemScript() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             100L
         );
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys);
 
         Script obtainedRedeemScript = ErpFederationRedeemScriptParser.extractStandardRedeemScript(
@@ -39,7 +39,7 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void extractStandardRedeemScript_fromStandardRedeemScript_fail() {
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys);
 
         ErpFederationRedeemScriptParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
@@ -47,10 +47,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScriptDeprecated() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = 300L;
@@ -66,10 +66,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScriptDeprecated_invalidDefaultFederationRedeemScript() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createCustomRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = 200L;
@@ -83,10 +83,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScriptDeprecated_invalidErpFederationRedeemScript() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createCustomRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = 200L;
@@ -100,10 +100,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScriptDeprecated_csv_below_zero() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = -200L;
@@ -117,10 +117,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScriptDeprecated_csv_above_max_value() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE + 1;
@@ -134,10 +134,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScriptDeprecated_csv_exact_max_value() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE;
@@ -153,10 +153,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScriptDeprecated_csv_value_one_byte_long() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
 
@@ -174,10 +174,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScript() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = 300L;
@@ -193,10 +193,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScript_invalidDefaultFederationRedeemScript() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createCustomRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = 300L;
@@ -210,10 +210,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScript_invalidErpFederationRedeemScript() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createCustomRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = 300L;
@@ -227,10 +227,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_negative_value() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = -100L;
@@ -244,10 +244,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_zero_value() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = 0L;
@@ -261,10 +261,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_above_max_value() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE + 1;
@@ -278,10 +278,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScript_csv_exact_max_value() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         Long csvValue = ErpFederationRedeemScriptParser.MAX_CSV_VALUE;
@@ -297,10 +297,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScript_csv_value_one_byte_long() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         long csvValue = 20L;
@@ -316,10 +316,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScript_csv_value_two_bytes_long() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         long csvValue = 500L;
@@ -335,10 +335,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScript_csv_value_two_bytes_long_including_sign() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         long csvValue = 130; // Any value above 127 needs an extra byte to indicate the sign
@@ -354,10 +354,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_value_three_bytes_long() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         long csvValue = 100_000L;
@@ -372,10 +372,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void createErpRedeemScript_csv_value_three_bytes_long_including_sign() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         long csvValue = 33_000L; // Any value above 32_767 needs an extra byte to indicate the sign
@@ -391,10 +391,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_value_four_bytes_long() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         long csvValue = 10_000_000L;
@@ -409,10 +409,10 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test(expected = VerificationException.class)
     public void createErpRedeemScript_csv_value_four_bytes_long_including_sign() {
-        Script defaultFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script defaultFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
-        Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+        Script erpFederationRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
         long csvValue = 8_400_000L; // Any value above 8_388_607 needs an extra byte to indicate the sign
@@ -427,7 +427,7 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void isErpFed() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             200L
@@ -438,7 +438,7 @@ public class ErpFederationRedeemScriptParserTest {
 
     @Test
     public void isErpFed_falseWithCustomRedeemScript() {
-        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
+        Script customRedeemScript = RedeemScriptTestUtils.createCustomRedeemScript(
             defaultRedeemScriptKeys
         );
 
