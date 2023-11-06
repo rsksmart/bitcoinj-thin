@@ -471,7 +471,7 @@ public class ScriptTest {
     @Test
     public void getNumberOfSignaturesRequiredToSpend_fast_bridge_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data, btcECKeyList);
 
         Assert.assertEquals(2, fastBridgeRedeemScript.getNumberOfSignaturesRequiredToSpend());
@@ -479,7 +479,7 @@ public class ScriptTest {
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_erp_redeem_script() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L
@@ -490,7 +490,7 @@ public class ScriptTest {
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_fast_bridge_erp_redeem_script() {
-        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script fastBridgeErpRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L,
@@ -502,14 +502,14 @@ public class ScriptTest {
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_no_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(btcECKeyList);
         Assert.assertEquals(2, redeemScript.getNumberOfSignaturesRequiredToSpend());
     }
 
     @Test
     public void getSigInsertionIndex_fast_bridge_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data, btcECKeyList);
 
         testGetSigInsertionIndex(fastBridgeRedeemScript);
@@ -517,7 +517,7 @@ public class ScriptTest {
 
     @Test
     public void getSigInsertionIndex_erp_redeem_script() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L
@@ -528,7 +528,7 @@ public class ScriptTest {
 
     @Test
     public void getSigInsertionIndex_fast_bridge_erp_redeem_script() {
-        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script fastBridgeErpRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L,
@@ -540,14 +540,14 @@ public class ScriptTest {
 
     @Test
     public void getSigInsertionIndex_no_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(btcECKeyList);
         testGetSigInsertionIndex(redeemScript);
     }
 
     @Test
     public void isSentToMultiSig_fast_bridge_multiSig() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             btcECKeyList
         );
@@ -557,7 +557,7 @@ public class ScriptTest {
 
     @Test
     public void isSentToMultiSig_erp_multiSig() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L
@@ -568,7 +568,7 @@ public class ScriptTest {
 
     @Test
     public void isSentToMultiSig_fast_bridge_erp_multiSig() {
-        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script fastBridgeErpRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L,
@@ -580,13 +580,13 @@ public class ScriptTest {
 
     @Test
     public void isStandardMultiSig_standard_multiSig() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(btcECKeyList);
         Assert.assertTrue(redeemScript.isSentToMultiSig());
     }
 
     @Test
     public void createEmptyInputScript_standard_redeemScript() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(btcECKeyList);
         Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
 
@@ -600,7 +600,7 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_fast_bridge_redeemScript() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             Sha256Hash.of(new byte[]{1}).getBytes(),
             btcECKeyList
         );
@@ -618,7 +618,7 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_erp_redeemScript() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L
@@ -643,7 +643,7 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_fast_bridge_erp_redeemScript() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L,
@@ -669,7 +669,7 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_p2sh_erp_redeemScript() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createP2shErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L
@@ -694,7 +694,7 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_fast_bridge_p2sh_erp_redeemScript() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeP2shErpRedeemScript(
             btcECKeyList,
             erpFedECKeyList,
             500L,
