@@ -20,14 +20,14 @@ public class RedeemScriptValidatorTest {
 
     @Before
     public void setUp() {
-        defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
-        emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+        defaultRedeemScriptKeys = RedeemScriptTestUtils.getDefaultRedeemScriptKeys();
+        emergencyRedeemScriptKeys = RedeemScriptTestUtils.getEmergencyRedeemScriptKeys();
     }
 
     @Test
     public void isRedeemLikeScript_invalid_redeem_script_missing_checkSig() {
         List<ScriptChunk> chunksWithoutCheckSig = RedeemScriptValidator.removeOpCheckMultisig(
-            RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys)
+            RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys)
         );
 
         Assert.assertFalse(RedeemScriptValidator.isRedeemLikeScript(chunksWithoutCheckSig));
@@ -47,13 +47,13 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasStandardRedeemScriptStructure_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
     public void hasStandardRedeemScriptStructure_non_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -64,13 +64,13 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
     public void hasErpRedeemScriptStructure_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             Sha256Hash.of(new byte[]{1}).getBytes(),
             defaultRedeemScriptKeys
         );
@@ -80,7 +80,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_erp_fed_redeem_script_one_byte_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             10L
@@ -91,7 +91,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_erp_fed_redeem_script_two_bytes_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -102,7 +102,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_erp_fed_redeem_script_two_bytes_including_sign_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             130L // Any value above 127 needs an extra byte to indicate the sign
@@ -113,7 +113,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_erp_fed_redeem_script_three_bytes_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             100_000L
@@ -124,7 +124,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_erp_fed_redeem_script_three_bytes_including_sign_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             33_000L // Any value above 32_767 needs an extra byte to indicate the sign
@@ -135,7 +135,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_erp_fed_redeem_script_four_bytes_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             10_000_000L
@@ -146,7 +146,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_erp_fed_redeem_script_four_bytes_including_sign_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             8_400_000L // Any value above 8_388_607 needs an extra byte to indicate the sign
@@ -157,7 +157,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_fast_bridge_erp_redeem_script_removing_prefix() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -175,7 +175,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFastBridgePrefix_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             Sha256Hash.of(new byte[]{1}).getBytes(),
             defaultRedeemScriptKeys
         );
@@ -185,7 +185,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFastBridgePrefix_erp_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -197,13 +197,13 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFastBridgePrefix_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         Assert.assertFalse(RedeemScriptValidator.hasFastBridgePrefix(redeemScript.getChunks()));
     }
 
     @Test(expected = VerificationException.class)
     public void removeOpCheckMultiSig_non_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -214,7 +214,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void removeOpCheckMultiSig_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         List<ScriptChunk> chunks = RedeemScriptValidator.removeOpCheckMultisig(redeemScript);
 
         Assert.assertEquals(defaultRedeemScriptKeys.size() + 2, chunks.size()); // 1 chunk per key + OP_M + OP_N
