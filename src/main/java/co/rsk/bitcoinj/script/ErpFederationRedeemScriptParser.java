@@ -34,8 +34,10 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
 
         chunksForRedeem.add(new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null));
 
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        Script redeemScript = scriptBuilder.addChunks(chunksForRedeem).build();
         // Validate the obtained redeem script has a valid format
-        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
+        if (!redeemScript.isSentToMultiSig()) {
             String message = "Standard redeem script obtained from ERP redeem script has an invalid structure";
             logger.debug("[extractStandardRedeemScriptChunksFromErpRedeemScript] {} {}", message, chunksForRedeem);
             throw new VerificationException(message);
@@ -80,7 +82,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     }
 
     public static boolean isErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
+        return RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(chunks);
     }
 
     private static Script createErpRedeemScript(
@@ -110,7 +112,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             .build();
 
         // Validate the created redeem script has a valid structure
-        if (!RedeemScriptValidator.hasErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
+        if (!RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
             String message = String.format(
                 "Created redeem script has an invalid structure, not ERP redeem script. Redeem script created: %s",
                 erpRedeemScript
@@ -126,8 +128,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
-            !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
+        if (!defaultFederationRedeemScript.isSentToMultiSig() || !(erpFederationRedeemScript.isSentToMultiSig())) {
 
             String message = "Provided redeem scripts have an invalid structure, not standard";
             logger.debug("[validateErpRedeemScriptValues] {}", message);

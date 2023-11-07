@@ -27,7 +27,7 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpRedeemScript,
         Sha256Hash derivationArgumentsHash
     ) {
-        if (!RedeemScriptValidator.hasErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
+        if (!RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
             String message = "Provided redeem script has not ERP structure";
             logger.debug("[createFastBridgeErpRedeemScript] {}", message);
             throw new VerificationException(message);
@@ -45,6 +45,6 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
 
     public static boolean isFastBridgeErpFed(List<ScriptChunk> chunks) {
         return RedeemScriptValidator.hasFastBridgePrefix(chunks) &&
-            RedeemScriptValidator.hasErpRedeemScriptStructure(chunks.subList(2, chunks.size()));
+            RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(chunks.subList(2, chunks.size()));
     }
 }

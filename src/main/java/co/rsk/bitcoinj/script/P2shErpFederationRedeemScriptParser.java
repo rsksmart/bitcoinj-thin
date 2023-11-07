@@ -31,8 +31,11 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
             i++;
         }
 
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        Script redeemScript = scriptBuilder.addChunks(chunksForRedeem).build();
+
         // Validate the obtained redeem script has a valid format
-        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
+        if (!redeemScript.isSentToMultiSig()) {
             String message = "Standard redeem script obtained from P2SH ERP redeem script has an invalid structure";
             logger.debug("[extractStandardRedeemScript] {} {}", message, chunksForRedeem);
             throw new VerificationException(message);
@@ -89,8 +92,7 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(defaultFederationRedeemScript.getChunks()) ||
-            !RedeemScriptValidator.hasStandardRedeemScriptStructure(erpFederationRedeemScript.getChunks())) {
+        if (!defaultFederationRedeemScript.isSentToMultiSig() || !erpFederationRedeemScript.isSentToMultiSig()) {
 
             String message = "Provided redeem scripts has an invalid structure, not standard";
             logger.debug(
