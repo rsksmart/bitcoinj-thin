@@ -34,7 +34,7 @@ public class StandardRedeemScriptParserTest {
     @Test
     public void getSigInsertionIndex_fast_bridge_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             btcECKeyList
         );
@@ -69,7 +69,7 @@ public class StandardRedeemScriptParserTest {
 
         byte[] txSigEncoded = txSig.encodeToBitcoin();
 
-        int sigIndex = parser.getSigInsertionIndex(sigHash, ecKey1);
+        int sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey1);
         Assert.assertEquals(0, sigIndex);
 
         inputScript = ScriptBuilder.updateScriptWithSignature(
@@ -82,13 +82,13 @@ public class StandardRedeemScriptParserTest {
 
         parser = RedeemScriptParserFactory.get(inputScript.getChunks());
 
-        sigIndex = parser.getSigInsertionIndex(sigHash, ecKey2);
+        sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
         Assert.assertEquals(1, sigIndex);
     }
 
     @Test
     public void getSigInsertionIndex_no_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(btcECKeyList);
 
         BtcTransaction fundTx = new BtcTransaction(networkParameters);
         fundTx.addOutput(Coin.FIFTY_COINS, ecKey1.toAddress(networkParameters));
@@ -123,7 +123,7 @@ public class StandardRedeemScriptParserTest {
         );
         byte[] txSigEncoded = txSig.encodeToBitcoin();
 
-        int sigIndex = parser.getSigInsertionIndex(sigHash, ecKey1);
+        int sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey1);
         Assert.assertEquals(0, sigIndex);
 
         inputScript = ScriptBuilder.updateScriptWithSignature(
@@ -136,14 +136,14 @@ public class StandardRedeemScriptParserTest {
 
         parser = RedeemScriptParserFactory.get(inputScript.getChunks());
 
-        sigIndex = parser.getSigInsertionIndex(sigHash, ecKey2);
+        sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
         Assert.assertEquals(1, sigIndex);
     }
 
     @Test
     public void findKeyInRedeem_fast_bridge_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             btcECKeyList
         );
@@ -158,7 +158,7 @@ public class StandardRedeemScriptParserTest {
     @Test(expected = IllegalStateException.class)
     public void findKeyInRedeem_fast_bridge_redeem_script_no_matching_key() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             btcECKeyList
         );
@@ -171,7 +171,7 @@ public class StandardRedeemScriptParserTest {
 
     @Test(expected = IllegalStateException.class)
     public void findKeyInRedeem_standard_redeem_script_no_matching_key() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(btcECKeyList);
         BtcECKey unmatchingBtcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(400));
 
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
@@ -182,7 +182,7 @@ public class StandardRedeemScriptParserTest {
     @Test
     public void getPubKeys_fast_bridge_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             btcECKeyList
         );
@@ -208,7 +208,7 @@ public class StandardRedeemScriptParserTest {
 
     @Test
     public void getPubKeys_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(btcECKeyList);
 
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
         List<BtcECKey> obtainedList = parser.getPubKeys();
@@ -248,7 +248,7 @@ public class StandardRedeemScriptParserTest {
     @Test
     public void getM_from_multiSig_fast_bridge_redeem_script() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data,
             btcECKeyList
         );
@@ -260,7 +260,7 @@ public class StandardRedeemScriptParserTest {
 
     @Test
     public void getM_from_multiSig_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(btcECKeyList);
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(2, parser.getM());
