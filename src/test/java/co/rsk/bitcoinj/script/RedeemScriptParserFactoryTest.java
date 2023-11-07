@@ -11,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static co.rsk.bitcoinj.script.RedeemScriptUtils.extractRedeemScriptParserFromInputScript;
+import static co.rsk.bitcoinj.script.RedeemScriptUtils.extractRedeemScriptFromInputScript;
 
 public class RedeemScriptParserFactoryTest {
 
@@ -116,7 +116,8 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeRedeemScript);
-        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
+        Script redeemScriptFromInputScript = extractRedeemScriptFromInputScript(inputScript).get();
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_MULTISIG, parser.getMultiSigType());
     }
@@ -131,7 +132,8 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
-        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
+        Script redeemScriptFromInputScript = extractRedeemScriptFromInputScript(inputScript).get();
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.STANDARD_MULTISIG, parser.getMultiSigType());
     }
@@ -150,7 +152,8 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, erpRedeemScript);
-        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
+        Script redeemScriptFromInputScript = extractRedeemScriptFromInputScript(inputScript).get();
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.ERP_FED, parser.getMultiSigType());
     }
@@ -170,7 +173,8 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeErpRedeemScript);
-        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
+        Script redeemScriptFromInputScript = extractRedeemScriptFromInputScript(inputScript).get();
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_ERP_FED, parser.getMultiSigType());
     }
@@ -189,7 +193,8 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, p2shErpRedeemScript);
-        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
+        Script redeemScriptFromInputScript = extractRedeemScriptFromInputScript(inputScript).get();
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.P2SH_ERP_FED, parser.getMultiSigType());
     }
@@ -209,7 +214,8 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeP2shErpRedeemScript);
-        RedeemScriptParser parser = extractRedeemScriptParserFromInputScript(inputScript).get();
+        Script redeemScriptFromInputScript = extractRedeemScriptFromInputScript(inputScript).get();
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_P2SH_ERP_FED, parser.getMultiSigType());
     }
@@ -239,11 +245,4 @@ public class RedeemScriptParserFactoryTest {
 
         Assert.assertEquals(MultiSigType.NO_MULTISIG_TYPE, parser.getMultiSigType());
     }
-    
-/*    private RedeemScriptParser extractRedeemScriptParserFromInputScript(Script inputScript) {
-        // Last chunk of input script is the redeem script
-        ScriptChunk redeemScriptChunksFromInputScript = inputScript.getChunks().get(inputScript.chunks.size() - 1);
-        Script redeemScriptFromInputScript = new Script(redeemScriptChunksFromInputScript.data);
-        return RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
-    }*/
 }
