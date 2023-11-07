@@ -17,6 +17,7 @@
 
 package co.rsk.bitcoinj.script;
 
+import static co.rsk.bitcoinj.script.RedeemScriptUtils.*;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -474,7 +475,7 @@ public class ScriptTest {
         Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data, btcECKeyList);
 
-        Assert.assertEquals(2, fastBridgeRedeemScript.getNumberOfSignaturesRequiredToSpend());
+        Assert.assertEquals(2, extractStandardRedeemScriptFromFlyoverRedeemScript(fastBridgeRedeemScript).getNumberOfSignaturesRequiredToSpend());
     }
 
     @Test
@@ -485,7 +486,7 @@ public class ScriptTest {
             500L
         );
 
-        Assert.assertEquals(2, erpRedeemScript.getNumberOfSignaturesRequiredToSpend());
+        Assert.assertEquals(2, extractStandardRedeemScriptFromErpRedeemScript(erpRedeemScript).getNumberOfSignaturesRequiredToSpend());
     }
 
     @Test
@@ -497,7 +498,9 @@ public class ScriptTest {
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
 
-        Assert.assertEquals(2, fastBridgeErpRedeemScript.getNumberOfSignaturesRequiredToSpend());
+
+
+        Assert.assertEquals(2, extractStandardRedeemScriptFromFlyoverErpRedeemScript(fastBridgeErpRedeemScript).getNumberOfSignaturesRequiredToSpend());
     }
 
     @Test
@@ -512,7 +515,7 @@ public class ScriptTest {
         Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
             data, btcECKeyList);
 
-        testGetSigInsertionIndex(fastBridgeRedeemScript);
+        testGetSigInsertionIndex(extractScriptWithoutFlyoverOpcodesFromFlyoverRedeemScript(fastBridgeRedeemScript));
     }
 
     @Test
@@ -523,7 +526,7 @@ public class ScriptTest {
             500L
         );
 
-        testGetSigInsertionIndex(erpRedeemScript);
+        testGetSigInsertionIndex(extractStandardRedeemScriptFromErpRedeemScript(erpRedeemScript));
     }
 
     @Test
@@ -535,7 +538,7 @@ public class ScriptTest {
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
 
-        testGetSigInsertionIndex(fastBridgeErpRedeemScript);
+        testGetSigInsertionIndex(extractScriptWithoutFlyoverOpcodesFromFlyoverRedeemScript(fastBridgeErpRedeemScript));
     }
 
     @Test
@@ -552,7 +555,7 @@ public class ScriptTest {
             btcECKeyList
         );
 
-        Assert.assertTrue(fastBridgeRedeemScript.isSentToMultiSig());
+        Assert.assertTrue(extractStandardRedeemScriptFromFlyoverRedeemScript(fastBridgeRedeemScript).isSentToMultiSig());
     }
 
     @Test
@@ -563,7 +566,7 @@ public class ScriptTest {
             500L
         );
 
-        Assert.assertTrue(erpRedeemScript.isSentToMultiSig());
+        Assert.assertTrue(extractStandardRedeemScriptFromErpRedeemScript(erpRedeemScript).isSentToMultiSig());
     }
 
     @Test
@@ -575,7 +578,7 @@ public class ScriptTest {
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
 
-        Assert.assertTrue(fastBridgeErpRedeemScript.isSentToMultiSig());
+        Assert.assertTrue(extractStandardRedeemScriptFromFlyoverRedeemScript(fastBridgeErpRedeemScript).isSentToMultiSig());
     }
 
     @Test

@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
+import static co.rsk.bitcoinj.script.RedeemScriptUtils.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
@@ -321,6 +322,68 @@ public class ScriptBuilder {
         return createMultiSigInputScriptBytes(sigs, multisigProgram.getProgram());
     }
 
+    public static Script createP2SHMultiSigFlyoverInputScript(@Nullable List<TransactionSignature> signatures,
+                                                              Script multisigProgram) {
+        Script insideRedeemScript = extractScriptWithoutFlyoverOpcodesFromFlyoverRedeemScript(multisigProgram);
+        if (insideRedeemScript.isSentToMultiSig()) {
+            List<byte[]> sigs = new ArrayList<byte[]>();
+            if (signatures == null) {
+                // create correct number of empty signatures
+                int numSigs = insideRedeemScript.getNumberOfSignaturesRequiredToSpend();
+                for (int i = 0; i < numSigs; i++)
+                    sigs.add(new byte[]{});
+            } else {
+                for (TransactionSignature signature : signatures) {
+                    sigs.add(signature.encodeToBitcoin());
+                }
+            }
+            return createMultiSigInputScriptBytes(sigs, multisigProgram.getProgram());
+        }
+        else {
+            return createP2SHMultiSigFlyoverErpInputScript(null, multisigProgram);
+        }
+    }
+
+    /**
+     * Create a program that satisfies a pay-to-script hashed ERP OP_CHECKMULTISIG program.
+     * If given signature list is null, incomplete scriptSig will be created with OP_0 instead of signatures
+     */
+    public static Script createP2SHMultiSigErpInputScript(@Nullable List<TransactionSignature> signatures,
+                                                       Script multisigProgram) {
+        List<byte[]> sigs = new ArrayList<byte[]>();
+        Script standardRedeemScript;
+        if (signatures == null) {
+            // create correct number of empty signatures
+            standardRedeemScript = extractStandardRedeemScriptFromErpRedeemScript(multisigProgram);
+            int numSigs = standardRedeemScript.getNumberOfSignaturesRequiredToSpend();
+            for (int i = 0; i < numSigs; i++)
+                sigs.add(new byte[]{});
+        } else {
+            for (TransactionSignature signature : signatures) {
+                sigs.add(signature.encodeToBitcoin());
+            }
+        }
+        return createMultiSigErpInputScriptBytes(sigs, multisigProgram.getProgram());
+    }
+
+    public static Script createP2SHMultiSigFlyoverErpInputScript(@Nullable List<TransactionSignature> signatures,
+                                                          Script multisigProgram) {
+        List<byte[]> sigs = new ArrayList<byte[]>();
+        Script standardRedeemScript;
+        if (signatures == null) {
+            // create correct number of empty signatures
+            standardRedeemScript = extractStandardRedeemScriptFromFlyoverRedeemScript(multisigProgram);
+            int numSigs = standardRedeemScript.getNumberOfSignaturesRequiredToSpend();
+            for (int i = 0; i < numSigs; i++)
+                sigs.add(new byte[]{});
+        } else {
+            for (TransactionSignature signature : signatures) {
+                sigs.add(signature.encodeToBitcoin());
+            }
+        }
+        return createMultiSigErpInputScriptBytes(sigs, multisigProgram.getProgram());
+    }
+
     /**
      * Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. 
      * Optionally, appends the script program bytes if spending a P2SH output.
@@ -333,6 +396,18 @@ public class ScriptBuilder {
             builder.data(signature);
         if (multisigProgramBytes!= null)
         	builder.data(multisigProgramBytes);
+        return builder.build();
+    }
+
+    public static Script createMultiSigErpInputScriptBytes(List<byte[]> signatures, @Nullable byte[] multisigProgramBytes) {
+        checkArgument(signatures.size() <= 16);
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
+        for (byte[] signature : signatures)
+            builder.data(signature);
+        builder.smallNum(0); // OP_NOTIF argument
+        if (multisigProgramBytes!= null)
+            builder.data(multisigProgramBytes);
         return builder.build();
     }
 

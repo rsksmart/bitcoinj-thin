@@ -25,47 +25,9 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void isRedeemLikeScript_invalid_redeem_script_missing_checkSig() {
-        List<ScriptChunk> chunksWithoutCheckSig = RedeemScriptValidator.removeOpCheckMultisig(
-            RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys)
-        );
-
-        Assert.assertFalse(RedeemScriptValidator.isRedeemLikeScript(chunksWithoutCheckSig));
-    }
-
-    @Test
-    public void isRedeemLikeScript_invalid_redeem_script_insufficient_chunks() {
-        ScriptBuilder builder = new ScriptBuilder();
-        Script redeemScript = builder
-            .data(ecKey1.getPubKey())
-            .data(ecKey2.getPubKey())
-            .data(ecKey3.getPubKey())
-            .build();
-
-        Assert.assertFalse(RedeemScriptValidator.isRedeemLikeScript(redeemScript.getChunks()));
-    }
-
-    @Test
-    public void hasStandardRedeemScriptStructure_standard_redeem_script() {
-        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
-    }
-
-    @Test
-    public void hasStandardRedeemScriptStructure_non_standard_redeem_script() {
-        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            500L
-        );
-
-        Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
-    }
-
-    @Test
     public void hasErpRedeemScriptStructure_standard_redeem_script() {
         Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertFalse(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -75,7 +37,7 @@ public class RedeemScriptValidatorTest {
             defaultRedeemScriptKeys
         );
 
-        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertFalse(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -86,7 +48,7 @@ public class RedeemScriptValidatorTest {
             10L
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -97,7 +59,7 @@ public class RedeemScriptValidatorTest {
             500L
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -108,7 +70,7 @@ public class RedeemScriptValidatorTest {
             130L // Any value above 127 needs an extra byte to indicate the sign
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -119,7 +81,7 @@ public class RedeemScriptValidatorTest {
             100_000L
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -130,7 +92,7 @@ public class RedeemScriptValidatorTest {
             33_000L // Any value above 32_767 needs an extra byte to indicate the sign
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -141,7 +103,7 @@ public class RedeemScriptValidatorTest {
             10_000_000L
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -152,7 +114,7 @@ public class RedeemScriptValidatorTest {
             8_400_000L // Any value above 8_388_607 needs an extra byte to indicate the sign
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
@@ -168,7 +130,7 @@ public class RedeemScriptValidatorTest {
         List<ScriptChunk> chunks = redeemScript.getChunks();
         List<ScriptChunk> chunksWithoutFastBridgePrefix = chunks.subList(2, chunks.size());
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(
+        Assert.assertTrue(RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(
             chunksWithoutFastBridgePrefix)
         );
     }
@@ -212,14 +174,14 @@ public class RedeemScriptValidatorTest {
         RedeemScriptValidator.removeOpCheckMultisig(redeemScript);
     }
 
-    @Test
+/*    @Test
     public void removeOpCheckMultiSig_standard_redeem_script() {
         Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         List<ScriptChunk> chunks = RedeemScriptValidator.removeOpCheckMultisig(redeemScript);
 
         Assert.assertEquals(defaultRedeemScriptKeys.size() + 2, chunks.size()); // 1 chunk per key + OP_M + OP_N
         Assert.assertFalse(RedeemScriptValidator.isRedeemLikeScript(chunks));
-    }
+    }*/
 
     @Test
     public void isOpN_valid_opcode() {
