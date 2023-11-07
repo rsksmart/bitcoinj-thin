@@ -12,7 +12,7 @@ public class RedeemScriptUtils {
     private static final Logger logger = LoggerFactory.getLogger(RedeemScriptUtils.class);
 
     private RedeemScriptUtils() { }
-    public static Optional<RedeemScriptParser> extractRedeemScriptParserFromInputScript(Script inputScript) {
+    public static Optional<Script> extractRedeemScriptFromInputScript(Script inputScript) {
         List<ScriptChunk> chunks = inputScript.getChunks();
 
         if (chunks == null || chunks.isEmpty()) {
@@ -26,8 +26,7 @@ public class RedeemScriptUtils {
 
         try {
             Script redeemScript = new Script(program);
-            RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-            return Optional.of(redeemScriptParser);
+            return Optional.of(redeemScript);
         } catch (ScriptException e) {
             logger.debug(
                 "[extractRedeemScriptFromInput] Failed to extract redeem script from inputScript {}. {}",
