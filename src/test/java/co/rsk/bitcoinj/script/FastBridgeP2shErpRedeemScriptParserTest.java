@@ -60,31 +60,6 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
     }
 
     @Test
-    public void createFastBridgeP2shErpRedeemScript_fromP2shErpRedeemScript() {
-        Script erpRedeemScript = RedeemScriptTestUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            5063L
-        );
-
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-
-        Script expectedRedeemScript = RedeemScriptTestUtils.createFastBridgeP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            5063L,
-            derivationArgumentsHash.getBytes()
-        );
-
-        Script obtainedRedeemScript = FastBridgeP2shErpRedeemScriptParser.createFastBridgeP2shErpRedeemScript(
-            erpRedeemScript,
-            derivationArgumentsHash
-        );
-
-        Assert.assertEquals(expectedRedeemScript, obtainedRedeemScript);
-    }
-
-    @Test
     public void isFastBridgeP2shErpFed() {
         Script fastBridgeP2shErpRedeemScript = RedeemScriptTestUtils.createFastBridgeP2shErpRedeemScript(
             defaultRedeemScriptKeys,
@@ -121,30 +96,6 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
         Assert.assertFalse(FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(
             customRedeemScript.getChunks())
         );
-    }
-
-    @Test
-    public void createFastBridgeP2shErpRedeemScript_compareAgainstOtherImplementation() throws IOException {
-
-        byte[] rawRedeemScripts;
-        try {
-            rawRedeemScripts = Files.readAllBytes(Paths.get("src/test/resources/redeemScripts_fastbridge_p2shERP.json"));
-        } catch (IOException e) {
-            System.out.println("redeemScripts_p2shERP.json file not found");
-            throw(e);
-        }
-
-        RawGeneratedRedeemScript[] generatedScripts = new ObjectMapper().readValue(rawRedeemScripts, RawGeneratedRedeemScript[].class);
-
-        for (RawGeneratedRedeemScript generatedScript : generatedScripts) {
-            Script bitcoinjScript = FastBridgeP2shErpRedeemScriptParser.createFastBridgeP2shErpRedeemScript(
-                generatedScript.powpegScript,
-                generatedScript.derivationHash
-            );
-
-            Script expectedScript = generatedScript.expectedScript;
-            Assert.assertEquals(expectedScript, bitcoinjScript);
-        }
     }
 
     private static class RawGeneratedRedeemScript {
