@@ -43,9 +43,9 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
             defaultRedeemScriptKeys
         );
 
-        Script obtainedRedeemScript = FastBridgeP2shErpRedeemScriptParser.extractStandardRedeemScript(
+        Script obtainedRedeemScript = new Script (FastBridgeP2shErpRedeemScriptParser.extractStandardRedeemScript(
             fastBridgeP2shErpRedeemScript.getChunks()
-        );
+        ));
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
     }

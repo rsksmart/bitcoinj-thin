@@ -30,9 +30,9 @@ public class ErpFederationRedeemScriptParserTest {
         Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys);
 
-        Script obtainedRedeemScript = ErpFederationRedeemScriptParser.extractStandardRedeemScript(
+        Script obtainedRedeemScript = new Script (ErpFederationRedeemScriptParser.extractStandardRedeemScript(
             erpRedeemScript.getChunks()
-        );
+        ));
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
     }

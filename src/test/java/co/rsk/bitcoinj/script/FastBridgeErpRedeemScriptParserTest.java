@@ -33,9 +33,9 @@ public class FastBridgeErpRedeemScriptParserTest {
         Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys);
 
-        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(
+        Script obtainedRedeemScript = new Script (FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(
             fastBridgeErpRedeemScript.getChunks()
-        );
+        ));
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
     }

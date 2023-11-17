@@ -76,8 +76,8 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public Script extractStandardRedeemScript() {
-        return new Script(redeemScriptChunks);
+    public List<ScriptChunk> extractStandardRedeemScript() {
+        return (new Script(redeemScriptChunks)).getChunks();
     }
 
     public static boolean isStandardMultiSig(List<ScriptChunk> chunks) {
