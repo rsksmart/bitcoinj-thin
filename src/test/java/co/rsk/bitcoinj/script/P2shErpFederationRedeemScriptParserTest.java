@@ -30,9 +30,9 @@ public class P2shErpFederationRedeemScriptParserTest {
             defaultRedeemScriptKeys
         );
 
-        Script obtainedRedeemScript = P2shErpFederationRedeemScriptParser.extractStandardRedeemScript(
+        Script obtainedRedeemScript = new Script(P2shErpFederationRedeemScriptParser.extractStandardRedeemScript(
             erpRedeemScript.getChunks()
-        );
+        ));
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
     }
