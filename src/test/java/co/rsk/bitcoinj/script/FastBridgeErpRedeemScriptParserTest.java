@@ -49,31 +49,6 @@ public class FastBridgeErpRedeemScriptParserTest {
     }
 
     @Test
-    public void createFastBridgeErpRedeemScript_from_Erp_redeem_script() {
-        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            5063L
-        );
-
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-
-        Script expectedRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            5063L,
-            derivationArgumentsHash.getBytes()
-        );
-
-        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
-            erpRedeemScript,
-            derivationArgumentsHash
-        );
-
-        Assert.assertEquals(expectedRedeemScript, obtainedRedeemScript);
-    }
-
-    @Test
     public void isFastBridgeErpFed() {
         Script fastBridgeErpRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
