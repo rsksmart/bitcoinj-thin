@@ -27,9 +27,9 @@ public class FastBridgeRedeemScriptParserTest {
 
         Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(publicKeys);
 
-        Script obtainedRedeemScript = FastBridgeRedeemScriptParser.extractStandardRedeemScript(
+        Script obtainedRedeemScript = new Script (FastBridgeRedeemScriptParser.extractStandardRedeemScript(
             fastBridgeRedeemScript
-        );
+        ));
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
     }
@@ -37,7 +37,7 @@ public class FastBridgeRedeemScriptParserTest {
     @Test
     public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_std_redeem_script() {
         Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(publicKeys);
-        Script obtainedRedeemScript = FastBridgeRedeemScriptParser.extractStandardRedeemScript(redeemScript);
+        Script obtainedRedeemScript = new Script(FastBridgeRedeemScriptParser.extractStandardRedeemScript(redeemScript));
 
         Assert.assertEquals(redeemScript, obtainedRedeemScript);
     }
