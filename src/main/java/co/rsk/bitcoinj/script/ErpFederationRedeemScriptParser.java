@@ -36,7 +36,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             throw new VerificationException(message);
         }
 
-        return (new Script(chunksForRedeem)).getChunks();
+        return chunksForRedeem;
     }
 
     public static boolean isErpFed(List<ScriptChunk> chunks) {
