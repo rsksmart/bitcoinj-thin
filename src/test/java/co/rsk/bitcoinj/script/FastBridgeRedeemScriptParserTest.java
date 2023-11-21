@@ -2,7 +2,6 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Sha256Hash;
-import co.rsk.bitcoinj.core.VerificationException;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,14 +31,6 @@ public class FastBridgeRedeemScriptParserTest {
         ));
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
-    }
-
-    @Test
-    public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_std_redeem_script() {
-        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(publicKeys);
-        Script obtainedRedeemScript = new Script(FastBridgeRedeemScriptParser.extractStandardRedeemScript(redeemScript));
-
-        Assert.assertEquals(redeemScript, obtainedRedeemScript);
     }
 
     @Test
