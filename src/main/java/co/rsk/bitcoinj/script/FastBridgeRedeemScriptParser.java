@@ -21,10 +21,8 @@ public class FastBridgeRedeemScriptParser extends StandardRedeemScriptParser {
     }
 
     public static List<ScriptChunk> extractStandardRedeemScript(Script redeemScript) {
-        return (ScriptBuilder.createRedeemScript(
-            redeemScript.getNumberOfSignaturesRequiredToSpend(),
-            redeemScript.getPubKeys()
-        )).getChunks();
+        List<ScriptChunk> chunks = redeemScript.getChunks();
+        return chunks.subList(2, chunks.size());
     }
 
     public static boolean isFastBridgeMultiSig(List<ScriptChunk> chunks) {
