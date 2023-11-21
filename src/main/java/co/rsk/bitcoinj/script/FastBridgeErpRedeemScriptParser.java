@@ -14,8 +14,8 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
     }
 
     public static List<ScriptChunk> extractStandardRedeemScript(List<ScriptChunk> chunks) {
-        return (ErpFederationRedeemScriptParser.
-            extractStandardRedeemScript(chunks.subList(2, chunks.size())));
+        return ErpFederationRedeemScriptParser.
+            extractStandardRedeemScript(chunks.subList(2, chunks.size()));
     }
 
     public static boolean isFastBridgeErpFed(List<ScriptChunk> chunks) {
