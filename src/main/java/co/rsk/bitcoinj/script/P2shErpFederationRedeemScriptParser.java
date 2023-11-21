@@ -35,7 +35,7 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
             throw new VerificationException(message);
         }
 
-        return (new Script(chunksForRedeem)).getChunks();
+        return chunksForRedeem;
     }
 
     public static boolean isP2shErpFed(List<ScriptChunk> chunks) {
