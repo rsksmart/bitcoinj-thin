@@ -33,9 +33,9 @@ public class FastBridgeErpRedeemScriptParserTest {
         Script standardRedeemScript = RedeemScriptTestUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys);
 
-        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(
+        Script obtainedRedeemScript = new Script (FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(
             fastBridgeErpRedeemScript.getChunks()
-        );
+        ));
 
         Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
     }
@@ -46,31 +46,6 @@ public class FastBridgeErpRedeemScriptParserTest {
             defaultRedeemScriptKeys);
 
         FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
-    }
-
-    @Test
-    public void createFastBridgeErpRedeemScript_from_Erp_redeem_script() {
-        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            5063L
-        );
-
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-
-        Script expectedRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            5063L,
-            derivationArgumentsHash.getBytes()
-        );
-
-        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.createFastBridgeErpRedeemScript(
-            erpRedeemScript,
-            derivationArgumentsHash
-        );
-
-        Assert.assertEquals(expectedRedeemScript, obtainedRedeemScript);
     }
 
     @Test
