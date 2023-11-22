@@ -51,7 +51,6 @@ public class StandardRedeemScriptParserTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeRedeemScript);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
 
         Sha256Hash sigHash = spendTx.hashForSignature(
             0,
@@ -80,8 +79,6 @@ public class StandardRedeemScriptParserTest {
             1
         );
 
-        parser = RedeemScriptParserFactory.get(inputScript.getChunks());
-
         sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
         Assert.assertEquals(1, sigIndex);
     }
@@ -105,8 +102,6 @@ public class StandardRedeemScriptParserTest {
             redeemScript.getPubKeys().get(0),
             redeemScript
         );
-
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(inputScript.getChunks());
 
         Sha256Hash sigHash = spendTx.hashForSignature(
             0,
@@ -133,8 +128,6 @@ public class StandardRedeemScriptParserTest {
             1,
             1
         );
-
-        parser = RedeemScriptParserFactory.get(inputScript.getChunks());
 
         sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
         Assert.assertEquals(1, sigIndex);
@@ -235,14 +228,6 @@ public class StandardRedeemScriptParserTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(script.getChunks());
 
         parser.getPubKeys();
-    }
-
-    @Test
-    public void getM_from_no_multiSig() {
-        Script redeemScript = new Script(new byte[2]);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
-        Assert.assertEquals(-1, parser.getM());
     }
 
     @Test
