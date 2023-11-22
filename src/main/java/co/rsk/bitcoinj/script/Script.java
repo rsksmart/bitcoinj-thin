@@ -677,7 +677,12 @@ public class Script {
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
     public boolean isSentToMultiSig() {
-        return !this.getRedeemScriptParser().getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
+        if (isSentToAddress() || isSentToRawPubKey()) {
+            return false;
+        }
+        else {
+            return !this.getRedeemScriptParser().getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
+        }
     }
 
     public boolean isSentToCLTVPaymentChannel() {
