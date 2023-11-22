@@ -11,13 +11,14 @@ public class RedeemScriptParserFactory {
     private static final Logger logger = LoggerFactory.getLogger(RedeemScriptParserFactory.class);
 
     public static RedeemScriptParser get(List<ScriptChunk> chunks) {
+
         // Due to a validation error, during the time this federation existed in testnet
         // bitcoinj-thin would not detect it correctly as an ERP fed
         // We need to keep this behaviour for the given redeem script to keep the consensus in testnet
         ScriptParserResult scriptParserResult = ScriptParser.parseScriptProgram(ERP_TESTNET_REDEEM_SCRIPT_BYTES);
         if (scriptParserResult.getChunks().equals(chunks)) {
             logger.debug("[get] Received redeem script matches the testnet federation hardcoded one. Return NoRedeemScriptParser");
-            throw new ScriptException("The provided redeem script matches the testnet federation hardcoded one. Cannot parse it.");
+            return new NonStandardRedeemScriptHardcodedParser();
         }
 
         if (chunks.size() < 4) {
