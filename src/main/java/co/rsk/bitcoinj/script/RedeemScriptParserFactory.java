@@ -17,7 +17,7 @@ public class RedeemScriptParserFactory {
         // We need to keep this behaviour for the given redeem script to keep the consensus in testnet
         ScriptParserResult scriptParserResult = ScriptParser.parseScriptProgram(ERP_TESTNET_REDEEM_SCRIPT_BYTES);
         if (scriptParserResult.getChunks().equals(chunks)) {
-            logger.debug("[get] Received redeem script matches the testnet federation hardcoded one. Return NoRedeemScriptParser");
+            logger.debug("[get] Received redeem script matches the testnet federation hardcoded one. Return NonStandardRedeemScriptHardcodedParser");
             return new NonStandardRedeemScriptHardcodedParser();
         }
 
