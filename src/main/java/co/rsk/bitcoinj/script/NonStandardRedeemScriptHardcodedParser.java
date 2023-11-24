@@ -17,7 +17,6 @@ public class NonStandardRedeemScriptHardcodedParser implements RedeemScriptParse
         return -1;
     }
 
-
     @Override
     public int findKeyInRedeem(BtcECKey key) {
         return -1;
