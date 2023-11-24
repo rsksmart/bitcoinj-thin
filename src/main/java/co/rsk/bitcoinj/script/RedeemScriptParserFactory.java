@@ -1,5 +1,6 @@
 package co.rsk.bitcoinj.script;
 
+import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Utils;
 import java.util.List;
 import org.slf4j.Logger;
@@ -10,19 +11,20 @@ public class RedeemScriptParserFactory {
     private static final Logger logger = LoggerFactory.getLogger(RedeemScriptParserFactory.class);
 
     public static RedeemScriptParser get(List<ScriptChunk> chunks) {
+
         // Due to a validation error, during the time this federation existed in testnet
         // bitcoinj-thin would not detect it correctly as an ERP fed
         // We need to keep this behaviour for the given redeem script to keep the consensus in testnet
         ScriptParserResult scriptParserResult = ScriptParser.parseScriptProgram(ERP_TESTNET_REDEEM_SCRIPT_BYTES);
         if (scriptParserResult.getChunks().equals(chunks)) {
-            logger.debug("[get] Received redeem script matches the testnet federation hardcoded one. Return NoRedeemScriptParser");
-            return new NoRedeemScriptParser();
+            logger.debug("[get] Received redeem script matches the testnet federation hardcoded one. Return NonStandardRedeemScriptHardcodedParser");
+            return new NonStandardRedeemScriptHardcodedParser();
         }
 
         if (chunks.size() < 4) {
             // A multisig redeem script must have at least 4 chunks (OP_N [PUB1 ...] OP_N CHECK_MULTISIG)
-            logger.trace("[get] Less than 4 chunks, return NoRedeemScriptParser");
-            return new NoRedeemScriptParser();
+            logger.trace("[get] Less than 4 chunks");
+            throw new ScriptException("The provided redeem script has less than 4 chunks.");
         }
 
         if (FastBridgeRedeemScriptParser.isFastBridgeMultiSig(chunks)) {
@@ -62,7 +64,7 @@ public class RedeemScriptParserFactory {
             );
         }
 
-        logger.debug("[get] Return NoRedeemScriptParser");
-        return new NoRedeemScriptParser();
+        logger.debug("[get] Cannot parse provided redeem script");
+        throw new ScriptException("The provided redeem script is unknown.");
     }
 }

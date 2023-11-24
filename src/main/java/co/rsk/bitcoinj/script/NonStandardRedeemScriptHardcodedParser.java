@@ -5,8 +5,8 @@ import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import java.util.List;
 
-public class NoRedeemScriptParser implements RedeemScriptParser {
-
+// this class exists to keep backwards compatibility
+public class NonStandardRedeemScriptHardcodedParser implements RedeemScriptParser {
     @Override
     public MultiSigType getMultiSigType() {
         return MultiSigType.NO_MULTISIG_TYPE;
@@ -16,7 +16,6 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
     public int getM() {
         return -1;
     }
-
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
