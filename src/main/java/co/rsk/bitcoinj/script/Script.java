@@ -676,6 +676,32 @@ public class Script {
     /**
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
+    public boolean isSentToStandardMultiSig() {
+        if (chunks.size() < 4) return false;
+        ScriptChunk chunk = chunks.get(chunks.size() - 1);
+        // Must end in OP_CHECKMULTISIG[VERIFY].
+        if (!chunk.isOpCode()) return false;
+        if (!(chunk.equalsOpCode(OP_CHECKMULTISIG) || chunk.equalsOpCode(OP_CHECKMULTISIGVERIFY))) return false;
+        try {
+            // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
+            ScriptChunk m = chunks.get(chunks.size() - 2);
+            if (!m.isOpCode()) return false;
+            int numKeys = decodeFromOpN(m.opcode);
+            if (numKeys < 1 || chunks.size() != 3 + numKeys) return false;
+            for (int i = 1; i < chunks.size() - 2; i++) {
+                if (chunks.get(i).isOpCode()) return false;
+            }
+            // First chunk must be an OP_N opcode too.
+            if (decodeFromOpN(chunks.get(0).opcode) < 1) return false;
+        } catch (IllegalArgumentException e) { // thrown by decodeFromOpN()
+            return false;   // Not an OP_N opcode.
+        }
+        return true;
+    }
+
+    /**
+     * Returns whether this script parser belong to a multisig
+     */
     public boolean isSentToMultiSig() {
         RedeemScriptParser parser;
         try {
