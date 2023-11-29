@@ -670,7 +670,7 @@ public class Script {
         try {
             // First chunk must be an OP_N opcode representing the threshold.
             ScriptChunk m = chunks.get(0);
-            if (!m.isOpCode() || (decodeFromOpN(m.opcode) < 1)) {
+            if (!m.isOpCode() || decodeFromOpN(m.opcode) < 1) {
                 return false;
             }
 
