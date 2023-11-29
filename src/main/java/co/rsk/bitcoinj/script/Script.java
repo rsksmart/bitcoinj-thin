@@ -676,6 +676,64 @@ public class Script {
     /**
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
+    public boolean isSentToStandardMultiSig() {
+        if (chunks.size() < 4) {
+            return false;
+        }
+
+        ScriptChunk lastChunk = chunks.get(chunks.size() - 1);
+        // Must end in OP_CHECKMULTISIG[VERIFY].
+        if (!lastChunk.isOpCode()) {
+            return false;
+        }
+        if (!lastChunk.equalsOpCode(OP_CHECKMULTISIG) && !lastChunk.equalsOpCode(OP_CHECKMULTISIGVERIFY)) {
+            return false;
+        }
+
+        try {
+            // First chunk must be an OP_N opcode representing the threshold
+            ScriptChunk m = chunks.get(0);
+            if (!m.isOpCode()) {
+                return false;
+            }
+            // It should be greater than zero
+            int threshold = decodeFromOpN(m.opcode);
+            if (threshold < 1) {
+                return false;
+            }
+
+            // Second to last chunk must be an OP_N opcode representing the number of keys
+            ScriptChunk n = chunks.get(chunks.size() - 2);
+            if (!n.isOpCode()) {
+                return false;
+            }
+            // It should be greater than zero
+            int numKeys = decodeFromOpN(n.opcode);
+            if (numKeys < 1) {
+                return false;
+            }
+            // There should be keys+3 total chunks
+            int expectedAmountOfChunks = 3 + numKeys; // keys plus OP_M, OP_N and OP_CHECKMULTISIG
+            if (chunks.size() != expectedAmountOfChunks) {
+                return false;
+            }
+
+            // Check that between OP_M and OP_N there are public keys only
+            for (int i = 1; i < chunks.size() - 2; i++) {
+                ScriptChunk chunk = chunks.get(i);
+                if (chunk.isOpCode()) {
+                    return false;
+                }
+            }
+        } catch (IllegalArgumentException e) { // thrown by decodeFromOpN()
+            return false;   // Not an OP_N opcode.
+        }
+        return true;
+    }
+
+    /**
+     * Returns whether this script parser belong to a multisig
+     */
     public boolean isSentToMultiSig() {
         RedeemScriptParser parser;
         try {
