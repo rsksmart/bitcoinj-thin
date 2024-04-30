@@ -16,9 +16,13 @@
 
 package co.rsk.bitcoinj.core;
 
+import java.io.ByteArrayOutputStream;
+import java.text.NumberFormat;
 import junit.framework.TestCase;
 
+import org.junit.Assert;
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
 public class VarIntTest extends TestCase {
 
@@ -77,5 +81,36 @@ public class VarIntTest extends TestCase {
     public void testSizeOfNegativeInt() throws Exception {
         // shouldn't normally be passed, but at least stay consistent (bug regression test)
         assertEquals(VarInt.sizeOf(-1), new VarInt(-1).encode().length);
+    }
+
+    @Test
+    public void testDeserializeListOfValuesInHex() throws Exception {
+        long[] expectedValues = {14435729L, 255L, 187L, 13337L};
+        byte[] values = Hex.decode("FE9145DC00FDFF00BBFD1934");
+        int offset = 0;
+        int idx = 0;
+        while (values.length > offset){
+            VarInt varIntValue = new VarInt(values, offset);
+            offset += varIntValue.getSizeInBytes();
+            assertEquals(expectedValues[idx], varIntValue.value);
+            idx++;
+            System.out.println(NumberFormat.getIntegerInstance().format(varIntValue.value));
+        }
+    }
+
+    @Test
+    public void testSerializeListOfValuesInHex() throws Exception {
+        long[] values = {14435729L, 255L, 187L, 13337L};
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        for (int i = 0; i < values.length; i++) {
+            long value = values[i];
+            VarInt varIntValue = new VarInt(value);
+            System.out.println(Hex.toHexString(varIntValue.encode()));
+            stream.write(varIntValue.encode());
+        }
+
+        byte[] expectedResult = Hex.decode("FE9145DC00FDFF00BBFD1934");
+        Assert.assertArrayEquals(expectedResult, stream.toByteArray());
+
     }
 }
