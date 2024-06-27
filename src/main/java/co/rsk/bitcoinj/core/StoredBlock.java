@@ -24,8 +24,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Locale;
 
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Wraps a {@link BtcBlock} object with extra data that can be derived from the block chain but is slow or inconvenient to
  * calculate. By storing it alongside the block header we reduce the amount of work required significantly.
