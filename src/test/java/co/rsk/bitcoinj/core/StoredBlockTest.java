@@ -1,66 +1,106 @@
 package co.rsk.bitcoinj.core;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import static org.junit.Assert.assertEquals;
 
 public class StoredBlockTest {
+    private static final NetworkParameters mainnet = NetworkParameters.fromID(NetworkParameters.ID_MAINNET);
 
     // Just an arbitrary block
-    private static final byte[] blockBytes = { 0, -128, -71, 44, 36, -15, 35, 19, 10, -30, -98, -119, -97, 12, -85, 114, 101, 55, 34, -27, 76, -33, 59, 48, 68, 82, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, -57, 46, -83, 101, -93, -73, -118, -74, 55, -47, -121, 108, 0, 65, 74, 119, -28, 123, -52, 91, 82, 102, 122, -63, -27, 115, 99, 53, 99, -66, -91, -90, -107, -86, 119, 102, 37, 93, 3, 23, 40, -47, -126, -88 };
-    private static final BtcBlock block = new BtcBlock(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), blockBytes);
+    private static final String blockHeader = "00e00820925b77c9ff4d0036aa29f3238cde12e9af9d55c34ed30200000000000000000032a9fa3e12ef87a2327b55db6a16a1227bb381db8b269d90aa3a6e38cf39665f91b47766255d0317c1b1575f";
+    private static final int blockHeight = 849137;
+    private static final BtcBlock block = new BtcBlock(mainnet, Hex.decode(blockHeader));
 
-    @Test
-    public void serializeCompact_forZeroChainWork_works() {
-        BigInteger zeroChainWork = BigInteger.ZERO;
-        StoredBlock blockToStore = new StoredBlock(block, zeroChainWork, 0);
-        ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
-        blockToStore.serializeCompact(buf);
-        assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE, buf.position());
-        buf.rewind();
-        assertEquals(StoredBlock.deserializeCompact(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), buf), blockToStore);
+    private static final int blockCapacity = StoredBlock.COMPACT_SERIALIZED_SIZE;
+    private ByteBuffer blockBuffer;
+
+    @Before
+    public void setUp() {
+        blockBuffer = ByteBuffer.allocate(blockCapacity);
     }
 
     @Test
-    public void serializeCompact_forSmallChainWork_works() {
-        BigInteger smallChainWork = BigInteger.ONE;
-        StoredBlock blockToStore = new StoredBlock(block, smallChainWork, 0);
-        ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
-        blockToStore.serializeCompact(buf);
-        assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE, buf.position());
-        buf.rewind();
-        assertEquals(StoredBlock.deserializeCompact(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), buf), blockToStore);
+    public void newStoredBlock_createsExpectedBlock() {
+        BigInteger chainWork = new BigInteger("ffffffffffffffff", 16); // 8 bytes
+        StoredBlock blockToStore = new StoredBlock(block, chainWork, blockHeight);
+
+        // assert block was correctly created
+        assertEquals(chainWork, blockToStore.getChainWork());
+        assertEquals(block, blockToStore.getHeader());
+        assertEquals(blockHeight, blockToStore.getHeight());
     }
 
     @Test
-    public void serializeCompact_forLessThan12bytesChainWork_works() {
-        long maxLongValue = Long.MAX_VALUE;
-        StoredBlock blockToStore = new StoredBlock(block, BigInteger.valueOf(maxLongValue), 0);
-        ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
-        blockToStore.serializeCompact(buf);
-        assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE, buf.position());
-        buf.rewind();
-        assertEquals(StoredBlock.deserializeCompact(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), buf), blockToStore);
+    public void serializeAndDeserializeCompact_forZeroChainWork_works() {
+        BigInteger chainWork = BigInteger.ZERO;
+        StoredBlock blockToStore = new StoredBlock(block, chainWork, blockHeight);
+
+        // serialize block
+        blockToStore.serializeCompact(blockBuffer);
+        assertEquals(blockCapacity, blockBuffer.position());
+
+        // deserialize block
+        blockBuffer.rewind();
+        StoredBlock blockDeserialized = StoredBlock.deserializeCompact(mainnet, blockBuffer);
+        assertEquals(blockDeserialized, blockToStore);
     }
 
     @Test
-    public void serializeCompact_forMax12bytesChainWork_works() {
-        BigInteger maxChainWork = new BigInteger("ffffffffffffffffffffffff", 16); // max chain work to fit in 12 unsigned bytes
-        StoredBlock blockToStore = new StoredBlock(block, maxChainWork, 0);
-        ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
-        blockToStore.serializeCompact(buf);
-        assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE, buf.position());
-        buf.rewind();
-        assertEquals(StoredBlock.deserializeCompact(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), buf), blockToStore);
+    public void serializeAndDeserializeCompact_forSmallChainWork_works() {
+        BigInteger chainWork = BigInteger.ONE;
+        StoredBlock blockToStore = new StoredBlock(block, chainWork, blockHeight);
+
+        // serialize block
+        blockToStore.serializeCompact(blockBuffer);
+        assertEquals(blockCapacity, blockBuffer.position());
+
+        // deserialize block
+        blockBuffer.rewind();
+        StoredBlock blockDeserialized = StoredBlock.deserializeCompact(mainnet, blockBuffer);
+        assertEquals(blockDeserialized, blockToStore);
+    }
+
+    @Test
+    public void serializeAndDeserializeCompact_for8bytesChainWork_works() {
+        BigInteger chainWork = new BigInteger("ffffffffffffffff", 16); // 8 bytes
+        StoredBlock blockToStore = new StoredBlock(block, chainWork, blockHeight);
+
+        // serialize block
+        blockToStore.serializeCompact(blockBuffer);
+        assertEquals(blockCapacity, blockBuffer.position());
+
+        // deserialize block
+        blockBuffer.rewind();
+        StoredBlock blockDeserialized = StoredBlock.deserializeCompact(mainnet, blockBuffer);
+        assertEquals(blockDeserialized, blockToStore);
+    }
+
+    @Test
+    public void serializeAndDeserializeCompact_forMax12bytesChainWork_works() {
+        BigInteger chainWork = new BigInteger("ffffffffffffffffffffffff", 16); // max chain work to fit in 12 unsigned bytes
+        StoredBlock blockToStore = new StoredBlock(block, chainWork, blockHeight);
+
+        // serialize block
+        blockToStore.serializeCompact(blockBuffer);
+        assertEquals(blockCapacity, blockBuffer.position());
+
+        // deserialize block
+        blockBuffer.rewind();
+        StoredBlock blockDeserialized = StoredBlock.deserializeCompact(mainnet, blockBuffer);
+        assertEquals(blockDeserialized, blockToStore);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void serializeCompact_for13bytesChainWork_throwsException() {
-        BigInteger tooLargeChainWork = new BigInteger("ffffffffffffffffffffffff", 16).add(BigInteger.valueOf(1)); // too large chain work to fit in 12 unsigned bytes
-        StoredBlock blockToStore = new StoredBlock(block, tooLargeChainWork, 0);
-        ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
-        blockToStore.serializeCompact(buf);
+        BigInteger chainWork = new BigInteger("ffffffffffffffffffffffff", 16).add(BigInteger.valueOf(1)); // too large chain work to fit in 12 unsigned bytes
+        StoredBlock blockToStore = new StoredBlock(block, chainWork, blockHeight);
+
+        // serialize block should throw illegal argument exception
+        blockToStore.serializeCompact(blockBuffer);
     }
 }
