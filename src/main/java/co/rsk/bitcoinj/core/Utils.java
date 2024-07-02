@@ -83,6 +83,9 @@ public class Utils {
      * @return numBytes byte long array.
      */
     public static byte[] bigIntegerToBytes(BigInteger b, int numBytes) {
+        if (b == null) {
+            return null;
+        }
         checkArgument(b.signum() >= 0, "b must be positive or zero");
         checkArgument(numBytes > 0, "numBytes must be positive");
         byte[] src = b.toByteArray();
