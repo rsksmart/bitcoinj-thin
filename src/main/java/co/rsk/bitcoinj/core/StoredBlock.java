@@ -24,8 +24,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Locale;
 
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Wraps a {@link BtcBlock} object with extra data that can be derived from the block chain but is slow or inconvenient to
  * calculate. By storing it alongside the block header we reduce the amount of work required significantly.
@@ -117,8 +115,7 @@ public class StoredBlock {
 
     /** Serializes the stored block to a custom packed format. Used by {@link CheckpointManager}. */
     public void serializeCompact(ByteBuffer buffer) {
-        byte[] chainWorkBytes = getChainWork().toByteArray();
-        checkState(chainWorkBytes.length <= CHAIN_WORK_BYTES, "Ran out of space to store chain work!");
+        byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES);
         if (chainWorkBytes.length < CHAIN_WORK_BYTES) {
             // Pad to the right size.
             buffer.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES - chainWorkBytes.length);
