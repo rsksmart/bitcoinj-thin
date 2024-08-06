@@ -17,6 +17,7 @@
 package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcTransaction;
+import co.rsk.bitcoinj.core.Sha256Hash;
 import com.google.common.collect.Lists;
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -270,14 +271,33 @@ public class ScriptBuilder {
     public static Script createMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0);
         checkArgument(threshold <= pubkeys.size());
-        checkArgument(pubkeys.size() <= 16);  // That's the max we can represent with a single opcode.
+//        checkArgument(pubkeys.size() <= 16);  // That's the max we can represent with a single opcode.
         ScriptBuilder builder = new ScriptBuilder();
-        builder.smallNum(threshold);
+        builder.number(threshold);
         for (BtcECKey key : pubkeys) {
             builder.data(key.getPubKey());
         }
-        builder.smallNum(pubkeys.size());
+        builder.number(pubkeys.size());
         builder.op(OP_CHECKMULTISIG);
+        return builder.build();
+    }
+
+    /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKSIG, OP_SWAP and OP_ADD. */
+    public static Script createNewMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
+        checkArgument(threshold > 0);
+        checkArgument(threshold <= pubkeys.size());
+        ScriptBuilder builder = new ScriptBuilder();
+        BtcECKey lastKey = pubkeys.get(pubkeys.size() - 1);
+        builder.data(lastKey.getPubKey());
+        builder.op(OP_CHECKSIG);
+        for (int i = pubkeys.size() - 2; i >= 0; i --) {
+            builder.op(OP_SWAP);
+            builder.data(pubkeys.get(i).getPubKey());
+            builder.op(OP_CHECKSIG);
+            builder.op(OP_ADD);
+        }
+        builder.number(threshold);
+        builder.op(OP_NUMEQUAL);
         return builder.build();
     }
 
@@ -411,8 +431,21 @@ public class ScriptBuilder {
      * Creates a scriptPubKey for the given redeem script.
      */
     public static Script createP2SHOutputScript(Script redeemScript) {
-        byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
+        byte[] hash = Utils.hash160(redeemScript.getProgram());
         return ScriptBuilder.createP2SHOutputScript(hash);
+    }
+
+    /**
+     * Creates a P2SH-P2WSH scriptPubKey for the given redeem script.
+     */
+    public static Script createP2SHP2WSHOutputScript(Script redeemScript) {
+        byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
+        Script witnessScript = new ScriptBuilder()
+            .number(ScriptOpCodes.OP_0)
+            .data(redeemScriptHash)
+            .build();
+
+        return ScriptBuilder.createP2SHOutputScript(witnessScript);
     }
 
     /**
@@ -432,6 +465,16 @@ public class ScriptBuilder {
         pubkeys = new ArrayList<BtcECKey>(pubkeys);
         Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
+    }
+
+    /**
+     * Creates redeem script with new structure with given public keys and threshold. Given public keys will be placed in
+     * redeem script in the lexicographical sorting order.
+     */
+    public static Script createNewRedeemScript(int threshold, List<BtcECKey> pubkeys) {
+        pubkeys = new ArrayList<BtcECKey>(pubkeys);
+        Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
+        return ScriptBuilder.createNewMultiSigOutputScript(threshold, pubkeys);
     }
 
     /**

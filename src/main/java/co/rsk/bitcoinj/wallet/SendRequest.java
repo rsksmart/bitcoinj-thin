@@ -60,6 +60,8 @@ public class SendRequest {
      */
     public BtcTransaction tx;
 
+    public boolean isSegwit = false;
+
     /**
      * When emptyWallet is set, all coins selected by the coin selector are sent to the first output in tx
      * (its value is ignored and set to {@link co.rsk.bitcoinj.wallet.Wallet#getBalance()} - the fees required
