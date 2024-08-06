@@ -1,21 +1,23 @@
 package co.rsk.bitcoinj.script;
 
+import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser {
+public class FastBridgeErpRedeemScriptParser implements RedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(FastBridgeErpRedeemScriptParser.class);
+
+    protected StandardRedeemScriptParser standardRedeemScriptParser;
 
     public FastBridgeErpRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
-        super(
+        standardRedeemScriptParser = new StandardRedeemScriptParser(
             extractStandardRedeemScript(redeemScriptChunks).getChunks()
         );
-        this.multiSigType = MultiSigType.FAST_BRIDGE_ERP_FED;
     }
 
     public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
@@ -46,5 +48,35 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
     public static boolean isFastBridgeErpFed(List<ScriptChunk> chunks) {
         return RedeemScriptValidator.hasFastBridgePrefix(chunks) &&
             RedeemScriptValidator.hasLegacyErpRedeemScriptStructure(chunks.subList(2, chunks.size()));
+    }
+
+    @Override
+    public MultiSigType getMultiSigType() {
+        return standardRedeemScriptParser.getMultiSigType();
+    }
+
+    @Override
+    public int getM() {
+        return standardRedeemScriptParser.getM();
+    }
+
+    @Override
+    public int findKeyInRedeem(BtcECKey key) {
+        return standardRedeemScriptParser.findKeyInRedeem(key);
+    }
+
+    @Override
+    public List<BtcECKey> getPubKeys() {
+        return standardRedeemScriptParser.getPubKeys();
+    }
+
+    @Override
+    public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
+        return standardRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
+    }
+
+    @Override
+    public Script extractStandardRedeemScript() {
+        return null;
     }
 }

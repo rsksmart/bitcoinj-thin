@@ -2,6 +2,8 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
 
+import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import java.util.ArrayList;
@@ -9,18 +11,21 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
-    private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
+public class ErpFederationRedeemScriptParser implements RedeemScriptParser {
+
+    private static final Logger logger = LoggerFactory.getLogger(
+        ErpFederationRedeemScriptParser.class);
 
     public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
+
+    protected StandardRedeemScriptParser standardRedeemScriptParser;
 
     public ErpFederationRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
-        super(
+        standardRedeemScriptParser = new StandardRedeemScriptParser(
             extractStandardRedeemScript(redeemScriptChunks).getChunks()
         );
-        this.multiSigType = MultiSigType.ERP_FED;
     }
 
     public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
@@ -39,7 +44,8 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         // Validate the obtained redeem script has a valid format
         if (!redeemScript.isSentToMultiSig()) {
             String message = "Standard redeem script obtained from ERP redeem script has an invalid structure";
-            logger.debug("[extractStandardRedeemScriptChunksFromErpRedeemScript] {} {}", message, chunksForRedeem);
+            logger.debug("[extractStandardRedeemScriptChunksFromErpRedeemScript] {} {}", message,
+                chunksForRedeem);
             throw new VerificationException(message);
         }
 
@@ -71,7 +77,8 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Long csvValue
     ) {
         final int CSV_SERIALIZED_LENGTH = 2;
-        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, CSV_SERIALIZED_LENGTH);
+        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue,
+            CSV_SERIALIZED_LENGTH);
 
         return createErpRedeemScript(
             defaultFederationRedeemScript,
@@ -128,7 +135,8 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
-        if (!defaultFederationRedeemScript.isSentToMultiSig() || !(erpFederationRedeemScript.isSentToMultiSig())) {
+        if (!defaultFederationRedeemScript.isSentToMultiSig()
+            || !(erpFederationRedeemScript.isSentToMultiSig())) {
 
             String message = "Provided redeem scripts have an invalid structure, not standard";
             logger.debug("[validateErpRedeemScriptValues] {}", message);
@@ -144,5 +152,35 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             logger.warn("[validateErpRedeemScriptValues] {}", message);
             throw new VerificationException(message);
         }
+    }
+
+    @Override
+    public MultiSigType getMultiSigType() {
+        return standardRedeemScriptParser.getMultiSigType();
+    }
+
+    @Override
+    public int getM() {
+        return standardRedeemScriptParser.getM();
+    }
+
+    @Override
+    public int findKeyInRedeem(BtcECKey key) {
+        return standardRedeemScriptParser.findKeyInRedeem(key);
+    }
+
+    @Override
+    public List<BtcECKey> getPubKeys() {
+        return standardRedeemScriptParser.getPubKeys();
+    }
+
+    @Override
+    public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
+        return standardRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
+    }
+
+    @Override
+    public Script extractStandardRedeemScript() {
+        return null;
     }
 }
