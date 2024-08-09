@@ -10,14 +10,14 @@ import org.junit.Test;
 
 public class FlyoverRedeemScriptParserTest {
 
-    private List<BtcECKey> publicKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+    private List<BtcECKey> publicKeys = RedeemScriptTestUtils.getDefaultRedeemScriptKeys();
     private Script redeemScript;
     private byte[] derivationHash;
     private FlyoverRedeemScriptParser flyoverRedeemScriptParser;
 
     @Before
     public void setUp() {
-        publicKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+        publicKeys = RedeemScriptTestUtils.getDefaultRedeemScriptKeys();
         redeemScript = ScriptBuilder.createRedeemScript(publicKeys.size() / 2 + 1, publicKeys);
         derivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
         Script flyoverRedeemScript = FlyoverRedeemScriptParser.createFlyoverRedeemScript(

@@ -17,11 +17,19 @@ public interface RedeemScriptParser {
         FLYOVER
     }
 
+    enum ScriptType {
+        P2SH,
+        REDEEM_SCRIPT,
+        UNDEFINED
+    }
 
     MultiSigType getMultiSigType();
 
+    ScriptType getScriptType();
 
     int getM();
+
+    int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey);
 
     int findKeyInRedeem(BtcECKey key);
 
