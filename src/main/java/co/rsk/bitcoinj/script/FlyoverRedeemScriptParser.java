@@ -12,10 +12,10 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
 
     private static final Logger logger = LoggerFactory.getLogger(FlyoverRedeemScriptParser.class);
 
-    private MultiSigType multiSigType;
-    private List<ScriptChunk> redeemScriptChunks;
-    private byte[] derivationHash;
-    private RedeemScriptParser redeemScriptParser;
+    private final MultiSigType multiSigType;
+    private final List<ScriptChunk> redeemScriptChunks;
+    private final byte[] derivationHash;
+    private final RedeemScriptParser redeemScriptParser;
 
     public FlyoverRedeemScriptParser(List<ScriptChunk> redeemScriptChunks) {
         this.multiSigType = MultiSigType.FLYOVER;
@@ -24,22 +24,19 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
         this.redeemScriptParser = RedeemScriptParserFactory.get(extractRedeemScript());
     }
 
-    public static Script createFlyoverRedeemScript(
-        Script redeemScript,
-        byte[] derivationHash
-    ) {
+    public static Script createFlyoverRedeemScript(Script redeemScript, byte[] derivationHash) {
+        final String CREATE_FLYOVER_REDEEM_SCRIPT_TAG = "createFlyoverRedeemScript";
 
         List<ScriptChunk> chunks = redeemScript.getChunks();
-
         if (RedeemScriptValidator.hasFastBridgePrefix(chunks)) {
-            String message = "Provided redeem script is already a fast bridge redeem script";
-            logger.debug("[createFlyoverRedeemScript] {}", message);
+            String message = "Provided Redeem Script is already a fast bridge redeem script";
+            logger.debug("[{}] {}", CREATE_FLYOVER_REDEEM_SCRIPT_TAG, message);
             throw new VerificationException(message);
         }
 
         if (derivationHash == null || Arrays.equals((derivationHash), (Sha256Hash.ZERO_HASH).getBytes())) {
             String message = "Derivation arguments are not valid";
-            logger.debug("[createFlyoverRedeemScript] {}", message);
+            logger.debug("[{}] {}", CREATE_FLYOVER_REDEEM_SCRIPT_TAG, message);
             throw new VerificationException(message);
         }
 
@@ -53,9 +50,11 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
     }
 
     private byte[] extractDerivationHash() {
+        final String EXTRACT_DERIVATION_HASH_TAG = "extractDerivationHash";
+
         if (!RedeemScriptValidator.hasFastBridgePrefix(redeemScriptChunks)) {
             String message = "Provided redeem script is not a flyover redeem script";
-            logger.debug("[createFlyoverRedeemScript] {}", message);
+            logger.debug("[{}] {}", EXTRACT_DERIVATION_HASH_TAG, message);
             throw new VerificationException(message);
         }
 
@@ -63,9 +62,10 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
     }
 
     private List<ScriptChunk> extractRedeemScript() {
+        final String EXTRACT_REDEEM_SCRIPT_TAG = "extractRedeemScript";
         if (!RedeemScriptValidator.hasFastBridgePrefix(redeemScriptChunks)) {
             String message = "Provided redeem script is not a flyover redeem script";
-            logger.debug("[createFlyoverRedeemScript] {}", message);
+            logger.debug("[{}] {}", EXTRACT_REDEEM_SCRIPT_TAG, message);
             throw new VerificationException(message);
         }
 
