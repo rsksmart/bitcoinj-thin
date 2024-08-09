@@ -20,6 +20,7 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -32,7 +33,6 @@ import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -486,25 +486,23 @@ public class Script {
      * a P2SH scriptSig.
      */
     public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        List<ScriptChunk> rawChunks = this.getChunks();
         // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
         // and any placeholder OP_0 sigs.
-        List<ScriptChunk> existingChunks = rawChunks.subList(1, rawChunks.size() - 1);
+        List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
+        ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
+        checkNotNull(redeemScriptChunk.data);
+
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(this.getChunks());
 
         int sigCount = 0;
-        int myIndex = redeemScriptParser.findKeyInRedeem(signingKey);
-        Iterator chunkIterator = existingChunks.iterator();
-
-        while(chunkIterator.hasNext()) {
-            ScriptChunk chunk = (ScriptChunk) chunkIterator.next();
-            if (chunk.opcode != 0) {
-                Preconditions.checkNotNull(chunk.data);
-                if (myIndex < redeemScriptParser.findSigInRedeem(chunk.data, hash)) {
+        int signingKeyIndex = redeemScriptParser.findKeyInRedeem(signingKey);
+        for (ScriptChunk chunk : existingChunks) {
+            if (chunk.opcode != OP_0) {
+                checkNotNull(chunk.data);
+                if (signingKeyIndex < redeemScriptParser.findSigInRedeem(chunk.data, hash)) {
                     return sigCount;
                 }
-
-                ++sigCount;
+                sigCount++;
             }
         }
 
