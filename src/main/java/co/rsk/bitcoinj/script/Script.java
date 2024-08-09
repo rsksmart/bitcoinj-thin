@@ -20,7 +20,6 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -33,6 +32,7 @@ import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -110,7 +110,6 @@ public class Script {
     // Creation time of the associated keys in seconds since the epoch.
     private long creationTimeSeconds;
 
-    private RedeemScriptParser redeemScriptParser;
 
     /** Creates an empty script that serializes to nothing. */
     private Script() {
@@ -482,34 +481,30 @@ public class Script {
         return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, sigsPrefixCount, sigsSuffixCount);
     }
 
-    private RedeemScriptParser getRedeemScriptParser() {
-        if (redeemScriptParser == null){
-            redeemScriptParser = RedeemScriptParserFactory.get(chunks);
-        }
-        return redeemScriptParser;
-    }
-
     /**
      * Returns the index where a signature by the key should be inserted. Only applicable to
      * a P2SH scriptSig.
      */
     public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
+        List<ScriptChunk> rawChunks = this.getChunks();
         // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
         // and any placeholder OP_0 sigs.
-        List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
-        ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
-        checkNotNull(redeemScriptChunk.data);
-        Script redeemScript = new Script(redeemScriptChunk.data);
+        List<ScriptChunk> existingChunks = rawChunks.subList(1, rawChunks.size() - 1);
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(this.getChunks());
 
         int sigCount = 0;
-        int myIndex = redeemScript.findKeyInRedeem(signingKey);
-        for (ScriptChunk chunk : existingChunks) {
-            if (chunk.opcode != OP_0) {
-                checkNotNull(chunk.data);
-                if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash)) {
+        int myIndex = redeemScriptParser.findKeyInRedeem(signingKey);
+        Iterator chunkIterator = existingChunks.iterator();
+
+        while(chunkIterator.hasNext()) {
+            ScriptChunk chunk = (ScriptChunk) chunkIterator.next();
+            if (chunk.opcode != 0) {
+                Preconditions.checkNotNull(chunk.data);
+                if (myIndex < redeemScriptParser.findSigInRedeem(chunk.data, hash)) {
                     return sigCount;
                 }
-                sigCount++;
+
+                ++sigCount;
             }
         }
 
@@ -517,15 +512,15 @@ public class Script {
     }
 
     public int findKeyInRedeem(BtcECKey key) {
-        return this.getRedeemScriptParser().findKeyInRedeem(key);
+        return RedeemScriptParserFactory.get(this.getChunks()).findKeyInRedeem(key);
     }
 
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return this.getRedeemScriptParser().findSigInRedeem(signatureBytes, hash);
+        return RedeemScriptParserFactory.get(this.getChunks()).findSigInRedeem(signatureBytes, hash);
     }
 
     public List<BtcECKey> getPubKeys() throws ScriptException {
-        return this.getRedeemScriptParser().getPubKeys();
+        return RedeemScriptParserFactory.get(this.getChunks()).getPubKeys();
     }
 
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
@@ -614,7 +609,7 @@ public class Script {
     public int getNumberOfSignaturesRequiredToSpend() {
         if (this.isSentToMultiSig()) {
             // for M of N CHECKMULTISIG script we will need M signatures to spend
-            return this.getRedeemScriptParser().getM();
+            return RedeemScriptParserFactory.get(this.getChunks()).getM();
         } else if (isSentToAddress() || isSentToRawPubKey()) {
             // pay-to-address and pay-to-pubkey require single sig
             return 1;
@@ -676,72 +671,9 @@ public class Script {
     /**
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
-    public boolean isSentToStandardMultiSig() {
-        if (chunks.size() < 4) {
-            return false;
-        }
-
-        ScriptChunk lastChunk = chunks.get(chunks.size() - 1);
-        // Must end in OP_CHECKMULTISIG[VERIFY].
-        if (!lastChunk.isOpCode()) {
-            return false;
-        }
-        if (!lastChunk.equalsOpCode(OP_CHECKMULTISIG) && !lastChunk.equalsOpCode(OP_CHECKMULTISIGVERIFY)) {
-            return false;
-        }
-
-        try {
-            // First chunk must be an OP_N opcode representing the threshold
-            ScriptChunk m = chunks.get(0);
-            if (!m.isOpCode()) {
-                return false;
-            }
-            // It should be greater than zero
-            int threshold = decodeFromOpN(m.opcode);
-            if (threshold < 1) {
-                return false;
-            }
-
-            // Second to last chunk must be an OP_N opcode representing the number of keys
-            ScriptChunk n = chunks.get(chunks.size() - 2);
-            if (!n.isOpCode()) {
-                return false;
-            }
-            // It should be greater than zero
-            int numKeys = decodeFromOpN(n.opcode);
-            if (numKeys < 1) {
-                return false;
-            }
-            // There should be keys+3 total chunks
-            int expectedAmountOfChunks = 3 + numKeys; // keys plus OP_M, OP_N and OP_CHECKMULTISIG
-            if (chunks.size() != expectedAmountOfChunks) {
-                return false;
-            }
-
-            // Check that between OP_M and OP_N there are public keys only
-            for (int i = 1; i < chunks.size() - 2; i++) {
-                ScriptChunk chunk = chunks.get(i);
-                if (chunk.isOpCode()) {
-                    return false;
-                }
-            }
-        } catch (IllegalArgumentException e) { // thrown by decodeFromOpN()
-            return false;   // Not an OP_N opcode.
-        }
-        return true;
-    }
-
-    /**
-     * Returns whether this script parser belong to a multisig
-     */
     public boolean isSentToMultiSig() {
-        RedeemScriptParser parser;
-        try {
-            parser = getRedeemScriptParser();
-        } catch (ScriptException e) {
-            return false;
-        }
-        MultiSigType multiSigType = parser.getMultiSigType();
+        List<ScriptChunk> chunks = this.getChunks();
+        MultiSigType multiSigType = RedeemScriptParserFactory.get(chunks).getMultiSigType();
         return !multiSigType.equals(MultiSigType.NO_MULTISIG_TYPE);
     }
 
