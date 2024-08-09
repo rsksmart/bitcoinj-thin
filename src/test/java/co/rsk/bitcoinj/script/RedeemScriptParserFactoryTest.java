@@ -12,8 +12,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static co.rsk.bitcoinj.script.RedeemScriptUtils.extractRedeemScriptFromInputScript;
-
 public class RedeemScriptParserFactoryTest {
 
     private List<BtcECKey> defaultRedeemScriptKeys;
@@ -25,8 +23,8 @@ public class RedeemScriptParserFactoryTest {
 
     @Before
     public void setUp() {
-        defaultRedeemScriptKeys = RedeemScriptTestUtils.getDefaultRedeemScriptKeys();
-        emergencyRedeemScriptKeys = RedeemScriptTestUtils.getEmergencyRedeemScriptKeys();
+        defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+        emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
     }
 
     @Test

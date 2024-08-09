@@ -8,7 +8,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
-public class RedeemScriptTestUtils {
+public class RedeemScriptUtils {
 
     protected static Script createStandardRedeemScript(List<BtcECKey> publicKeys) {
         return ScriptBuilder.createRedeemScript(publicKeys.size() / 2 + 1, publicKeys);
