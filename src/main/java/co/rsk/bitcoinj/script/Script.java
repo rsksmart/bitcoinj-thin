@@ -499,14 +499,15 @@ public class Script {
         List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
         ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
         checkNotNull(redeemScriptChunk.data);
-        Script redeemScript = new Script(redeemScriptChunk.data);
+
+        RedeemScriptParser redeemScriptParser = getRedeemScriptParser();
 
         int sigCount = 0;
-        int myIndex = redeemScript.findKeyInRedeem(signingKey);
+        int signingKeyIndex = redeemScriptParser.findKeyInRedeem(signingKey);
         for (ScriptChunk chunk : existingChunks) {
             if (chunk.opcode != OP_0) {
                 checkNotNull(chunk.data);
-                if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash)) {
+                if (signingKeyIndex < redeemScriptParser.findSigInRedeem(chunk.data, hash)) {
                     return sigCount;
                 }
                 sigCount++;
