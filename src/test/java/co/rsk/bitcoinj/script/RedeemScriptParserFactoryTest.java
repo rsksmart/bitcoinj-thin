@@ -40,7 +40,7 @@ public class RedeemScriptParserFactoryTest {
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_multiSig_chunk() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             data,
             defaultRedeemScriptKeys
         );
@@ -51,7 +51,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_standard_multiSig_chunk() {
-        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.STANDARD_MULTISIG, parser.getMultiSigType());
@@ -59,7 +59,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_erp_multiSig_chunk() {
-        Script redeemScript = RedeemScriptTestUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -72,7 +72,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_erp_fast_bridge_multiSig_chunk() {
-        Script redeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
+        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -86,7 +86,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_p2sh_erp_multiSig_chunk() {
-        Script redeemScript = RedeemScriptTestUtils.createP2shErpRedeemScript(
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -99,7 +99,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_p2sh_erp_multiSig_chunk() {
-        Script redeemScript = RedeemScriptTestUtils.createFastBridgeP2shErpRedeemScript(
+        Script redeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -114,7 +114,7 @@ public class RedeemScriptParserFactoryTest {
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_P2SH_chunk() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptTestUtils.createFastBridgeRedeemScript(
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             data,
             defaultRedeemScriptKeys
         );
@@ -133,7 +133,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_standard_P2SH_chunk() {
-        Script redeemScript = RedeemScriptTestUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
 
         Script spk = ScriptBuilder.createP2SHOutputScript(
             2,
@@ -149,7 +149,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_erp_P2SH_chunk() {
-        Script erpRedeemScript = RedeemScriptTestUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -169,7 +169,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_erp_P2SH_chunk() {
-        Script fastBridgeErpRedeemScript = RedeemScriptTestUtils.createFastBridgeErpRedeemScript(
+        Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -190,7 +190,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_p2sh_erp_P2SH_chunk() {
-        Script p2shErpRedeemScript = RedeemScriptTestUtils.createP2shErpRedeemScript(
+        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -210,7 +210,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void create_RedeemScriptParser_object_from_fast_bridge_p2sh_erp_P2SH_chunk() {
-        Script fastBridgeP2shErpRedeemScript = RedeemScriptTestUtils.createFastBridgeP2shErpRedeemScript(
+        Script fastBridgeP2shErpRedeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L,
@@ -223,7 +223,7 @@ public class RedeemScriptParserFactoryTest {
         );
 
         Script inputScript = spk.createEmptyInputScript(null, fastBridgeP2shErpRedeemScript);
-        Script redeemScriptFromInputScript = extractRedeemScriptFromInputScript(inputScript).get();
+        Script redeemScriptFromInputScript = RedeemScriptUtils.extractRedeemScriptFromInputScript(inputScript).get();
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScriptFromInputScript.getChunks());
 
         Assert.assertEquals(MultiSigType.FAST_BRIDGE_P2SH_ERP_FED, parser.getMultiSigType());
@@ -231,7 +231,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test (expected = ScriptException.class)
     public void create_RedeemScriptParser_object_from_custom_redeem_script_no_multiSig() {
-        Script redeemScript = RedeemScriptTestUtils.createCustomRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptUtils.createCustomRedeemScript(defaultRedeemScriptKeys);
         RedeemScriptParserFactory.get(redeemScript.getChunks());
     }
 
