@@ -83,4 +83,14 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     public static boolean isStandardMultiSig(List<ScriptChunk> chunks) {
         return RedeemScriptValidator.hasStandardRedeemScriptStructure(chunks);
     }
+
+    @Override
+    public ScriptType getScriptType() {
+        return null;
+    }
+
+    @Override
+    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
+        return 0;
+    }
 }

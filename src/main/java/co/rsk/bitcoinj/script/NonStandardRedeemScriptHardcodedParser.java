@@ -36,4 +36,14 @@ public class NonStandardRedeemScriptHardcodedParser implements RedeemScriptParse
     public List<ScriptChunk> extractStandardRedeemScript() {
         throw new ScriptException("Only usable for multisig scripts.");
     }
+
+    @Override
+    public ScriptType getScriptType() {
+        return ScriptType.UNDEFINED;
+    }
+
+    @Override
+    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
+        return 0;
+    }
 }
