@@ -483,12 +483,12 @@ public class Script {
 
     /**
      * Returns the index where a signature by the key should be inserted. Only applicable to
-     * a P2SH scriptSig.
+     * a P2SH scriptSig.`
      */
     public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
         // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
         // and any placeholder OP_0 sigs.
-        List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
+        List<ScriptChunk> potentialSignatureChunks = chunks.subList(1, chunks.size() - 1);
         ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
         checkNotNull(redeemScriptChunk.data);
 
@@ -496,7 +496,7 @@ public class Script {
 
         int sigCount = 0;
         int signingKeyIndex = redeemScriptParser.findKeyInRedeem(signingKey);
-        for (ScriptChunk chunk : existingChunks) {
+        for (ScriptChunk chunk : potentialSignatureChunks) {
             if (chunk.opcode != OP_0) {
                 checkNotNull(chunk.data);
                 if (signingKeyIndex < redeemScriptParser.findSigInRedeem(chunk.data, hash)) {
