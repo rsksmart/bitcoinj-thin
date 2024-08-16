@@ -17,13 +17,13 @@ public class FastBridgeP2shErpRedeemScriptParser extends StandardRedeemScriptPar
     ) {
         super(
             scriptType,
-            extractStandardRedeemScript(redeemScriptChunks).getChunks(),
+            extractStandardRedeemScript(redeemScriptChunks),
             rawChunks
         );
         this.multiSigType = MultiSigType.FAST_BRIDGE_P2SH_ERP_FED;
     }
 
-    public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
+    public static List<ScriptChunk> extractStandardRedeemScript(List<ScriptChunk> chunks) {
         return P2shErpFederationRedeemScriptParser.
             extractStandardRedeemScript(chunks.subList(2, chunks.size()));
     }

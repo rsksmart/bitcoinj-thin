@@ -20,13 +20,13 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
     ) {
         super(
             scriptType,
-            extractStandardRedeemScript(redeemScriptChunks).getChunks(),
+            extractStandardRedeemScript(redeemScriptChunks),
             rawChunks
         );
         this.multiSigType = MultiSigType.P2SH_ERP_FED;
     }
 
-    public static Script extractStandardRedeemScript(List<ScriptChunk> chunks) {
+    public static List<ScriptChunk> extractStandardRedeemScript(List<ScriptChunk> chunks) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
         int i = 1;
@@ -42,7 +42,7 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
             throw new VerificationException(message);
         }
 
-        return new Script(chunksForRedeem);
+        return chunksForRedeem;
     }
 
     public static Script createP2shErpRedeemScript(

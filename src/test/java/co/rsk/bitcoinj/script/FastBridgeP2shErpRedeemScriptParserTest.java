@@ -38,16 +38,12 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
             csvValue,
             derivationArgumentsHash.getBytes()
         );
+        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
 
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
-            defaultRedeemScriptKeys
-        );
+        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeP2shErpRedeemScriptParser.extractStandardRedeemScript(fastBridgeP2shErpRedeemScript.getChunks());
 
-        Script obtainedRedeemScript = FastBridgeP2shErpRedeemScriptParser.extractStandardRedeemScript(
-            fastBridgeP2shErpRedeemScript.getChunks()
-        );
-
-        Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
+        Assert.assertEquals(standardRedeemScriptChunks, obtainedRedeemScriptChunks);
     }
 
     @Test(expected = VerificationException.class)

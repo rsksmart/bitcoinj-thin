@@ -1,5 +1,7 @@
 package co.rsk.bitcoinj.script;
 
+import static org.junit.Assert.assertEquals;
+
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.core.Coin;
@@ -203,7 +205,7 @@ public class StandardRedeemScriptParserTest {
         Collections.sort(expectedKeysList);
         Collections.sort(obtainedKeysList);
 
-        Assert.assertEquals(expectedKeysList, obtainedKeysList);
+        assertEquals(expectedKeysList, obtainedKeysList);
     }
 
     @Test
@@ -226,7 +228,7 @@ public class StandardRedeemScriptParserTest {
         Collections.sort(expectedKeysList);
         Collections.sort(obtainedKeysList);
 
-        Assert.assertEquals(expectedKeysList, obtainedKeysList);
+        assertEquals(expectedKeysList, obtainedKeysList);
     }
 
     @Test(expected = ScriptException.class)
@@ -242,7 +244,7 @@ public class StandardRedeemScriptParserTest {
         Script redeemScript = new Script(new byte[2]);
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
-        Assert.assertEquals(-1, parser.getM());
+        assertEquals(-1, parser.getM());
     }
 
     @Test
@@ -255,7 +257,7 @@ public class StandardRedeemScriptParserTest {
 
         RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
 
-        Assert.assertEquals(2, parser.getM());
+        assertEquals(2, parser.getM());
     }
 
     @Test
@@ -263,6 +265,20 @@ public class StandardRedeemScriptParserTest {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
-        Assert.assertEquals(2, parser.getM());
+        assertEquals(2, parser.getM());
+    }
+
+    @Test
+    public void extractStandardRedeemScript_whenGetScriptChunksFromStandardRedeemScriptParser_ShouldReturnScriptChunks() {
+        // Arrange
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        List<ScriptChunk> expectedRedeemScriptChunks = redeemScript.getChunks();
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+
+        // Act
+        List<ScriptChunk> actualRedeemScripChunks = redeemScriptParser.extractStandardRedeemScript();
+
+        // Assert
+        assertEquals(expectedRedeemScriptChunks, actualRedeemScripChunks);
     }
 }
