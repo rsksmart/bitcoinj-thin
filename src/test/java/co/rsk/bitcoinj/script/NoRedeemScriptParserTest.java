@@ -9,7 +9,7 @@ public class NoRedeemScriptParserTest {
 
     @Test (expected = ScriptException.class)
     public void extractStandardRedeemScript_whenNoRedeemScriptIsCalled_shouldThrowScriptException() {
-        // Actual
+        // Act
         noRedeemScriptParser.extractStandardRedeemScript();
     }
 }
