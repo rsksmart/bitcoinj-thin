@@ -269,7 +269,7 @@ public class StandardRedeemScriptParserTest {
     }
 
     @Test
-    public void extractStandardRedeemScript_whenGetScriptChunksFromStandardRedeemScriptParser_ShouldReturnScriptChunks() {
+    public void extractStandardRedeemScript_whenGetScriptChunksFromStandardRedeemScriptParser_shouldReturnScriptChunks() {
         // Arrange
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         List<ScriptChunk> expectedRedeemScriptChunks = redeemScript.getChunks();
