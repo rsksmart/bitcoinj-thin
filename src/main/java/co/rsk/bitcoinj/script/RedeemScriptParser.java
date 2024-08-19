@@ -28,8 +28,6 @@ public interface RedeemScriptParser {
 
     int getM();
 
-    int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey);
-
     int findKeyInRedeem(BtcECKey key);
 
     List<BtcECKey> getPubKeys();

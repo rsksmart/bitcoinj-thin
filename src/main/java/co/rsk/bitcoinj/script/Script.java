@@ -32,6 +32,7 @@ import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -493,8 +494,51 @@ public class Script {
      * Returns the index where a signature by the key should be inserted. Only applicable to
      * a P2SH scriptSig.
      */
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return this.getRedeemScriptParser().getSigInsertionIndex(hash, signingKey);
+    public int getSigInsertionIndex(Sha256Hash hashForSignature, BtcECKey signingKey) {
+        // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
+        // and any placeholder OP_0 sigs.
+
+
+        // In order to affect consensus, we keep returning zero as the default value for the insertion index
+        // when the script is not a scriptSig.
+        final int defaultSigInsertionIndexForNoScriptSig = 0;
+        String noScriptSigFormatExceptionMessage = "Script does not match ScriptSig format";
+        if (chunks.size() < 2) {
+            log.debug(noScriptSigFormatExceptionMessage);
+            return defaultSigInsertionIndexForNoScriptSig;
+        }
+
+        List<ScriptChunk> chunksWithoutRedeemScript = chunks.subList(1, chunks.size() - 1);
+        ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
+
+        if (redeemScriptChunk.data == null) {
+            log.debug(noScriptSigFormatExceptionMessage);
+            return defaultSigInsertionIndexForNoScriptSig;
+        }
+
+        Script redeemScript = new Script(redeemScriptChunk.data);
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+
+        if (!redeemScriptParser.getScriptType().equals(RedeemScriptParser.ScriptType.REDEEM_SCRIPT)){
+            log.debug("Redeem script could not be parsed");
+            return defaultSigInsertionIndexForNoScriptSig;
+        }
+
+        int potentialSigInsertionIndex = 0;
+        int keyIndexInRedeem = redeemScriptParser.findKeyInRedeem(signingKey);
+
+        for (ScriptChunk chunk : chunksWithoutRedeemScript) {
+            if (chunk.opcode != OP_0) {
+                Preconditions.checkNotNull(chunk.data);
+                if (keyIndexInRedeem < redeemScriptParser.findSigInRedeem(chunk.data, hashForSignature)) {
+                    return potentialSigInsertionIndex;
+                }
+
+                potentialSigInsertionIndex++;
+            }
+        }
+
+        return potentialSigInsertionIndex;
     }
 
     public int findKeyInRedeem(BtcECKey key) {
