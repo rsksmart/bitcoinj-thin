@@ -26,20 +26,20 @@ public class FastBridgeRedeemScriptParserTest {
         );
 
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
+        List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
 
-        Script obtainedRedeemScript = FastBridgeRedeemScriptParser.extractStandardRedeemScript(
-            fastBridgeRedeemScript
-        );
+        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeRedeemScriptParser.extractStandardRedeemScript(fastBridgeRedeemScript);
 
-        Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
+        Assert.assertEquals(standardRedeemScriptChunks, obtainedRedeemScriptChunks);
     }
 
     @Test
     public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_std_redeem_script() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
-        Script obtainedRedeemScript = FastBridgeRedeemScriptParser.extractStandardRedeemScript(redeemScript);
+        List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
+        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeRedeemScriptParser.extractStandardRedeemScript(redeemScript);
 
-        Assert.assertEquals(redeemScript, obtainedRedeemScript);
+        Assert.assertEquals(redeemScriptChunks, obtainedRedeemScriptChunks);
     }
 
     @Test

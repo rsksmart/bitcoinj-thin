@@ -30,14 +30,12 @@ public class FastBridgeErpRedeemScriptParserTest {
             derivationArgumentsHash.getBytes()
         );
 
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
-            defaultRedeemScriptKeys);
+        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
 
-        Script obtainedRedeemScript = FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(
-            fastBridgeErpRedeemScript.getChunks()
-        );
+        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeErpRedeemScriptParser.extractStandardRedeemScript(fastBridgeErpRedeemScript.getChunks());
 
-        Assert.assertEquals(standardRedeemScript, obtainedRedeemScript);
+        Assert.assertEquals(standardRedeemScriptChunks, obtainedRedeemScriptChunks);
     }
 
     @Test(expected = VerificationException.class)
