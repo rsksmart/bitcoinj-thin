@@ -218,8 +218,8 @@ public class ScriptTest {
         Script multiSigInputScript = ScriptBuilder.createMultiSigInputScript(signatures);
 
         // Assert that the input script only contains the OP_CODE zero and the required number of signatures.
-        final int expectedOpCodesNumberOfChunks = 1;
-        int expectedNumberOfChunks = expectedOpCodesNumberOfChunks + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        final int expectedOpZeroNumberOfChunks = 1;
+        int expectedNumberOfChunks = expectedOpZeroNumberOfChunks + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
         assertEquals(expectedNumberOfChunks, multiSigInputScript.getChunks().size());
 
         // Assert that the input script created does not end with the original
