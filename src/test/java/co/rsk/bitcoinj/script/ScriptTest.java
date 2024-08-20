@@ -294,14 +294,19 @@ public class ScriptTest {
     
     @Test
     public void dataDrivenValidScripts() throws Exception {
-        InputStreamReader scriptValidJsonInStream = new InputStreamReader(getClass().getResourceAsStream(
-            "script_valid.json"), Charsets.UTF_8);
+        InputStreamReader scriptValidJsonInStream = new InputStreamReader(
+            Objects.requireNonNull(getClass().getResourceAsStream(
+                "script_valid.json")), Charsets.UTF_8);
         JsonNode validScripsInJsonArray = new ObjectMapper().readTree(scriptValidJsonInStream);
         for (JsonNode validScriptInJson : validScripsInJsonArray) {
-            Script scriptSig = parseScriptString(validScriptInJson.get(0).asText());
-            Script scriptPubKey = parseScriptString(validScriptInJson.get(1).asText());
-            Set<VerifyFlag> verifyFlags = parseVerifyFlags(validScriptInJson.get(2).asText());
-            scriptSig.correctlySpends(new BtcTransaction(MAINNET_PARAMS), 0, scriptPubKey, verifyFlags);
+            try {
+                Script scriptSig = parseScriptString(validScriptInJson.get(0).asText());
+                Script scriptPubKey = parseScriptString(validScriptInJson.get(1).asText());
+                Set<VerifyFlag> verifyFlags = parseVerifyFlags(validScriptInJson.get(2).asText());
+                scriptSig.correctlySpends(new BtcTransaction(MAINNET_PARAMS), 0, scriptPubKey, verifyFlags);
+            } catch (Throwable actualException){
+                fail();
+            }
         }
     }
     
@@ -325,7 +330,7 @@ public class ScriptTest {
     public void dataDrivenValidTransactions() throws Exception {
         MessageSerializer defaultSerializer = MAINNET_PARAMS.getDefaultSerializer();
         InputStreamReader validTransactionsJsonArrayInBytes = new InputStreamReader(
-            getClass().getResourceAsStream("tx_valid.json"), Charsets.UTF_8);
+            Objects.requireNonNull(getClass().getResourceAsStream("tx_valid.json")), Charsets.UTF_8);
         JsonNode validTxsInJsonArray = new ObjectMapper().readTree(validTransactionsJsonArrayInBytes);
         for (JsonNode validTxInJson : validTxsInJsonArray) {
             if (validTxInJson.isArray() && validTxInJson.size() == 1 && validTxInJson.get(0).isTextual()) {
@@ -353,8 +358,9 @@ public class ScriptTest {
 
     @Test
     public void dataDrivenInvalidTransactions() throws Exception {
-        InputStreamReader invalidTxsJsonInStream = new InputStreamReader(getClass().getResourceAsStream(
-            "tx_invalid.json"), Charsets.UTF_8);
+        InputStreamReader invalidTxsJsonInStream = new InputStreamReader(
+            Objects.requireNonNull(getClass().getResourceAsStream(
+                "tx_invalid.json")), Charsets.UTF_8);
         JsonNode invalidTxsInJsonArray = new ObjectMapper().readTree(invalidTxsJsonInStream);
         for (JsonNode test : invalidTxsInJsonArray) {
             if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
@@ -372,7 +378,7 @@ public class ScriptTest {
 
             // Bitcoin Core checks this case in CheckTransaction, but we leave it to
             // later where we will see an attempt to double-spend, so we explicitly check here
-            HashSet<TransactionOutPoint> set = new HashSet<TransactionOutPoint>();
+            HashSet<TransactionOutPoint> set = new HashSet<>();
             for (TransactionInput input : transaction.getInputs()) {
                 if (set.contains(input.getOutpoint()))
                     valid = false;
@@ -635,8 +641,8 @@ public class ScriptTest {
 
     @Test
     public void getSigInsertionIndex_whenTestnetHardcodeRedeemScript_shouldReturnZero() {
-        final byte[] ERP_TESTNET_REDEEM_SCRIPT_BYTES = Utils.HEX.decode("6453210208f40073a9e43b3e9103acec79767a6de9b0409749884e989960fee578012fce210225e892391625854128c5c4ea4340de0c2a70570f33db53426fc9c746597a03f42102afc230c2d355b1a577682b07bc2646041b5d0177af0f98395a46018da699b6da210344a3c38cd59afcba3edcebe143e025574594b001700dec41e59409bdbd0f2a0921039a060badbeb24bee49eb2063f616c0f0f0765d4ca646b20a88ce828f259fcdb955670300cd50b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f5368ae");
-        Script erpTestnetRedeemScript = new Script(ERP_TESTNET_REDEEM_SCRIPT_BYTES);
+        final byte[] erpTestnetRedeemScriptBytes = Hex.decode("6453210208f40073a9e43b3e9103acec79767a6de9b0409749884e989960fee578012fce210225e892391625854128c5c4ea4340de0c2a70570f33db53426fc9c746597a03f42102afc230c2d355b1a577682b07bc2646041b5d0177af0f98395a46018da699b6da210344a3c38cd59afcba3edcebe143e025574594b001700dec41e59409bdbd0f2a0921039a060badbeb24bee49eb2063f616c0f0f0765d4ca646b20a88ce828f259fcdb955670300cd50b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f5368ae");
+        Script erpTestnetRedeemScript = new Script(erpTestnetRedeemScriptBytes);
 
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
@@ -924,7 +930,7 @@ public class ScriptTest {
         UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
 
         for(String w : words) {
-            if (w.equals(""))
+            if (w.isEmpty())
                 continue;
             if (w.matches("^-?[0-9]*$")) {
                 // Number
@@ -959,18 +965,14 @@ public class ScriptTest {
         Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
         if (!"NONE".equals(str)) {
             for (String flag : str.split(",")) {
-                try {
-                    flags.add(VerifyFlag.valueOf(flag));
-                } catch (IllegalArgumentException x) {
-
-                }
+                flags.add(VerifyFlag.valueOf(flag));
             }
         }
         return flags;
     }
 
     private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
-        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
+        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
         for (JsonNode input : inputs) {
             String hash = input.get(0).asText();
             int index = input.get(1).asInt();
