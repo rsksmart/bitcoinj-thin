@@ -498,18 +498,19 @@ public class Script {
         // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
         // and any placeholder OP_0 sigs.
 
-
-        // In order to affect consensus, we keep returning zero as the default value for the insertion index
+        // To keep backwards compatibility, we keep returning zero as the default value for the insertion index
         // when the script is not a scriptSig.
         final int defaultSigInsertionIndexForNoScriptSig = 0;
-        String noScriptSigFormatExceptionMessage = "Script does not match ScriptSig format";
+        String noScriptSigFormatExceptionMessage = "[getSigInsertionIndex] Script does not match ScriptSig format";
         if (chunks.size() < 2) {
             log.debug(noScriptSigFormatExceptionMessage);
             return defaultSigInsertionIndexForNoScriptSig;
         }
 
-        List<ScriptChunk> chunksWithoutRedeemScript = chunks.subList(1, chunks.size() - 1);
-        ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
+        final int redeemScriptChunkIndex = chunks.size() - 1;
+        ScriptChunk redeemScriptChunk = chunks.get(redeemScriptChunkIndex);
+
+        List<ScriptChunk> chunksWithoutRedeemScript = chunks.subList(1, redeemScriptChunkIndex);
 
         if (redeemScriptChunk.data == null) {
             log.debug(noScriptSigFormatExceptionMessage);
@@ -524,21 +525,21 @@ public class Script {
             return defaultSigInsertionIndexForNoScriptSig;
         }
 
-        int potentialSigInsertionIndex = 0;
+        int sigInsertionIndex = 0;
         int keyIndexInRedeem = redeemScriptParser.findKeyInRedeem(signingKey);
 
         for (ScriptChunk chunk : chunksWithoutRedeemScript) {
             if (chunk.opcode != OP_0) {
                 Preconditions.checkNotNull(chunk.data);
                 if (keyIndexInRedeem < redeemScriptParser.findSigInRedeem(chunk.data, hashForSignature)) {
-                    return potentialSigInsertionIndex;
+                    return sigInsertionIndex;
                 }
 
-                potentialSigInsertionIndex++;
+                sigInsertionIndex++;
             }
         }
 
-        return potentialSigInsertionIndex;
+        return sigInsertionIndex;
     }
 
     public int findKeyInRedeem(BtcECKey key) {

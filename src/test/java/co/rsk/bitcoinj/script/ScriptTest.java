@@ -17,6 +17,7 @@
 
 package co.rsk.bitcoinj.script;
 
+import static co.rsk.bitcoinj.script.RedeemScriptUtils.createErpRedeemScript;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -44,6 +45,7 @@ import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.MainNetParams;
+import co.rsk.bitcoinj.script.Script.ScriptType;
 import co.rsk.bitcoinj.script.Script.VerifyFlag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -516,7 +518,7 @@ public class ScriptTest {
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_erp_redeem_script() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = createErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             500L
@@ -558,7 +560,7 @@ public class ScriptTest {
 
     @Test
     public void getSigInsertionIndex_erp_redeem_script() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = createErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             500L
@@ -672,6 +674,25 @@ public class ScriptTest {
     }
 
     @Test
+    public void getSigInsertionIndex_whenScriptWithOnlyOP0AndRedeemScript_shouldReturnZero() {
+        Script erpRedeemScript = createErpRedeemScript(FEDERATION_KEYS, ERP_FEDERATION_KEYS, 500L);
+        Script customRedeemScript = new ScriptBuilder().number(OP_0)
+            .data(erpRedeemScript.getProgram()).build();
+
+        assertEquals(2, customRedeemScript.getChunks().size());
+        ScriptType actualScriptType = customRedeemScript.getScriptType();
+        assertEquals(ScriptType.NO_TYPE, actualScriptType);
+
+        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
+        BtcECKey signingKey = FEDERATION_KEYS.get(1);
+
+        int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature,
+            signingKey);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT,
+            sigInsertionIndex);
+    }
+
+    @Test
     public void isSentToMultiSig_fast_bridge_multiSig() {
         byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
@@ -684,7 +705,7 @@ public class ScriptTest {
 
     @Test
     public void isSentToMultiSig_erp_multiSig() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = createErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             500L
@@ -749,7 +770,7 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_erp_redeemScript() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = createErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             500L
