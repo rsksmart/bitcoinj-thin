@@ -32,7 +32,7 @@ import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.core.BtcTransaction.SigHash;
 import co.rsk.bitcoinj.core.Coin;
-import co.rsk.bitcoinj.core.DumpedPrivateKey;
+import co.rsk.bitcoinj.core.MessageSerializer;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
@@ -44,14 +44,13 @@ import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.MainNetParams;
-import co.rsk.bitcoinj.params.TestNet3Params;
 import co.rsk.bitcoinj.script.Script.VerifyFlag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -63,291 +62,311 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.hamcrest.core.IsNot;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 public class ScriptTest {
-    // From tx 05e04c26c12fe408a3c1b71aa7996403f6acad1045252b1c62e055496f4d2cb1 on the testnet.
-    static final String sigProg = "47304402202b4da291cc39faf8433911988f9f49fc5c995812ca2f94db61468839c228c3e90220628bff3ff32ec95825092fa051cba28558a981fcf59ce184b14f2e215e69106701410414b38f4be3bb9fa0f4f32b74af07152b2f2f630bc02122a491137b6c523e46f18a0d5034418966f93dfc37cc3739ef7b2007213a302b7fba161557f4ad644a1c";
-    static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
+    private static final NetworkParameters MAINNET_PARAMS = MainNetParams.get();
 
-    private static final NetworkParameters PARAMS = TestNet3Params.get();
-    private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
-    private final List<BtcECKey> btcECKeyList = new ArrayList<>();
-    private final List<BtcECKey> erpFedECKeyList = new ArrayList<>();
-    private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(100));
-    private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(200));
-    private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(300));
-    private final BtcECKey ecKey4 = BtcECKey.fromPrivate(BigInteger.valueOf(400));
-    private final BtcECKey ecKey5 = BtcECKey.fromPrivate(BigInteger.valueOf(500));
-    private final BtcECKey ecKey6 = BtcECKey.fromPrivate(BigInteger.valueOf(600));
-    private final BtcECKey ecKey7 = BtcECKey.fromPrivate(BigInteger.valueOf(700));
-    private final BtcECKey ecKey8 = BtcECKey.fromPrivate(BigInteger.valueOf(800));
+    private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+    private static final List<BtcECKey> ERP_FEDERATION_KEYS = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
 
-    @Before
-    public void setUp() {
-        btcECKeyList.add(ecKey1);
-        btcECKeyList.add(ecKey2);
-        btcECKeyList.add(ecKey3);
-        erpFedECKeyList.add(ecKey4);
-        erpFedECKeyList.add(ecKey5);
-        erpFedECKeyList.add(ecKey6);
-        erpFedECKeyList.add(ecKey7);
-        erpFedECKeyList.add(ecKey8);
-    }
+    private static final int REQUIRED_SIGNATURES = FEDERATION_KEYS.size() / 2 + 1;
+
+    private static final int STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS = 1 + REQUIRED_SIGNATURES + 1; // One for OP_0 at the beginning and one for the redeem script at the end
+    private static final int P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS = 1 + REQUIRED_SIGNATURES + 2; // One for OP_0 at the beginning plus one for for the flow op code and one for the redeem script at the end
+
+    private static final int EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT = 0;
 
     @Test
     public void testScriptSig() {
-        byte[] sigProgBytes = Hex.decode(sigProg);
-        Script script = new Script(sigProgBytes);
+        // Arrange
+        // From tx 144c51489015966bd7dccf62d3f289b5fc326d7fb8b4766287209130601d6f94 on mainnet.
+        final String expectedAddress = "13jVTrDQrmob6Bc3MAcVhiJ15V22aypzB9";
+        final String scriptSig = "473044022056eb4d70a5e060b2fff471833a27369d7f58f37272db069ff343aa8cea49d5ec0220018655699f56628e985ffa96777edde790ee830c8d2575ccbc720292e507f0650121025256789f7facfb367ae3afb232e9e50bb4d887ba06bdaa8c406a011fd5a3c89d";
+
+        byte[] scriptSigInBytes = Hex.decode(scriptSig);
+        Script p2pkh = new Script(scriptSigInBytes);
+
         // Test we can extract the from address.
-        byte[] hash160 = Utils.sha256hash160(script.getPubKey());
-        Address a = new Address(PARAMS, hash160);
-        assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", a.toString());
+        // Act
+        byte[] pubKeyInBytes = p2pkh.getPubKey();
+
+        // Assert
+        byte[] deriveAddressInBytes = Utils.sha256hash160(pubKeyInBytes);
+        Address addressFromP2pkhScriptSig = new Address(MAINNET_PARAMS, deriveAddressInBytes);
+        assertEquals(expectedAddress, addressFromP2pkhScriptSig.toString());
+    }
+
+    @Test
+    public void getPubKey_whenScriptSig_shouldThrowException(){
+        // arrange
+        // From tx f464e7c6200af3afaaac0b38ea38adcd7521df0d522dad95f991bab48439cf3e on mainnet.
+        final String scriptSig = "00473044022033fb52c62b3354e9b6af80506141f38443994678fdc83e5638069a9738d8e5060220351f4f385f4cb2700e4befe0e7e2782f573291edd9e6485e4f46abcada39df8501483045022100f69ef21fc9baadb1e15aeb69376b2b3595aab64894a89fcb6bbc42947c3ad2910220181577ada1b37822645faae8d935d9d4ad49338dbcbf59a218bc2a82d5c2559201483045022100caecafd376515ead5f84ff933a118e0bf7360f3f28cc977347cdb46fa8adefcc02202736a5ae2c756e0cb968082853f06e3353265d609ebd196eea89914c2423ced201483045022100bfae4595d53450fe569611f51cb56de78dee248c6813235a246796ec6ef72f1e02200b2afef75892d0fcaba2eaabc4889cca09ad456aae88d0d05c2f4259f43903d001483045022100d96d0707f783866e9ecc013f2c1a648af5ca5e1a3b600f593f40c2d7a68175c1022066095b9d688281314f1c4271b664cd9ff1939f8f48cd046f61a0cb0cdff2346301004dc901645521020ace50bab1230f8002a0bfe619482af74b338cc9e4c956add228df47e6adae1c21025093f439fb8006fd29ab56605ffec9cdc840d16d2361004e1337a2f86d8bd2db210275d473555de2733c47125f9702b0f870df1d817379f5587f09b6c40ed2c6c9492102a95f095d0ce8cb3b9bf70cc837e3ebe1d107959b1fa3f9b2d8f33446f9c8cbdb2103250c11be0561b1d7ae168b1f59e39cbc1fd1ba3cf4d2140c1a365b2723a2bf9321034851379ec6b8a701bd3eef8a0e2b119abb4bdde7532a3d6bcbff291b0daf3f25210350179f143a632ce4e6ac9a755b82f7f4266cfebb116a42cadb104c2c2a3350f92103b04fbd87ef5e2c0946a684c8c93950301a45943bbe56d979602038698facf9032103b58a5da144f5abab2e03e414ad044b732300de52fa25c672a7f7b3588877190659ae670350cd00b275532102370a9838e4d15708ad14a104ee5606b36caaaaf739d833e67770ce9fd9b3ec80210257c293086c4d4fe8943deda5f890a37d11bebd140e220faa76258a41d077b4d42103c2660a46aa73078ee6016dee953488566426cf55fc8011edd0085634d75395f92103cd3e383ec6e12719a6c69515e5559bcbe037d0aa24c187e1e26ce932e22ad7b354ae68";
+
+        byte[] scriptSigInBytes = Hex.decode(scriptSig);
+        Script script = new Script(scriptSigInBytes);
+
+        // act
+        assertThrows(ScriptException.class, script::getPubKey);
     }
 
     @Test
     public void testScriptPubKey() {
-        // Check we can extract the to address
-        byte[] pubkeyBytes = Hex.decode(pubkeyProg);
-        Script pubkey = new Script(pubkeyBytes);
-        assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
-        Address toAddr = new Address(PARAMS, pubkey.getPubKeyHash());
-        assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
+        // From tx f464e7c6200af3afaaac0b38ea38adcd7521df0d522dad95f991bab48439cf3e on mainnet.
+        final String pubKeyInHex = "76a914742e7c6115d8ffa7a241ac3fff1d7fd9e149bd6588ac";
+        final String expectedAddressFromScriptSig = "1BbK59V1D4V5xgHjfenSVbYoWXkf67eDND";
+        byte[] pubKeyBytes = Hex.decode(pubKeyInHex);
+
+        Script pubKey = new Script(pubKeyBytes);
+
+        String expectedPubKey = "DUP HASH160 PUSHDATA(20)[742e7c6115d8ffa7a241ac3fff1d7fd9e149bd65] EQUALVERIFY CHECKSIG";
+        assertEquals(expectedPubKey, pubKey.toString());
+
+        Address actualAddress = new Address(MAINNET_PARAMS, pubKey.getPubKeyHash());
+        assertEquals(expectedAddressFromScriptSig, actualAddress.toString());
     }
 
     @Test
     public void testMultiSig() {
-        List<BtcECKey> keys = Lists.newArrayList(new BtcECKey(), new BtcECKey(), new BtcECKey());
-        assertTrue(ScriptBuilder.createMultiSigOutputScript(2, keys).isSentToMultiSig());
-        Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
-        assertTrue(script.isSentToMultiSig());
-        List<BtcECKey> pubkeys = new ArrayList<BtcECKey>(3);
-        for (BtcECKey key : keys) pubkeys.add(BtcECKey.fromPublicOnly(key.getPubKeyPoint()));
-        assertEquals(script.getPubKeys(), pubkeys);
-        assertFalse(ScriptBuilder.createOutputScript(new BtcECKey()).isSentToMultiSig());
-        try {
-            // Fail if we ask for more signatures than keys.
-            Script.createMultiSigOutputScript(4, keys);
-            fail();
-        } catch (Throwable e) {
-            // Expected.
+        List<BtcECKey> signers = Lists.newArrayList(new BtcECKey(), new BtcECKey(), new BtcECKey());
+        assertTrue(ScriptBuilder.createMultiSigOutputScript(2, signers).isSentToMultiSig());
+        Script multiSigScript = ScriptBuilder.createMultiSigOutputScript(3, signers);
+        assertTrue(multiSigScript.isSentToMultiSig());
+        List<BtcECKey> pubKeys = new ArrayList<>(3);
+        for (BtcECKey signer : signers) {
+            BtcECKey pubKey = BtcECKey.fromPublicOnly(signer.getPubKeyPoint());
+            pubKeys.add(pubKey);
         }
-        try {
-            // Must have at least one signature required.
-            Script.createMultiSigOutputScript(0, keys);
-        } catch (Throwable e) {
-            // Expected.
-        }
-        // Actual execution is tested by the data driven tests.
+        assertEquals(multiSigScript.getPubKeys(), pubKeys);
+
+        Script signerScript = ScriptBuilder.createOutputScript(signers.get(0));
+        assertFalse(signerScript.isSentToMultiSig());
+
+        // Fail if we ask for more signatures than signers.
+        assertThrows(IllegalArgumentException.class, () -> Script.createMultiSigOutputScript(4, signers));
+
+        // Fail if we ask for no signatures
+        assertThrows(IllegalArgumentException.class, () -> Script.createMultiSigOutputScript(0, signers));
+
+        // Fail if we ask for negative number of signatures
+        assertThrows(IllegalArgumentException.class, () -> Script.createMultiSigOutputScript(-1, signers));
     }
 
     @Test
     public void testP2SHOutputScript() {
-        Address p2shAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        final String addressFromP2shScript = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
+        Address p2shAddress = Address.fromBase58(MainNetParams.get(), addressFromP2shScript);
         assertTrue(ScriptBuilder.createOutputScript(p2shAddress).isPayToScriptHash());
     }
 
     @Test
     public void testIp() {
-        byte[] bytes = Hex.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
-        Script s = new Script(bytes);
-        assertTrue(s.isSentToRawPubKey());
+        final String pubKeyScriptInHex = "41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac";
+        byte[] pubKeyScriptInBytes = Hex.decode(pubKeyScriptInHex);
+        Script pubKeyScript = new Script(pubKeyScriptInBytes);
+        assertTrue(pubKeyScript.isSentToRawPubKey());
     }
     
     @Test
     public void testCreateMultiSigInputScript() {
         // Setup transaction and signatures
-        BtcECKey key1 = DumpedPrivateKey.fromBase58(PARAMS, "cVLwRLTvz3BxDAWkvS3yzT9pUcTCup7kQnfT2smRjvmmm1wAP6QT").getKey();
-        BtcECKey key2 = DumpedPrivateKey.fromBase58(PARAMS, "cTine92s8GLpVqvebi8rYce3FrUYq78ZGQffBYCS1HmDPJdSTxUo").getKey();
-        BtcECKey key3 = DumpedPrivateKey.fromBase58(PARAMS, "cVHwXSPRZmL9adctwBwmn4oTZdZMbaCsR5XF6VznqMgcvt1FDDxg").getKey();
-        Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key1, key2, key3));
-        byte[] bytes = Hex.decode("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
-        BtcTransaction transaction = PARAMS.getDefaultSerializer().makeTransaction(bytes);
-        TransactionOutput output = transaction.getOutput(1);
-        BtcTransaction spendTx = new BtcTransaction(PARAMS);
-        Address address = Address.fromBase58(PARAMS, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
-        Script outputScript = ScriptBuilder.createOutputScript(address);
-        spendTx.addOutput(output.getValue(), outputScript);
-        spendTx.addInput(output);
-        Sha256Hash sighash = spendTx.hashForSignature(0, multisigScript, SigHash.ALL, false);
-        BtcECKey.ECDSASignature party1Signature = key1.sign(sighash);
-        BtcECKey.ECDSASignature party2Signature = key2.sign(sighash);
-        TransactionSignature party1TransactionSignature = new TransactionSignature(party1Signature, SigHash.ALL, false);
-        TransactionSignature party2TransactionSignature = new TransactionSignature(party2Signature, SigHash.ALL, false);
+        Script multisigScript = ScriptBuilder.createMultiSigOutputScript(
+            REQUIRED_SIGNATURES,
+            FEDERATION_KEYS);
 
-        // Create p2sh multisig input script
-        Script inputScript = ScriptBuilder.createP2SHMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature), multisigScript);
+        BtcTransaction fundingTx = new BtcTransaction(MAINNET_PARAMS);
+        fundingTx.addInput(Sha256Hash.ZERO_HASH, 0, new Script(new byte[]{}));
+        fundingTx.addOutput(Coin.COIN, multisigScript);
+        TransactionOutput fundingTxOutput = fundingTx.getOutput(0);
 
-        // Assert that the input script contains 4 chunks
-        assertEquals(4, inputScript.getChunks().size());
+        BtcTransaction spendTx = new BtcTransaction(MAINNET_PARAMS);
+        spendTx.addInput(fundingTxOutput);
 
-        // Assert that the input script created contains the original multisig
+        final Address userAddress = BtcECKey.fromPrivate(BigInteger.valueOf(900)).toAddress(
+            MAINNET_PARAMS);
+        Script recipientScript = ScriptBuilder.createOutputScript(userAddress);
+        Coin amountToSend = fundingTxOutput.getValue();
+        spendTx.addOutput(amountToSend, recipientScript);
+
+        Sha256Hash sigHash = spendTx.hashForSignature(0, multisigScript, SigHash.ALL, false);
+
+        List<TransactionSignature> signatures = new ArrayList<>();
+        for (int i = 0; i < REQUIRED_SIGNATURES; i++) {
+            BtcECKey.ECDSASignature ecdsaSignature = FEDERATION_KEYS.get(i).sign(sigHash);
+            TransactionSignature txSignature = new TransactionSignature(ecdsaSignature, SigHash.ALL, false);
+            signatures.add(txSignature);
+        }
+
+        // Create p2sh multiSig input script
+        Script p2shScript = ScriptBuilder.createP2SHMultiSigInputScript(signatures, multisigScript);
+
+        // Assert that the input script contains standard multiSig op codes + expected number of required signatures
+
+        assertEquals(STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS, p2shScript.getChunks().size());
+
+        // Assert that the input script created contains the original multiSig
         // script as the last chunk
-        ScriptChunk scriptChunk = inputScript.getChunks().get(inputScript.getChunks().size() - 1);
-        Assert.assertArrayEquals(scriptChunk.data, multisigScript.getProgram());
+        ScriptChunk redeemScriptChunk = p2shScript.getChunks().get(p2shScript.getChunks().size() - 1);
+        Assert.assertArrayEquals(redeemScriptChunk.data, multisigScript.getProgram());
 
-        // Create regular multisig input script
-        inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature));
+        // Create regular multiSig input script
+        Script multiSigInputScript = ScriptBuilder.createMultiSigInputScript(signatures);
 
-        // Assert that the input script only contains 3 chunks
-        assertEquals(3, inputScript.getChunks().size());
+        // Assert that the input script only contains the OP_CODE zero and the required number of signatures.
+        final int expectedOpZeroNumberOfChunks = 1;
+        int expectedNumberOfChunks = expectedOpZeroNumberOfChunks + REQUIRED_SIGNATURES;
+        assertEquals(expectedNumberOfChunks, multiSigInputScript.getChunks().size());
 
         // Assert that the input script created does not end with the original
-        // multisig script
-        scriptChunk = inputScript.getChunks().get(inputScript.getChunks().size() - 1);
-        Assert.assertThat(scriptChunk.data, IsNot.not(equalTo(multisigScript.getProgram())));
+        // multiSig script
+        redeemScriptChunk = multiSigInputScript.getChunks().get(multiSigInputScript.getChunks().size() - 1);
+        Assert.assertThat(redeemScriptChunk.data, IsNot.not(equalTo(multisigScript.getProgram())));
     }
 
     @Test
     public void createAndUpdateEmptyInputScript() {
-        TransactionSignature dummySig = TransactionSignature.dummy();
-        BtcECKey key = new BtcECKey();
+        TransactionSignature transactionSignature = TransactionSignature.dummy();
+        BtcECKey signer = new BtcECKey();
 
-        // pay-to-pubkey
-        Script inputScript = ScriptBuilder.createInputScript(dummySig);
-        assertThat(inputScript.getChunks().get(0).data, equalTo(dummySig.encodeToBitcoin()));
-        inputScript = ScriptBuilder.createInputScript(null);
-        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
+        // pay-to-pubKey
+        Script p2pkScript = ScriptBuilder.createInputScript(transactionSignature);
+        assertThat(p2pkScript.getChunks().get(0).data, equalTo(transactionSignature.encodeToBitcoin()));
+        p2pkScript = ScriptBuilder.createInputScript(null);
+        assertThat(p2pkScript.getChunks().get(0).opcode, equalTo(OP_0));
 
         // pay-to-address
-        inputScript = ScriptBuilder.createInputScript(dummySig, key);
-        assertThat(inputScript.getChunks().get(0).data, equalTo(dummySig.encodeToBitcoin()));
-        inputScript = ScriptBuilder.createInputScript(null, key);
-        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(1).data, equalTo(key.getPubKey()));
+        p2pkScript = ScriptBuilder.createInputScript(transactionSignature, signer);
+        assertThat(p2pkScript.getChunks().get(0).data, equalTo(transactionSignature.encodeToBitcoin()));
+        p2pkScript = ScriptBuilder.createInputScript(null, signer);
+        assertThat(p2pkScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(p2pkScript.getChunks().get(1).data, equalTo(signer.getPubKey()));
 
         // pay-to-script-hash
-        BtcECKey key2 = new BtcECKey();
-        Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key, key2));
-        inputScript = ScriptBuilder.createP2SHMultiSigInputScript(Arrays.asList(dummySig, dummySig), multisigScript);
-        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
-        assertThat(inputScript.getChunks().get(2).data, equalTo(dummySig.encodeToBitcoin()));
-        assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
+        BtcECKey signer2 = new BtcECKey();
+        Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(signer, signer2));
+        p2pkScript = ScriptBuilder.createP2SHMultiSigInputScript(Arrays.asList(transactionSignature, transactionSignature), multisigScript);
+        assertThat(p2pkScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(p2pkScript.getChunks().get(1).data, equalTo(transactionSignature.encodeToBitcoin()));
+        assertThat(p2pkScript.getChunks().get(2).data, equalTo(transactionSignature.encodeToBitcoin()));
+        assertThat(p2pkScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
 
-        inputScript = ScriptBuilder.createP2SHMultiSigInputScript(null, multisigScript);
-        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(1).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(2).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
+        p2pkScript = ScriptBuilder.createP2SHMultiSigInputScript(null, multisigScript);
+        assertThat(p2pkScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(p2pkScript.getChunks().get(1).opcode, equalTo(OP_0));
+        assertThat(p2pkScript.getChunks().get(2).opcode, equalTo(OP_0));
+        assertThat(p2pkScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
 
-        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 0, 1, 1);
-        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
-        assertThat(inputScript.getChunks().get(2).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
+        p2pkScript = ScriptBuilder.updateScriptWithSignature(p2pkScript, transactionSignature.encodeToBitcoin(), 0, 1, 1);
+        assertThat(p2pkScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(p2pkScript.getChunks().get(1).data, equalTo(transactionSignature.encodeToBitcoin()));
+        assertThat(p2pkScript.getChunks().get(2).opcode, equalTo(OP_0));
+        assertThat(p2pkScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
 
-        inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 1, 1, 1);
-        assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
-        assertThat(inputScript.getChunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
-        assertThat(inputScript.getChunks().get(2).data, equalTo(dummySig.encodeToBitcoin()));
-        assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
+        p2pkScript = ScriptBuilder.updateScriptWithSignature(p2pkScript, transactionSignature.encodeToBitcoin(), 1, 1, 1);
+        assertThat(p2pkScript.getChunks().get(0).opcode, equalTo(OP_0));
+        assertThat(p2pkScript.getChunks().get(1).data, equalTo(transactionSignature.encodeToBitcoin()));
+        assertThat(p2pkScript.getChunks().get(2).data, equalTo(transactionSignature.encodeToBitcoin()));
+        assertThat(p2pkScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
 
         // updating scriptSig with no missing signatures
-        try {
-            ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 1, 1, 1);
-            fail("Exception expected");
-        } catch (Exception e) {
-            assertEquals(IllegalArgumentException.class, e.getClass());
-        }
+        final Script finalP2pkScript = p2pkScript;
+        assertThrows(IllegalArgumentException.class, () -> ScriptBuilder.updateScriptWithSignature(
+            finalP2pkScript, transactionSignature.encodeToBitcoin(), 1, 1, 1));
     }
 
     @Test
     public void testOp0() {
         // Check that OP_0 doesn't NPE and pushes an empty stack frame.
-        BtcTransaction tx = new BtcTransaction(PARAMS);
-        tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
+        BtcTransaction btcTransaction = new BtcTransaction(MAINNET_PARAMS);
+        TransactionInput transactionInput = new TransactionInput(MAINNET_PARAMS, btcTransaction, new byte[]{});
+        btcTransaction.addInput(transactionInput);
         Script script = new ScriptBuilder().smallNum(0).build();
 
-        LinkedList<byte[]> stack = new LinkedList<byte[]>();
-        Script.executeScript(tx, 0, script, stack, Script.ALL_VERIFY_FLAGS);
+        LinkedList<byte[]> stack = new LinkedList<>();
+        Script.executeScript(btcTransaction, 0, script, stack, Script.ALL_VERIFY_FLAGS);
         assertEquals("OP_0 push length", 0, stack.get(0).length);
     }
     
     @Test
     public void dataDrivenValidScripts() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "script_valid.json"), Charsets.UTF_8));
-        for (JsonNode test : json) {
-            Script scriptSig = parseScriptString(test.get(0).asText());
-            Script scriptPubKey = parseScriptString(test.get(1).asText());
-            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
+        InputStreamReader scriptValidJsonInStream = new InputStreamReader(
+            Objects.requireNonNull(getClass().getResourceAsStream(
+                "script_valid.json")), Charsets.UTF_8);
+        JsonNode validScripsInJsonArray = new ObjectMapper().readTree(scriptValidJsonInStream);
+        for (JsonNode validScriptInJson : validScripsInJsonArray) {
             try {
-                scriptSig.correctlySpends(new BtcTransaction(PARAMS), 0, scriptPubKey, verifyFlags);
-            } catch (ScriptException e) {
-                System.err.println(test);
-                System.err.flush();
-                throw e;
+                Script scriptSig = parseScriptString(validScriptInJson.get(0).asText());
+                Script scriptPubKey = parseScriptString(validScriptInJson.get(1).asText());
+                Set<VerifyFlag> verifyFlags = parseVerifyFlags(validScriptInJson.get(2).asText());
+                scriptSig.correctlySpends(new BtcTransaction(MAINNET_PARAMS), 0, scriptPubKey, verifyFlags);
+            } catch (Throwable actualException){
+                fail();
             }
         }
     }
     
     @Test
     public void dataDrivenInvalidScripts() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "script_invalid.json"), Charsets.UTF_8));
+        InputStream invalidScriptsInBytes = Objects.requireNonNull(
+            getClass().getResourceAsStream("script_invalid.json"));
+        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(invalidScriptsInBytes
+            , Charsets.UTF_8));
         for (JsonNode test : json) {
-            try {
+            assertThrows(ScriptException.class, () -> {
                 Script scriptSig = parseScriptString(test.get(0).asText());
                 Script scriptPubKey = parseScriptString(test.get(1).asText());
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
-                scriptSig.correctlySpends(new BtcTransaction(PARAMS), 0, scriptPubKey, verifyFlags);
-                System.err.println(test);
-                System.err.flush();
-                fail();
-            } catch (VerificationException e) {
-                // Expected.
-            }
+                scriptSig.correctlySpends(new BtcTransaction(MAINNET_PARAMS), 0, scriptPubKey, verifyFlags);
+            });
         }
     }
 
     @Test
     public void dataDrivenValidTransactions() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "tx_valid.json"), Charsets.UTF_8));
-        for (JsonNode test : json) {
-            if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
+        MessageSerializer defaultSerializer = MAINNET_PARAMS.getDefaultSerializer();
+        InputStreamReader validTransactionsJsonArrayInBytes = new InputStreamReader(
+            Objects.requireNonNull(getClass().getResourceAsStream("tx_valid.json")), Charsets.UTF_8);
+        JsonNode validTxsInJsonArray = new ObjectMapper().readTree(validTransactionsJsonArrayInBytes);
+        for (JsonNode validTxInJson : validTxsInJsonArray) {
+            if (validTxInJson.isArray() && validTxInJson.size() == 1 && validTxInJson.get(0).isTextual()) {
                 continue; // This is a comment.
-            BtcTransaction transaction = null;
-            try {
-                Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-                transaction = PARAMS.getDefaultSerializer().makeTransaction(Hex.decode(test.get(1).asText().toLowerCase()));
-                transaction.verify();
-                Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
+            }
 
-                for (int i = 0; i < transaction.getInputs().size(); i++) {
-                    TransactionInput input = transaction.getInputs().get(i);
-                    if (input.getOutpoint().getIndex() == 0xffffffffL)
-                        input.getOutpoint().setIndex(-1);
-                    assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
-                    input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()),
-                            verifyFlags);
+            Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(validTxInJson.get(0));
+            BtcTransaction transaction = defaultSerializer.makeTransaction(
+                Hex.decode(validTxInJson.get(1).asText().toLowerCase()));
+            transaction.verify();
+            Set<VerifyFlag> verifyFlags = parseVerifyFlags(validTxInJson.get(2).asText());
+
+            for (int i = 0; i < transaction.getInputs().size(); i++) {
+                TransactionInput input = transaction.getInputs().get(i);
+                if (input.getOutpoint().getIndex() == 0xffffffffL) {
+                    input.getOutpoint().setIndex(-1);
                 }
-            } catch (Exception e) {
-                System.err.println(test);
-                if (transaction != null)
-                    System.err.println(transaction);
-                throw e;
+                input.getScriptSig()
+                    .correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()),
+                        verifyFlags);
+                assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
             }
         }
     }
 
     @Test
     public void dataDrivenInvalidTransactions() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "tx_invalid.json"), Charsets.UTF_8));
-        for (JsonNode test : json) {
+        InputStreamReader invalidTxsJsonInStream = new InputStreamReader(
+            Objects.requireNonNull(getClass().getResourceAsStream(
+                "tx_invalid.json")), Charsets.UTF_8);
+        JsonNode invalidTxsInJsonArray = new ObjectMapper().readTree(invalidTxsJsonInStream);
+        for (JsonNode test : invalidTxsInJsonArray) {
             if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
                 continue; // This is a comment.
             Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-            BtcTransaction transaction = PARAMS.getDefaultSerializer().makeTransaction(Hex.decode(test.get(1).asText().toLowerCase()));
+            BtcTransaction transaction = MAINNET_PARAMS.getDefaultSerializer().makeTransaction(Hex.decode(test.get(1).asText().toLowerCase()));
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
             boolean valid = true;
@@ -359,7 +378,7 @@ public class ScriptTest {
 
             // Bitcoin Core checks this case in CheckTransaction, but we leave it to
             // later where we will see an attempt to double-spend, so we explicitly check here
-            HashSet<TransactionOutPoint> set = new HashSet<TransactionOutPoint>();
+            HashSet<TransactionOutPoint> set = new HashSet<>();
             for (TransactionInput input : transaction.getInputs()) {
                 if (set.contains(input.getOutpoint()))
                     valid = false;
@@ -390,21 +409,25 @@ public class ScriptTest {
 
     @Test
     public void getToAddress() {
-        // pay to pubkey
-        BtcECKey toKey = new BtcECKey();
-        Address toAddress = toKey.toAddress(PARAMS);
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toKey).getToAddress(PARAMS, true));
-        // pay to pubkey hash
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(PARAMS, true));
+        // pay to pubKey
+        BtcECKey signer = new BtcECKey();
+        Address expectedAddress = signer.toAddress(MAINNET_PARAMS);
+        Address actualAddress = ScriptBuilder.createOutputScript(signer).getToAddress(
+            MAINNET_PARAMS, true);
+        assertEquals(expectedAddress, actualAddress);
+
+        // pay to pubKey hash
+        assertEquals(expectedAddress, ScriptBuilder.createOutputScript(expectedAddress).getToAddress(
+            MAINNET_PARAMS, true));
         // pay to script hash
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
-        Address scriptAddress = Address.fromP2SHScript(PARAMS, p2shScript);
-        assertEquals(scriptAddress, p2shScript.getToAddress(PARAMS, true));
+        Address scriptAddress = Address.fromP2SHScript(MAINNET_PARAMS, p2shScript);
+        assertEquals(scriptAddress, p2shScript.getToAddress(MAINNET_PARAMS, true));
     }
 
     @Test(expected = ScriptException.class)
     public void getToAddressNoPubKey() {
-        ScriptBuilder.createOutputScript(new BtcECKey()).getToAddress(PARAMS, false);
+        ScriptBuilder.createOutputScript(new BtcECKey()).getToAddress(MAINNET_PARAMS, false);
     }
 
     /** Test encoding of zero, which should result in an opcode */
@@ -414,9 +437,12 @@ public class ScriptTest {
 
         // 0 should encode directly to 0
         builder.number(0);
-        assertArrayEquals(new byte[] {
+        byte[] actualScriptBytes = builder.build().getProgram();
+
+        byte[] expectedScriptBytes = {
             0x00         // Pushed data
-        }, builder.build().getProgram());
+        };
+        assertArrayEquals(expectedScriptBytes, actualScriptBytes);
     }
 
     @Test
@@ -424,9 +450,13 @@ public class ScriptTest {
         final ScriptBuilder builder = new ScriptBuilder();
 
         builder.number(5);
-        assertArrayEquals(new byte[] {
+        byte[] actualScriptBytes = builder.build().getProgram();
+
+        byte[] expectedScriptBytes = {
             0x55         // Pushed data
-        }, builder.build().getProgram());
+        };
+        assertArrayEquals(expectedScriptBytes, actualScriptBytes);
+        builder.number(5);
     }
 
     @Test
@@ -451,10 +481,13 @@ public class ScriptTest {
         // sign byte has to be added to the end for the signed encoding.
         builder = new ScriptBuilder();
         builder.number(0x8000);
-        assertArrayEquals(new byte[] {
+        byte[] actualScriptBytes = builder.build().getProgram();
+
+        byte[] expectedScriptBytes = {
             0x03,             // Length of the pushed data
             0x00, (byte) 0x80, 0x00  // Pushed data
-        }, builder.build().getProgram());
+        };
+        assertArrayEquals(expectedScriptBytes, actualScriptBytes);
     }
 
     @Test
@@ -462,55 +495,63 @@ public class ScriptTest {
         // Check encoding of a negative value
         final ScriptBuilder builder = new ScriptBuilder();
         builder.number(-5);
-        assertArrayEquals(new byte[] {
+        byte[] actualScriptBytes = builder.build().getProgram();
+
+        byte[] expectedScriptBytes = {
             0x01,        // Length of the pushed data
             ((byte) 133) // Pushed data
-        }, builder.build().getProgram());
+        };
+        assertArrayEquals(expectedScriptBytes, actualScriptBytes);
     }
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_fast_bridge_redeem_script() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data, btcECKeyList);
+            flyoverDerivationHash, FEDERATION_KEYS);
+        int actualNumberOfSignaturesRequiredToSpend = fastBridgeRedeemScript.getNumberOfSignaturesRequiredToSpend();
 
-        Assert.assertEquals(2, fastBridgeRedeemScript.getNumberOfSignaturesRequiredToSpend());
+        Assert.assertEquals(REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
     }
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_erp_redeem_script() {
         Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L
         );
+        int actualNumberOfSignaturesRequiredToSpend = erpRedeemScript.getNumberOfSignaturesRequiredToSpend();
 
-        Assert.assertEquals(2, erpRedeemScript.getNumberOfSignaturesRequiredToSpend());
+        Assert.assertEquals(REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
     }
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_fast_bridge_erp_redeem_script() {
         Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L,
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
+        int actualNumberOfSignaturesRequiredToSpend = fastBridgeErpRedeemScript.getNumberOfSignaturesRequiredToSpend();
 
-        Assert.assertEquals(2, fastBridgeErpRedeemScript.getNumberOfSignaturesRequiredToSpend());
+        Assert.assertEquals(REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
     }
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_no_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-        Assert.assertEquals(2, redeemScript.getNumberOfSignaturesRequiredToSpend());
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
+        int actualNumberOfSignaturesRequiredToSpend = redeemScript.getNumberOfSignaturesRequiredToSpend();
+
+        Assert.assertEquals(REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
     }
 
     @Test
     public void getSigInsertionIndex_fast_bridge_redeem_script() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data, btcECKeyList);
+            flyoverDerivationHash, FEDERATION_KEYS);
 
         testGetSigInsertionIndex(fastBridgeRedeemScript);
     }
@@ -518,8 +559,8 @@ public class ScriptTest {
     @Test
     public void getSigInsertionIndex_erp_redeem_script() {
         Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L
         );
 
@@ -527,29 +568,115 @@ public class ScriptTest {
     }
 
     @Test
+    public void getSigInsertionIndex_whenP2shRedeemScript_shouldReturnIndex() {
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            600L
+        );
+
+        testGetSigInsertionIndex(redeemScript);
+    }
+
+    @Test
     public void getSigInsertionIndex_fast_bridge_erp_redeem_script() {
+        byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L,
-            Sha256Hash.of(new byte[]{1}).getBytes()
+            flyoverDerivationHash
         );
 
         testGetSigInsertionIndex(fastBridgeErpRedeemScript);
     }
 
     @Test
-    public void getSigInsertionIndex_no_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+    public void getSigInsertionIndex_whenFlyoverP2shRedeemScript_shouldReturnIndex() {
+        byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script flyoverP2shRedeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            500L,
+            flyoverDerivationHash
+        );
+
+        testGetSigInsertionIndex(flyoverP2shRedeemScript);
+    }
+
+    @Test
+    public void getSigInsertionIndex_whenStandardRedeemScript_shouldReturnSigInsertionIndex() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
         testGetSigInsertionIndex(redeemScript);
     }
 
     @Test
+    public void getSigInsertionIndex_whenEmptyScript_shouldReturnZero() {
+        Script redeemScript = new ScriptBuilder().build();
+        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
+        BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
+
+        int actualSigInsertionIndex = redeemScript.getSigInsertionIndex(hashForSignature, signingKey);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
+
+        assertScriptIsNoRedeemScript(redeemScript);
+    }
+
+    @Test
+    public void getSigInsertionIndex_whenP2shScript_shouldReturnZero() {
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(
+            REQUIRED_SIGNATURES,
+            FEDERATION_KEYS
+        );
+
+        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
+        BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
+
+        int actualSigInsertionIndex = p2shOutputScript.getSigInsertionIndex(hashForSignature, signingKey);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
+
+        assertScriptIsNoRedeemScript(p2shOutputScript);
+    }
+
+    @Test
+    public void getSigInsertionIndex_whenTestnetHardcodeRedeemScript_shouldReturnZero() {
+        final byte[] erpTestnetRedeemScriptBytes = Hex.decode("6453210208f40073a9e43b3e9103acec79767a6de9b0409749884e989960fee578012fce210225e892391625854128c5c4ea4340de0c2a70570f33db53426fc9c746597a03f42102afc230c2d355b1a577682b07bc2646041b5d0177af0f98395a46018da699b6da210344a3c38cd59afcba3edcebe143e025574594b001700dec41e59409bdbd0f2a0921039a060badbeb24bee49eb2063f616c0f0f0765d4ca646b20a88ce828f259fcdb955670300cd50b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f5368ae");
+        Script erpTestnetRedeemScript = new Script(erpTestnetRedeemScriptBytes);
+
+        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
+        BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
+
+        int actualSigInsertionIndex = erpTestnetRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
+
+        assertScriptIsNoRedeemScript(erpTestnetRedeemScript);
+    }
+
+    private static void assertScriptIsNoRedeemScript(Script redeemScript) {
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(
+            redeemScript.getChunks());
+        Assert.assertTrue(redeemScriptParser instanceof NoRedeemScriptParser);
+    }
+
+    @Test
+    public void getSigInsertionIndex_whenMalformedRedeemScript_shouldReturnZero() {
+        Script customRedeemScript = new Script(new byte[2]);
+
+        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
+        BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
+
+        int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, sigInsertionIndex);
+
+        assertScriptIsNoRedeemScript(customRedeemScript);
+    }
+
+    @Test
     public void isSentToMultiSig_fast_bridge_multiSig() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
+            flyoverDerivationHash,
+            FEDERATION_KEYS
         );
 
         Assert.assertTrue(fastBridgeRedeemScript.isSentToMultiSig());
@@ -558,8 +685,8 @@ public class ScriptTest {
     @Test
     public void isSentToMultiSig_erp_multiSig() {
         Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L
         );
 
@@ -569,8 +696,8 @@ public class ScriptTest {
     @Test
     public void isSentToMultiSig_fast_bridge_erp_multiSig() {
         Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L,
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
@@ -580,20 +707,22 @@ public class ScriptTest {
 
     @Test
     public void isStandardMultiSig_standard_multiSig() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
         Assert.assertTrue(redeemScript.isSentToMultiSig());
     }
 
     @Test
     public void createEmptyInputScript_standard_redeemScript() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
         Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
 
+        int expectedOpZeroes = 1 + REQUIRED_SIGNATURES;
+
         assertInputScriptStructure(
             inputScript.getChunks(),
-            4,
-            3,
+            STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS,
+            expectedOpZeroes,
             redeemScript.getProgram()
         );
     }
@@ -602,16 +731,18 @@ public class ScriptTest {
     public void createEmptyInputScript_fast_bridge_redeemScript() {
         Script redeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             Sha256Hash.of(new byte[]{1}).getBytes(),
-            btcECKeyList
+            FEDERATION_KEYS
         );
 
         Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
 
+        int expectedOpZeroes = 1 + REQUIRED_SIGNATURES;
+
         assertInputScriptStructure(
             inputScript.getChunks(),
-            4,
-            3,
+            STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS,
+            expectedOpZeroes,
             redeemScript.getProgram()
         );
     }
@@ -619,8 +750,8 @@ public class ScriptTest {
     @Test
     public void createEmptyInputScript_erp_redeemScript() {
         Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L
         );
 
@@ -632,11 +763,12 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
+        int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            5,
-            4,
+            P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
+            expectedOpZeroes,
             redeemScript.getProgram()
         );
     }
@@ -644,8 +776,8 @@ public class ScriptTest {
     @Test
     public void createEmptyInputScript_fast_bridge_erp_redeemScript() {
         Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L,
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
@@ -658,11 +790,12 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
+        int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            5,
-            4,
+            P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
+            expectedOpZeroes,
             redeemScript.getProgram()
         );
     }
@@ -670,8 +803,8 @@ public class ScriptTest {
     @Test
     public void createEmptyInputScript_p2sh_erp_redeemScript() {
         Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L
         );
 
@@ -683,11 +816,12 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
+        int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            5,
-            4,
+            P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
+            expectedOpZeroes,
             redeemScript.getProgram()
         );
     }
@@ -695,8 +829,8 @@ public class ScriptTest {
     @Test
     public void createEmptyInputScript_fast_bridge_p2sh_erp_redeemScript() {
         Script redeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
-            btcECKeyList,
-            erpFedECKeyList,
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
             500L,
             Sha256Hash.of(new byte[]{1}).getBytes()
         );
@@ -709,11 +843,12 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
+        int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            5,
-            4,
+            P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
+            expectedOpZeroes,
             redeemScript.getProgram()
         );
     }
@@ -727,20 +862,28 @@ public class ScriptTest {
         // Validate input scripts chunks
         Assert.assertEquals(expectedChunksSize, chunks.size());
 
-        for (int i = 0; i < expectedOpZeroes; i++) {
-            Assert.assertTrue(chunks.get(i).equalsOpCode(OP_0));
+        int actualOpZeroes = 0;
+        for (ScriptChunk chunk : chunks) {
+            if (chunk.equalsOpCode(OP_0)) {
+                actualOpZeroes++;
+            }
         }
 
+        Assert.assertEquals(expectedOpZeroes, actualOpZeroes);
         Assert.assertArrayEquals(redeemScriptProgram, chunks.get(chunks.size() - 1).data);
     }
 
     private void testGetSigInsertionIndex(Script redeemScript) {
-        NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
+        final BtcECKey fedKey1 = FEDERATION_KEYS.get(0);
+        final BtcECKey fedKey2 = FEDERATION_KEYS.get(1);
 
-        BtcTransaction fundTx = new BtcTransaction(networkParameters);
-        fundTx.addOutput(Coin.FIFTY_COINS, ecKey1.toAddress(networkParameters));
+        BtcTransaction fundTx = new BtcTransaction(MAINNET_PARAMS);
 
-        BtcTransaction spendTx = new BtcTransaction(networkParameters);
+        final Address userAddress = BtcECKey.fromPrivate(BigInteger.valueOf(900)).toAddress(
+            MAINNET_PARAMS);
+        fundTx.addOutput(Coin.FIFTY_COINS, userAddress);
+
+        BtcTransaction spendTx = new BtcTransaction(MAINNET_PARAMS);
         spendTx.addInput(fundTx.getOutput(0));
 
         Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
@@ -750,13 +893,13 @@ public class ScriptTest {
         Sha256Hash sigHash = spendTx.hashForSignature(0, redeemScript,
             BtcTransaction.SigHash.ALL, false);
 
-        BtcECKey.ECDSASignature sign1 = ecKey1.sign(sigHash);
+        BtcECKey.ECDSASignature sign1 = fedKey1.sign(sigHash);
         TransactionSignature txSig = new TransactionSignature(sign1,
             BtcTransaction.SigHash.ALL, false);
 
         byte[] txSigEncoded = txSig.encodeToBitcoin();
 
-        int sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey1);
+        int sigIndex = inputScript.getSigInsertionIndex(sigHash, fedKey1);
         Assert.assertEquals(0, sigIndex);
 
         inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, txSigEncoded,
@@ -765,7 +908,7 @@ public class ScriptTest {
         Assert.assertFalse(inputScript.getChunks().get(1).equalsOpCode(OP_0));
         Assert.assertArrayEquals(txSigEncoded, inputScript.getChunks().get(1).data);
 
-        sigIndex = inputScript.getSigInsertionIndex(sigHash, ecKey2);
+        sigIndex = inputScript.getSigInsertionIndex(sigHash, fedKey2);
         Assert.assertEquals(1, sigIndex);
     }
 
@@ -775,7 +918,7 @@ public class ScriptTest {
         UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
 
         for(String w : words) {
-            if (w.equals(""))
+            if (w.isEmpty())
                 continue;
             if (w.matches("^-?[0-9]*$")) {
                 // Number
@@ -810,25 +953,36 @@ public class ScriptTest {
         Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
         if (!"NONE".equals(str)) {
             for (String flag : str.split(",")) {
-                try {
-                    flags.add(VerifyFlag.valueOf(flag));
-                } catch (IllegalArgumentException x) {
-                    log.debug("Cannot handle verify flag {} -- ignored.", flag);
-                }
+                flags.add(VerifyFlag.valueOf(flag));
             }
         }
         return flags;
     }
 
     private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
-        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
+        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
         for (JsonNode input : inputs) {
             String hash = input.get(0).asText();
             int index = input.get(1).asInt();
             String script = input.get(2).asText();
             Sha256Hash sha256Hash = Sha256Hash.wrap(Hex.decode(hash));
-            scriptPubKeys.put(new TransactionOutPoint(PARAMS, index, sha256Hash), parseScriptString(script));
+            scriptPubKeys.put(new TransactionOutPoint(MAINNET_PARAMS, index, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;
+    }
+
+    private <T extends Throwable> T assertThrows(Class<T> expectedExceptionType, Executable executable) {
+        try {
+            executable.execute();
+        } catch (Throwable throwable) {
+            if (expectedExceptionType.isInstance(throwable)) {
+                return (T) throwable;
+            }
+        }
+        throw new AssertionError("Expected exception of type " + expectedExceptionType.getName() + " but no exception was thrown");
+    }
+
+    private interface Executable {
+        void execute() throws Throwable;
     }
 }
