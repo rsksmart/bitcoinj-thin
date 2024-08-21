@@ -8,8 +8,8 @@ public class NoRedeemScriptParserTest {
     private final RedeemScriptParser noRedeemScriptParser = new NoRedeemScriptParser();
 
     @Test (expected = ScriptException.class)
-    public void extractStandardRedeemScript_shouldThrowScriptException() {
+    public void extractStandardRedeemScriptChunks_shouldThrowScriptException() {
         // Act
-        noRedeemScriptParser.extractStandardRedeemScript();
+        noRedeemScriptParser.extractStandardRedeemScriptChunks();
     }
 }

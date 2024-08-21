@@ -29,7 +29,7 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
     }
 
     @Test
-    public void extractStandardRedeemScript_fromFastBridgeP2shErpRedeemScript() {
+    public void extractStandardRedeemScriptChunks_fromFastBridgeP2ShErpRedeemScript() {
         Long csvValue = 100L;
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
         Script fastBridgeP2shErpRedeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
@@ -41,18 +41,18 @@ public class FastBridgeP2shErpRedeemScriptParserTest {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
 
-        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeP2shErpRedeemScriptParser.extractStandardRedeemScript(fastBridgeP2shErpRedeemScript.getChunks());
+        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeP2shErpRedeemScriptParser.extractStandardRedeemScriptChunks(fastBridgeP2shErpRedeemScript.getChunks());
 
         Assert.assertEquals(standardRedeemScriptChunks, obtainedRedeemScriptChunks);
     }
 
     @Test(expected = VerificationException.class)
-    public void extractStandardRedeemScript_fromStandardRedeemScript_fail() {
+    public void extractStandardRedeemScriptChunks_fromStandardRedeemScript_fail() {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
 
-        FastBridgeP2shErpRedeemScriptParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
+        FastBridgeP2shErpRedeemScriptParser.extractStandardRedeemScriptChunks(standardRedeemScript.getChunks());
     }
 
     @Test

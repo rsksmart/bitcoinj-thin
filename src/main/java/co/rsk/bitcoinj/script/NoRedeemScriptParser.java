@@ -43,7 +43,7 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public List<ScriptChunk> extractStandardRedeemScript() {
+    public List<ScriptChunk> extractStandardRedeemScriptChunks() {
         throw new ScriptException("Only usable for multisig scripts.");
     }
 }
