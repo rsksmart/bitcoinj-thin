@@ -82,7 +82,7 @@ public class ScriptTest {
     private static final int STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS = 1 + REQUIRED_SIGNATURES + 1; // One for OP_0 at the beginning and one for the redeem script at the end
     private static final int P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS = 1 + REQUIRED_SIGNATURES + 2; // One for OP_0 at the beginning plus one for for the flow op code and one for the redeem script at the end
 
-    private static final int EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT = 0;
+    private static final int EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG = 0;
 
     @Test
     public void testScriptSig() {
@@ -619,7 +619,7 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         int actualSigInsertionIndex = redeemScript.getSigInsertionIndex(hashForSignature, signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG, actualSigInsertionIndex);
 
         assertScriptIsNoRedeemScript(redeemScript);
     }
@@ -635,7 +635,7 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         int actualSigInsertionIndex = p2shOutputScript.getSigInsertionIndex(hashForSignature, signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG, actualSigInsertionIndex);
 
         assertScriptIsNoRedeemScript(p2shOutputScript);
     }
@@ -649,7 +649,7 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         int actualSigInsertionIndex = erpTestnetRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG, actualSigInsertionIndex);
 
         assertScriptIsNoRedeemScript(erpTestnetRedeemScript);
     }
@@ -668,7 +668,7 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, sigInsertionIndex);
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG, sigInsertionIndex);
 
         assertScriptIsNoRedeemScript(customRedeemScript);
     }
@@ -688,7 +688,7 @@ public class ScriptTest {
 
         int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature,
             signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT,
+        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG,
             sigInsertionIndex);
     }
 

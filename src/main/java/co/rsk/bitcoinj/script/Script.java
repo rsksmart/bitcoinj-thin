@@ -502,7 +502,7 @@ public class Script {
         // when the script is not a scriptSig.
         final int defaultSigInsertionIndexForNoScriptSig = 0;
         String noScriptSigFormatExceptionMessage = "[getSigInsertionIndex] Script does not match ScriptSig format";
-        if (chunks.size() < 2) {
+        if (chunks.size() < 4) {
             log.debug(noScriptSigFormatExceptionMessage);
             return defaultSigInsertionIndexForNoScriptSig;
         }
@@ -521,7 +521,7 @@ public class Script {
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         if (!redeemScriptParser.getScriptType().equals(RedeemScriptParser.ScriptType.REDEEM_SCRIPT)){
-            log.debug("Redeem script could not be parsed");
+            log.debug("[getSigInsertionIndex] Redeem script could not be parsed");
             return defaultSigInsertionIndexForNoScriptSig;
         }
 
