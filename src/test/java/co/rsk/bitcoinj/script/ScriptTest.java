@@ -75,10 +75,10 @@ public class ScriptTest {
     private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
     private static final List<BtcECKey> ERP_FEDERATION_KEYS = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
 
-    private static final int SCRIPT_SIG_MULTISIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS = 2;
-    private static final int FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS = 3;
+    private static final int REQUIRED_SIGNATURES = FEDERATION_KEYS.size() / 2 + 1;
 
-    private static final int EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES = FEDERATION_KEYS.size() / 2 + 1;
+    private static final int STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS = 1 + REQUIRED_SIGNATURES + 1; // One for OP_0 at the beginning and one for the redeem script at the end
+    private static final int P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS = 1 + REQUIRED_SIGNATURES + 2; // One for OP_0 at the beginning plus one for for the flow op code and one for the redeem script at the end
 
     private static final int EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT = 0;
 
@@ -176,7 +176,7 @@ public class ScriptTest {
     public void testCreateMultiSigInputScript() {
         // Setup transaction and signatures
         Script multisigScript = ScriptBuilder.createMultiSigOutputScript(
-            EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES,
+            REQUIRED_SIGNATURES,
             FEDERATION_KEYS);
 
         BtcTransaction fundingTx = new BtcTransaction(MAINNET_PARAMS);
@@ -196,7 +196,7 @@ public class ScriptTest {
         Sha256Hash sigHash = spendTx.hashForSignature(0, multisigScript, SigHash.ALL, false);
 
         List<TransactionSignature> signatures = new ArrayList<>();
-        for (int i = 0; i < EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES; i++) {
+        for (int i = 0; i < REQUIRED_SIGNATURES; i++) {
             BtcECKey.ECDSASignature ecdsaSignature = FEDERATION_KEYS.get(i).sign(sigHash);
             TransactionSignature txSignature = new TransactionSignature(ecdsaSignature, SigHash.ALL, false);
             signatures.add(txSignature);
@@ -206,9 +206,8 @@ public class ScriptTest {
         Script p2shScript = ScriptBuilder.createP2SHMultiSigInputScript(signatures, multisigScript);
 
         // Assert that the input script contains standard multiSig op codes + expected number of required signatures
-        int expectedNumberOfChunksForScriptSig = SCRIPT_SIG_MULTISIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS
-            + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
-        assertEquals(expectedNumberOfChunksForScriptSig, p2shScript.getChunks().size());
+
+        assertEquals(STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS, p2shScript.getChunks().size());
 
         // Assert that the input script created contains the original multiSig
         // script as the last chunk
@@ -220,7 +219,7 @@ public class ScriptTest {
 
         // Assert that the input script only contains the OP_CODE zero and the required number of signatures.
         final int expectedOpZeroNumberOfChunks = 1;
-        int expectedNumberOfChunks = expectedOpZeroNumberOfChunks + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedNumberOfChunks = expectedOpZeroNumberOfChunks + REQUIRED_SIGNATURES;
         assertEquals(expectedNumberOfChunks, multiSigInputScript.getChunks().size());
 
         // Assert that the input script created does not end with the original
@@ -512,7 +511,7 @@ public class ScriptTest {
             flyoverDerivationHash, FEDERATION_KEYS);
         int actualNumberOfSignaturesRequiredToSpend = fastBridgeRedeemScript.getNumberOfSignaturesRequiredToSpend();
 
-        Assert.assertEquals(EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
+        Assert.assertEquals(REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
     }
 
     @Test
@@ -524,7 +523,7 @@ public class ScriptTest {
         );
         int actualNumberOfSignaturesRequiredToSpend = erpRedeemScript.getNumberOfSignaturesRequiredToSpend();
 
-        Assert.assertEquals(EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
+        Assert.assertEquals(REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
     }
 
     @Test
@@ -537,7 +536,7 @@ public class ScriptTest {
         );
         int actualNumberOfSignaturesRequiredToSpend = fastBridgeErpRedeemScript.getNumberOfSignaturesRequiredToSpend();
 
-        Assert.assertEquals(EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
+        Assert.assertEquals(REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
     }
 
     @Test
@@ -545,7 +544,7 @@ public class ScriptTest {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
         int actualNumberOfSignaturesRequiredToSpend = redeemScript.getNumberOfSignaturesRequiredToSpend();
 
-        Assert.assertEquals(EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
+        Assert.assertEquals(REQUIRED_SIGNATURES, actualNumberOfSignaturesRequiredToSpend);
     }
 
     @Test
@@ -626,7 +625,7 @@ public class ScriptTest {
     @Test
     public void getSigInsertionIndex_whenP2shScript_shouldReturnZero() {
         Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(
-            EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES,
+            REQUIRED_SIGNATURES,
             FEDERATION_KEYS
         );
 
@@ -725,12 +724,11 @@ public class ScriptTest {
         Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
 
-        int expectedChunkSize = SCRIPT_SIG_MULTISIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
-        int expectedOpZeroes = 1 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedOpZeroes = 1 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            expectedChunkSize,
+            STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             redeemScript.getProgram()
         );
@@ -745,12 +743,12 @@ public class ScriptTest {
 
         Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
-        int expectedChunkSize = SCRIPT_SIG_MULTISIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
-        int expectedOpZeroes = 1 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+
+        int expectedOpZeroes = 1 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            expectedChunkSize,
+            STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             redeemScript.getProgram()
         );
@@ -772,12 +770,11 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
-        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
-        int expectedOpZeroes = 2 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            expectedChunkSize,
+            P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             redeemScript.getProgram()
         );
@@ -800,12 +797,11 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
-        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
-        int expectedOpZeroes = 2 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            expectedChunkSize,
+            P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             redeemScript.getProgram()
         );
@@ -827,12 +823,11 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
-        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
-        int expectedOpZeroes = 2 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            expectedChunkSize,
+            P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             redeemScript.getProgram()
         );
@@ -855,12 +850,11 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
-        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
-        int expectedOpZeroes = 2 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
             inputScript.getChunks(),
-            expectedChunkSize,
+            P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             redeemScript.getProgram()
         );
