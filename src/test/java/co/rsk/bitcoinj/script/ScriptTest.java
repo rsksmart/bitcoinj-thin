@@ -619,7 +619,7 @@ public class ScriptTest {
         int actualSigInsertionIndex = redeemScript.getSigInsertionIndex(hashForSignature, signingKey);
         Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
 
-        assertScriptIsNoRedeemScript(redeemScript, hashForSignature, signingKey);
+        assertScriptIsNoRedeemScript(redeemScript);
     }
 
     @Test
@@ -635,8 +635,7 @@ public class ScriptTest {
         int actualSigInsertionIndex = p2shOutputScript.getSigInsertionIndex(hashForSignature, signingKey);
         Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
 
-        assertScriptIsNoRedeemScript(p2shOutputScript, hashForSignature,
-            signingKey);
+        assertScriptIsNoRedeemScript(p2shOutputScript);
     }
 
     @Test
@@ -650,18 +649,13 @@ public class ScriptTest {
         int actualSigInsertionIndex = erpTestnetRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
         Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
 
-        assertScriptIsNoRedeemScript(erpTestnetRedeemScript, hashForSignature, signingKey);
+        assertScriptIsNoRedeemScript(erpTestnetRedeemScript);
     }
 
-    private static void assertScriptIsNoRedeemScript(Script redeemScript,
-        Sha256Hash hashForSignature, BtcECKey signingKey) {
+    private static void assertScriptIsNoRedeemScript(Script redeemScript) {
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(
             redeemScript.getChunks());
         Assert.assertTrue(redeemScriptParser instanceof NoRedeemScriptParser);
-
-        int actualSigInsertionIndex = redeemScriptParser.getSigInsertionIndex(hashForSignature,
-            signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, actualSigInsertionIndex);
     }
 
     @Test
@@ -674,8 +668,7 @@ public class ScriptTest {
         int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
         Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_REDEEM_SCRIPT, sigInsertionIndex);
 
-        assertScriptIsNoRedeemScript(customRedeemScript, hashForSignature,
-            signingKey);
+        assertScriptIsNoRedeemScript(customRedeemScript);
     }
 
     @Test
