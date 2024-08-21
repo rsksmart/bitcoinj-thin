@@ -20,13 +20,13 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
     ) {
         super(
             scriptType,
-            extractStandardRedeemScript(redeemScriptChunks),
+            extractStandardRedeemScriptChunks(redeemScriptChunks),
             rawChunks
         );
         this.multiSigType = MultiSigType.P2SH_ERP_FED;
     }
 
-    public static List<ScriptChunk> extractStandardRedeemScript(List<ScriptChunk> chunks) {
+    public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
         int i = 1;

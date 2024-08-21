@@ -269,14 +269,14 @@ public class StandardRedeemScriptParserTest {
     }
 
     @Test
-    public void extractStandardRedeemScript_whenGetScriptChunksFromStandardRedeemScriptParser_shouldReturnScriptChunks() {
+    public void extractStandardRedeemScriptChunks_whenGetScriptChunksFromStandardRedeemScriptParser_shouldReturnScriptChunks() {
         // Arrange
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         List<ScriptChunk> expectedRedeemScriptChunks = redeemScript.getChunks();
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         // Act
-        List<ScriptChunk> actualRedeemScripChunks = redeemScriptParser.extractStandardRedeemScript();
+        List<ScriptChunk> actualRedeemScripChunks = redeemScriptParser.extractStandardRedeemScriptChunks();
 
         // Assert
         assertEquals(expectedRedeemScriptChunks, actualRedeemScripChunks);

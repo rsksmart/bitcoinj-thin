@@ -119,7 +119,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public List<ScriptChunk> extractStandardRedeemScript() {
+    public List<ScriptChunk> extractStandardRedeemScriptChunks() {
         return redeemScriptChunks;
     }
 

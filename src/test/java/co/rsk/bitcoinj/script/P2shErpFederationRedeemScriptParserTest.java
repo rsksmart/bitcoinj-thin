@@ -20,7 +20,7 @@ public class P2shErpFederationRedeemScriptParserTest {
     }
 
     @Test
-    public void extractStandardRedeemScript_fromP2shErpRedeemScript() {
+    public void extractStandardRedeemScriptChunks_fromP2ShErpRedeemScript() {
         Script erpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -29,18 +29,18 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
 
-        List<ScriptChunk> obtainedRedeemScriptChunks = P2shErpFederationRedeemScriptParser.extractStandardRedeemScript(erpRedeemScript.getChunks());
+        List<ScriptChunk> obtainedRedeemScriptChunks = P2shErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks(erpRedeemScript.getChunks());
 
         Assert.assertEquals(standardRedeemScriptChunks, obtainedRedeemScriptChunks);
     }
 
     @Test(expected = VerificationException.class)
-    public void extractStandardRedeemScript_fromStandardRedeemScript_fail() {
+    public void extractStandardRedeemScriptChunks_fromStandardRedeemScript_fail() {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         );
 
-        P2shErpFederationRedeemScriptParser.extractStandardRedeemScript(standardRedeemScript.getChunks());
+        P2shErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks(standardRedeemScript.getChunks());
     }
 
     @Test

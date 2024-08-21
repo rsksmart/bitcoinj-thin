@@ -29,7 +29,7 @@ public class FastBridgeRedeemScriptParser extends StandardRedeemScriptParser {
         return derivationHash;
     }
 
-    public static List<ScriptChunk> extractStandardRedeemScript(Script redeemScript) {
+    public static List<ScriptChunk> extractStandardRedeemScriptChunks(Script redeemScript) {
         return ScriptBuilder.createRedeemScript(
             redeemScript.getNumberOfSignaturesRequiredToSpend(),
             redeemScript.getPubKeys()

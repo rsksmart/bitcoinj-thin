@@ -18,7 +18,7 @@ public class FastBridgeRedeemScriptParserTest {
     }
 
     @Test
-    public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_fb_redeem_script() {
+    public void extractStandardRedeemScriptChunks_whenGetFromMultiSigFastBridgeRedeemScript_shouldReturnScripChunks() {
         byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             data,
@@ -28,16 +28,16 @@ public class FastBridgeRedeemScriptParserTest {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
         List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
 
-        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeRedeemScriptParser.extractStandardRedeemScript(fastBridgeRedeemScript);
+        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeRedeemScriptParser.extractStandardRedeemScriptChunks(fastBridgeRedeemScript);
 
         Assert.assertEquals(standardRedeemScriptChunks, obtainedRedeemScriptChunks);
     }
 
     @Test
-    public void extractRedeemScriptFromMultiSigFastBridgeRedeemScript_std_redeem_script() {
+    public void extractStandardRedeemScriptChunks_whenGetFromMultiSigStandardRedeemScript_shouldReturnScripChunks() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(publicKeys);
         List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
-        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeRedeemScriptParser.extractStandardRedeemScript(redeemScript);
+        List<ScriptChunk> obtainedRedeemScriptChunks = FastBridgeRedeemScriptParser.extractStandardRedeemScriptChunks(redeemScript);
 
         Assert.assertEquals(redeemScriptChunks, obtainedRedeemScriptChunks);
     }
