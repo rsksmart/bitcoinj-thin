@@ -75,8 +75,8 @@ public class ScriptTest {
     private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
     private static final List<BtcECKey> ERP_FEDERATION_KEYS = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
 
-    private static final int REDEEM_SCRIPT_STANDARD_OP_CODES_NUMBER_OF_CHUNKS = 2;
-    private static final int FED_P2SH_SCRIPT_SIG_OP_CODES_AND_REDEEM_NUMBER_OF_CHUNKS = 3;
+    private static final int SCRIPT_SIG_MULTISIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS = 2;
+    private static final int FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS = 3;
 
     private static final int EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES = FEDERATION_KEYS.size() / 2 + 1;
 
@@ -206,7 +206,8 @@ public class ScriptTest {
         Script p2shScript = ScriptBuilder.createP2SHMultiSigInputScript(signatures, multisigScript);
 
         // Assert that the input script contains standard multiSig op codes + expected number of required signatures
-        int expectedNumberOfChunksForScriptSig = REDEEM_SCRIPT_STANDARD_OP_CODES_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedNumberOfChunksForScriptSig = SCRIPT_SIG_MULTISIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS
+            + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
         assertEquals(expectedNumberOfChunksForScriptSig, p2shScript.getChunks().size());
 
         // Assert that the input script created contains the original multiSig
@@ -724,7 +725,7 @@ public class ScriptTest {
         Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
 
-        int expectedChunkSize = REDEEM_SCRIPT_STANDARD_OP_CODES_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedChunkSize = SCRIPT_SIG_MULTISIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
         int expectedOpZeroes = 1 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
@@ -744,7 +745,7 @@ public class ScriptTest {
 
         Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Script inputScript = spk.createEmptyInputScript(null, redeemScript);
-        int expectedChunkSize = REDEEM_SCRIPT_STANDARD_OP_CODES_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedChunkSize = SCRIPT_SIG_MULTISIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
         int expectedOpZeroes = 1 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
@@ -771,7 +772,7 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
-        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP_CODES_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
         int expectedOpZeroes = 2 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
@@ -799,7 +800,7 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
-        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP_CODES_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
         int expectedOpZeroes = 2 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
@@ -826,7 +827,7 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
-        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP_CODES_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
         int expectedOpZeroes = 2 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
@@ -854,7 +855,7 @@ public class ScriptTest {
         // M elements OP_0 - Belonging to M/N amount of signatures
         // OP_0 - Belonging to ERP
         // Last element: Program of redeem script
-        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP_CODES_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
+        int expectedChunkSize = FED_P2SH_SCRIPT_SIG_OP0_AND_REDEEM_NUMBER_OF_CHUNKS + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
         int expectedOpZeroes = 2 + EXPECTED_NUMBER_OF_REQUIRED_SIGNATURES;
 
         assertInputScriptStructure(
