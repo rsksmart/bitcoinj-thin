@@ -120,7 +120,6 @@ public class Script {
     Script(List<ScriptChunk> chunks) {
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
         creationTimeSeconds = Utils.currentTimeSeconds();
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
     }
 
     /**
@@ -132,7 +131,6 @@ public class Script {
         program = programBytes;
         parse(programBytes);
         creationTimeSeconds = 0;
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
 
     }
 
@@ -140,7 +138,6 @@ public class Script {
         program = programBytes;
         parse(programBytes);
         this.creationTimeSeconds = creationTimeSeconds;
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
     }
 
     public long getCreationTimeSeconds() {
@@ -485,24 +482,31 @@ public class Script {
         return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, sigsPrefixCount, sigsSuffixCount);
     }
 
+    private RedeemScriptParser getRedeemScriptParser() {
+        if (redeemScriptParser == null){
+            redeemScriptParser = RedeemScriptParserFactory.get(chunks);
+        }
+        return redeemScriptParser;
+    }
+
     /**
      * Returns the index where a signature by the key should be inserted. Only applicable to
      * a P2SH scriptSig.
      */
     public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return this.redeemScriptParser.getSigInsertionIndex(hash, signingKey);
+        return this.getRedeemScriptParser().getSigInsertionIndex(hash, signingKey);
     }
 
     public int findKeyInRedeem(BtcECKey key) {
-        return this.redeemScriptParser.findKeyInRedeem(key);
+        return this.getRedeemScriptParser().findKeyInRedeem(key);
     }
 
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return this.redeemScriptParser.findSigInRedeem(signatureBytes, hash);
+        return this.getRedeemScriptParser().findSigInRedeem(signatureBytes, hash);
     }
 
     public List<BtcECKey> getPubKeys() throws ScriptException {
-        return this.redeemScriptParser.getPubKeys();
+        return this.getRedeemScriptParser().getPubKeys();
     }
 
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
@@ -591,7 +595,7 @@ public class Script {
     public int getNumberOfSignaturesRequiredToSpend() {
         if (this.isSentToMultiSig()) {
             // for M of N CHECKMULTISIG script we will need M signatures to spend
-            return redeemScriptParser.getM();
+            return this.getRedeemScriptParser().getM();
         } else if (isSentToAddress() || isSentToRawPubKey()) {
             // pay-to-address and pay-to-pubkey require single sig
             return 1;
@@ -654,7 +658,7 @@ public class Script {
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
     public boolean isSentToMultiSig() {
-        return !redeemScriptParser.getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
+        return !this.getRedeemScriptParser().getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
     }
 
     public boolean isSentToCLTVPaymentChannel() {
