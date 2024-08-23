@@ -5,11 +5,11 @@ import org.junit.Test;
 
 public class NonStandardRedeemScriptParserTest {
 
-    private final RedeemScriptParser noRedeemScriptParser = new NonStandardRedeemScriptParser();
+    private final RedeemScriptParser nonStandardRedeemScriptParser = new NonStandardRedeemScriptParser();
 
     @Test (expected = ScriptException.class)
     public void extractStandardRedeemScriptChunks_shouldThrowScriptException() {
         // Act
-        noRedeemScriptParser.extractStandardRedeemScriptChunks();
+        nonStandardRedeemScriptParser.extractStandardRedeemScriptChunks();
     }
 }
