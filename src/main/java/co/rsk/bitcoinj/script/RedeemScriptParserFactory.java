@@ -17,20 +17,20 @@ public class RedeemScriptParserFactory {
         // We need to keep this behaviour for the given redeem script to keep the consensus in testnet
         ScriptParserResult scriptParserResult = ScriptParser.parseScriptProgram(ERP_TESTNET_REDEEM_SCRIPT_BYTES);
         if (scriptParserResult.getChunks().equals(chunks)) {
-            logger.debug("[get] Received redeem script matches the testnet federation hardcoded one. Return NoRedeemScriptParser");
-            return new NoRedeemScriptParser();
+            logger.debug("[get] Received redeem script matches the testnet federation hardcoded one. Return NonStandardErpRedeemScriptParserHardcoded");
+            return new NonStandardErpRedeemScriptParserHardcoded();
         }
 
         if (chunks.size() < 4) {
             // A multisig redeem script must have at least 4 chunks (OP_N [PUB1 ...] OP_N CHECK_MULTISIG)
-            logger.trace("[get] Less than 4 chunks, return NoRedeemScriptParser");
-            return new NoRedeemScriptParser();
+            logger.trace("[get] Less than 4 chunks, return NonStandardErpRedeemScriptParserHardcoded");
+            return new NonStandardErpRedeemScriptParserHardcoded();
         }
 
         ParseResult result = extractRedeemScriptFromChunks(chunks);
 
         if (result == null) {
-            return new NoRedeemScriptParser();
+            return new NonStandardErpRedeemScriptParserHardcoded();
         }
 
         if (FastBridgeRedeemScriptParser.isFastBridgeMultiSig(result.internalScript)) {
@@ -82,8 +82,8 @@ public class RedeemScriptParserFactory {
             );
         }
 
-        logger.debug("[get] Return NoRedeemScriptParser");
-        return new NoRedeemScriptParser();
+        logger.debug("[get] Return NonStandardErpRedeemScriptParserHardcoded");
+        return new NonStandardErpRedeemScriptParserHardcoded();
     }
 
     private static ParseResult extractRedeemScriptFromChunks(List<ScriptChunk> chunks) {

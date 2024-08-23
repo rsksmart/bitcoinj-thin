@@ -5,7 +5,7 @@ import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import java.util.List;
 
-public class NoRedeemScriptParser implements RedeemScriptParser {
+public class NonStandardErpRedeemScriptParserHardcoded implements RedeemScriptParser {
 
     @Override
     public MultiSigType getMultiSigType() {
