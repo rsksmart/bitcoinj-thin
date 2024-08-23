@@ -82,8 +82,6 @@ public class ScriptTest {
     private static final int STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS = 1 + REQUIRED_SIGNATURES + 1; // One for OP_0 at the beginning and one for the redeem script at the end
     private static final int P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS = 1 + REQUIRED_SIGNATURES + 2; // One for OP_0 at the beginning plus one for for the flow op code and one for the redeem script at the end
 
-    private static final int EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG = 0;
-
     @Test
     public void testScriptSig() {
         // Arrange
@@ -550,7 +548,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getSigInsertionIndex_fast_bridge_redeem_script() {
+    public void getSigInsertionIndex_whenScriptSigWithFlyoverRedeemScript_shouldReturnIndex() {
         byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             flyoverDerivationHash, FEDERATION_KEYS);
@@ -559,7 +557,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getSigInsertionIndex_erp_redeem_script() {
+    public void getSigInsertionIndex_whenScriptSigWithErpRedeemScript_shouldReturnIndex() {
         Script erpRedeemScript = createErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
@@ -570,7 +568,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getSigInsertionIndex_whenP2shRedeemScript_shouldReturnIndex() {
+    public void getSigInsertionIndex_whenScriptSigWithP2shRedeemScript_shouldReturnIndex() {
         Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
@@ -581,7 +579,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getSigInsertionIndex_fast_bridge_erp_redeem_script() {
+    public void getSigInsertionIndex_whenScriptSigFlyoverErpRedeemScript_shouldReturnIndex() {
         byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
         Script fastBridgeErpRedeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
             FEDERATION_KEYS,
@@ -618,8 +616,7 @@ public class ScriptTest {
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
-        int actualSigInsertionIndex = redeemScript.getSigInsertionIndex(hashForSignature, signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG, actualSigInsertionIndex);
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> redeemScript.getSigInsertionIndex(hashForSignature, signingKey));
 
         assertScriptIsNoRedeemScript(redeemScript);
     }
@@ -634,24 +631,53 @@ public class ScriptTest {
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
-        int actualSigInsertionIndex = p2shOutputScript.getSigInsertionIndex(hashForSignature, signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG, actualSigInsertionIndex);
+        assertThrows(NullPointerException.class, () -> p2shOutputScript.getSigInsertionIndex(hashForSignature, signingKey));
 
         assertScriptIsNoRedeemScript(p2shOutputScript);
     }
 
     @Test
-    public void getSigInsertionIndex_whenTestnetHardcodeRedeemScript_shouldReturnZero() {
+    public void getSigInsertionIndex_whenTestnetHardcodeRedeemScript_shouldThrowNullPointerException() {
         final byte[] erpTestnetRedeemScriptBytes = Hex.decode("6453210208f40073a9e43b3e9103acec79767a6de9b0409749884e989960fee578012fce210225e892391625854128c5c4ea4340de0c2a70570f33db53426fc9c746597a03f42102afc230c2d355b1a577682b07bc2646041b5d0177af0f98395a46018da699b6da210344a3c38cd59afcba3edcebe143e025574594b001700dec41e59409bdbd0f2a0921039a060badbeb24bee49eb2063f616c0f0f0765d4ca646b20a88ce828f259fcdb955670300cd50b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f5368ae");
         Script erpTestnetRedeemScript = new Script(erpTestnetRedeemScriptBytes);
 
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
-        int actualSigInsertionIndex = erpTestnetRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG, actualSigInsertionIndex);
-
+        assertThrows(NullPointerException.class, () -> erpTestnetRedeemScript.getSigInsertionIndex(hashForSignature, signingKey));
         assertScriptIsNoRedeemScript(erpTestnetRedeemScript);
+    }
+
+    @Test
+    public void getSigInsertionIndex_whenScriptSigWithTestnetHardcodeRedeemScript_shouldReturnIndex() {
+        String scriptSigInHex = "0047304402204f830f545cdc5dd283e54f62be58e3cd27c36c6cd4ccc6c632804d0f115cc81a022071870096fc1a1c135350b84b48a077cde5ff286af10124d472bcdb089bc4bb4201473044022021091ce29f55dfa9b4e02c36d8759bd2dcf1ea818a653045ec01e2e2bbf909aa0220257efb33446dc7eb886140457bdc3e3ba7de9447f27c18302ad129f55e32026a0147304402207806dba3948cfbe42cc3e537ab361ffabd51e783937c0824da75d41929ba7f6302205992e75e00ec892610048cc3af8a6d0383ad15d833cd831fb1ab07948ec428a901473044022008fec3810107888587f9e4df2a6a627c501e7a97d70634a7c904452ebe88ab1e0220658c6de22bc5bcd35bbfd11f70a53aa00d8f783e5806106d895cd65318a7865001483045022100926389b72f9ff01f1caa424e230ce86d979bb73d5b61e37953345ddeaf4de954022004e333b34b3a3ddd79c35c0b17a98fbea2079384b97fa3b90c45c3da65ed01c101004dc901645521020ace50bab1230f8002a0bfe619482af74b338cc9e4c956add228df47e6adae1c21025093f439fb8006fd29ab56605ffec9cdc840d16d2361004e1337a2f86d8bd2db210275d473555de2733c47125f9702b0f870df1d817379f5587f09b6c40ed2c6c9492102a95f095d0ce8cb3b9bf70cc837e3ebe1d107959b1fa3f9b2d8f33446f9c8cbdb2103250c11be0561b1d7ae168b1f59e39cbc1fd1ba3cf4d2140c1a365b2723a2bf9321034851379ec6b8a701bd3eef8a0e2b119abb4bdde7532a3d6bcbff291b0daf3f25210350179f143a632ce4e6ac9a755b82f7f4266cfebb116a42cadb104c2c2a3350f92103b04fbd87ef5e2c0946a684c8c93950301a45943bbe56d979602038698facf9032103b58a5da144f5abab2e03e414ad044b732300de52fa25c672a7f7b3588877190659ae670350cd00b275532102370a9838e4d15708ad14a104ee5606b36caaaaf739d833e67770ce9fd9b3ec80210257c293086c4d4fe8943deda5f890a37d11bebd140e220faa76258a41d077b4d42103c2660a46aa73078ee6016dee953488566426cf55fc8011edd0085634d75395f92103cd3e383ec6e12719a6c69515e5559bcbe037d0aa24c187e1e26ce932e22ad7b354ae68";
+        Script scriptSig = new Script(Hex.decode(scriptSigInHex));
+        scriptSig.getChunks();
+        int redeemScriptIndex = scriptSig.getChunks().size() - 1;
+        Script redeemScript = new Script(scriptSig.getChunks().get(redeemScriptIndex).data);
+        Script inputScript = ScriptBuilder.createP2SHMultiSigInputScript(null,
+            redeemScript);
+
+
+        final byte[] erpTestnetRedeemScriptBytes = Hex.decode("6453210208f40073a9e43b3e9103acec79767a6de9b0409749884e989960fee578012fce210225e892391625854128c5c4ea4340de0c2a70570f33db53426fc9c746597a03f42102afc230c2d355b1a577682b07bc2646041b5d0177af0f98395a46018da699b6da210344a3c38cd59afcba3edcebe143e025574594b001700dec41e59409bdbd0f2a0921039a060badbeb24bee49eb2063f616c0f0f0765d4ca646b20a88ce828f259fcdb955670300cd50b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f5368ae");
+        Script erpTestnetRedeemScript = new Script(erpTestnetRedeemScriptBytes);
+
+        ScriptBuilder erpTestnetScriptSigBuilder = new ScriptBuilder();
+        erpTestnetScriptSigBuilder.number(0);
+        erpTestnetScriptSigBuilder.data(new byte[]{}).data(TransactionSignature.dummy().encodeToBitcoin());
+        erpTestnetScriptSigBuilder.data(new byte[]{}).data(TransactionSignature.dummy().encodeToBitcoin());
+        erpTestnetScriptSigBuilder.data(new byte[]{}).data(TransactionSignature.dummy().encodeToBitcoin());
+        erpTestnetScriptSigBuilder.data(erpTestnetRedeemScript.getProgram());
+        Script erpTestnetScriptSig = erpTestnetScriptSigBuilder.build();
+
+        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
+        BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
+
+        int actualSigInsertionIndex = erpTestnetScriptSig.getSigInsertionIndex(hashForSignature, signingKey);
+        // This return zero because the script is being parsed identified as NoRedeemScriptParser,
+        // and is using its findKeyInRedeem implementation that is returning -1 as default value
+        // instead of throwing an exception
+        Assert.assertEquals(0, actualSigInsertionIndex);
     }
 
     private static void assertScriptIsNoRedeemScript(Script redeemScript) {
@@ -668,7 +694,9 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG, sigInsertionIndex);
+        // This return zero because the NoRedeemScriptParser.findKeyInRedeem is being used and is
+        // returning -1 as default value instead of throwing an exception
+        Assert.assertEquals(0, sigInsertionIndex);
 
         assertScriptIsNoRedeemScript(customRedeemScript);
     }
@@ -686,10 +714,12 @@ public class ScriptTest {
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = FEDERATION_KEYS.get(1);
 
-        int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature,
-            signingKey);
-        Assert.assertEquals(EXPECTED_DEFAULT_SIG_INSERTION_INDEX_FOR_NO_SCRIPT_SIG,
-            sigInsertionIndex);
+        // This return zero because the NoRedeemScriptParser.findKeyInRedeem is being used and is
+        // returning -1 as default value instead of throwing an exception
+        int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
+        Assert.assertEquals(0, sigInsertionIndex);
+
+        assertScriptIsNoRedeemScript(customRedeemScript);
     }
 
     @Test

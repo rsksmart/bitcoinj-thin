@@ -20,6 +20,7 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -498,32 +499,13 @@ public class Script {
         // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
         // and any placeholder OP_0 sigs.
 
-        // To keep backwards compatibility, we keep returning zero as the default value for the insertion index
-        // when the script is not a scriptSig.
-        final int defaultSigInsertionIndexForNoScriptSig = 0;
-        String noScriptSigFormatExceptionMessage = "[getSigInsertionIndex] Script does not match ScriptSig format";
-        if (chunks.size() < 4) {
-            log.debug(noScriptSigFormatExceptionMessage);
-            return defaultSigInsertionIndexForNoScriptSig;
-        }
-
         final int redeemScriptChunkIndex = chunks.size() - 1;
         ScriptChunk redeemScriptChunk = chunks.get(redeemScriptChunkIndex);
-
+        checkNotNull(redeemScriptChunk.data);
         List<ScriptChunk> chunksWithoutRedeemScript = chunks.subList(1, redeemScriptChunkIndex);
-
-        if (redeemScriptChunk.data == null) {
-            log.debug(noScriptSigFormatExceptionMessage);
-            return defaultSigInsertionIndexForNoScriptSig;
-        }
 
         Script redeemScript = new Script(redeemScriptChunk.data);
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
-        if (!redeemScriptParser.getScriptType().equals(RedeemScriptParser.ScriptType.REDEEM_SCRIPT)){
-            log.debug("[getSigInsertionIndex] Redeem script could not be parsed");
-            return defaultSigInsertionIndexForNoScriptSig;
-        }
 
         int sigInsertionIndex = 0;
         int keyIndexInRedeem = redeemScriptParser.findKeyInRedeem(signingKey);
