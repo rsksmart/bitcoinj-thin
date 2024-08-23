@@ -655,7 +655,7 @@ public class ScriptTest {
     private static void assertScriptIsNoRedeemScript(Script redeemScript) {
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(
             redeemScript.getChunks());
-        Assert.assertTrue(redeemScriptParser instanceof NoRedeemScriptParser);
+        Assert.assertTrue(redeemScriptParser instanceof NonStandardRedeemScriptParser);
     }
 
     @Test
