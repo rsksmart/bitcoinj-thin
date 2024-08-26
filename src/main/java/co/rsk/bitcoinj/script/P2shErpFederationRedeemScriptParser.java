@@ -1,17 +1,22 @@
 package co.rsk.bitcoinj.script;
 
+import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
+public class P2shErpFederationRedeemScriptParser implements RedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(P2shErpFederationRedeemScriptParser.class);
 
     public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
+
+    private final RedeemScriptParser redeemScriptParser;
 
     public P2shErpFederationRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
@@ -19,7 +24,41 @@ public class P2shErpFederationRedeemScriptParser extends StandardRedeemScriptPar
         super(
             extractStandardRedeemScriptChunks(redeemScriptChunks)
         );
-        this.multiSigType = MultiSigType.P2SH_ERP_FED;
+    }
+
+    @Override
+    public MultiSigType getMultiSigType() {
+        return MultiSigType.P2SH_ERP_FED;
+    }
+
+    @Override
+    public int getM() {
+        return this.redeemScriptParser.getM();
+    }
+
+    @Override
+    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
+        return this.redeemScriptParser.getSigInsertionIndex(hash, signingKey);
+    }
+
+    @Override
+    public int findKeyInRedeem(BtcECKey key) {
+        return this.redeemScriptParser.findKeyInRedeem(key);
+    }
+
+    @Override
+    public List<BtcECKey> getPubKeys() {
+        return this.redeemScriptParser.getPubKeys();
+    }
+
+    @Override
+    public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
+        return this.redeemScriptParser.findSigInRedeem(signatureBytes, hash);
+    }
+
+    @Override
+    public List<ScriptChunk> extractStandardRedeemScriptChunks() {
+        return this.redeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
     public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
