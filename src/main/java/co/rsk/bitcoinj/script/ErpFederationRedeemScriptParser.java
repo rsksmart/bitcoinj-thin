@@ -16,13 +16,11 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
 
     public ErpFederationRedeemScriptParser(
         ScriptType scriptType,
-        List<ScriptChunk> redeemScriptChunks,
-        List<ScriptChunk> rawChunks
+        List<ScriptChunk> redeemScriptChunks
     ) {
         super(
             scriptType,
-            extractStandardRedeemScriptChunks(redeemScriptChunks),
-            rawChunks
+            extractStandardRedeemScriptChunks(redeemScriptChunks)
         );
         this.multiSigType = MultiSigType.ERP_FED;
     }

@@ -17,20 +17,16 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     protected MultiSigType multiSigType;
     protected ScriptType scriptType;
     // In case of P2SH represents a scriptSig, where the last chunk is the redeem script (either standard or extended)
-    protected List<ScriptChunk> rawChunks;
     // Standard redeem script
     protected List<ScriptChunk> redeemScriptChunks;
 
     public StandardRedeemScriptParser(
         ScriptType scriptType,
-        List<ScriptChunk> redeemScriptChunks,
-        List<ScriptChunk> rawChunks
+        List<ScriptChunk> redeemScriptChunks
     ) {
         this.multiSigType = MultiSigType.STANDARD_MULTISIG;
         this.scriptType = scriptType;
         this.redeemScriptChunks = redeemScriptChunks;
-
-        this.rawChunks = Collections.unmodifiableList(new ArrayList<>(rawChunks));
     }
 
     @Override

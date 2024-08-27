@@ -37,48 +37,42 @@ public class RedeemScriptParserFactory {
             logger.debug("[get] Return FastBridgeRedeemScriptParser");
             return new FastBridgeRedeemScriptParser(
                 result.scriptType,
-                result.internalScript,
-                chunks
+                result.internalScript
             );
         }
         if (StandardRedeemScriptParser.isStandardMultiSig(result.internalScript)) {
             logger.debug("[get] Return StandardRedeemScriptParser");
             return new StandardRedeemScriptParser(
                 result.scriptType,
-                result.internalScript,
-                chunks
+                result.internalScript
             );
         }
         if (P2shErpFederationRedeemScriptParser.isP2shErpFed(result.internalScript)) {
             logger.debug("[get] Return P2shErpFederationRedeemScriptParser");
             return new P2shErpFederationRedeemScriptParser(
                 result.scriptType,
-                result.internalScript,
-                chunks
+                result.internalScript
             );
         }
         if (FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(result.internalScript)) {
             logger.debug("[get] Return FastBridgeP2shErpRedeemScriptParser");
             return new FastBridgeP2shErpRedeemScriptParser(
                 result.scriptType,
-                result.internalScript,
-                chunks
+                result.internalScript
             );
         }
         if (ErpFederationRedeemScriptParser.isErpFed(result.internalScript)) {
             logger.debug("[get] Return ErpFederationRedeemScriptParser");
             return new ErpFederationRedeemScriptParser(
                 result.scriptType,
-                result.internalScript,
-                chunks
+                result.internalScript
             );
         }
         if (FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(result.internalScript)) {
             logger.debug("[get] Return FastBridgeErpRedeemScriptParser");
             return new FastBridgeErpRedeemScriptParser(
                 result.scriptType,
-                result.internalScript,
-                chunks
+                result.internalScript
             );
         }
 
