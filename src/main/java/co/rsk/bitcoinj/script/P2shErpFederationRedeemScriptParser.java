@@ -4,7 +4,7 @@ import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
-import java.util.Collections;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,32 +33,32 @@ public class P2shErpFederationRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int getM() {
-        return this.redeemScriptParser.getM();
+        return redeemScriptParser.getM();
     }
 
     @Override
     public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return this.redeemScriptParser.getSigInsertionIndex(hash, signingKey);
+        return redeemScriptParser.getSigInsertionIndex(hash, signingKey);
     }
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
-        return this.redeemScriptParser.findKeyInRedeem(key);
+        return redeemScriptParser.findKeyInRedeem(key);
     }
 
     @Override
     public List<BtcECKey> getPubKeys() {
-        return this.redeemScriptParser.getPubKeys();
+        return redeemScriptParser.getPubKeys();
     }
 
     @Override
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return this.redeemScriptParser.findSigInRedeem(signatureBytes, hash);
+        return redeemScriptParser.findSigInRedeem(signatureBytes, hash);
     }
 
     @Override
     public List<ScriptChunk> extractStandardRedeemScriptChunks() {
-        return this.redeemScriptParser.extractStandardRedeemScriptChunks();
+        return redeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
     public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
