@@ -11,13 +11,11 @@ import org.slf4j.LoggerFactory;
 public class FlyoverRedeemScriptParser implements RedeemScriptParser {
 
     private static final Logger logger = LoggerFactory.getLogger(FlyoverRedeemScriptParser.class);
-    private final MultiSigType multiSigType;
     private final RedeemScriptParser redeemScriptParser;
 
     public FlyoverRedeemScriptParser(List<ScriptChunk> redeemScriptChunks) {
         List<ScriptChunk> standardRedeemScriptChunks = extractStandardRedeemScriptChunks(redeemScriptChunks);
         this.redeemScriptParser = RedeemScriptParserFactory.get(standardRedeemScriptChunks);
-        this.multiSigType = MultiSigType.FLYOVER;
     }
 
     @Override
@@ -32,7 +30,7 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public MultiSigType getMultiSigType() {
-        return multiSigType;
+        return MultiSigType.FLYOVER;
     }
 
     @Override
