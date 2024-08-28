@@ -197,10 +197,10 @@ public class Script {
      * Bitcoin Core does something similar.</p>
      */
     private void parse(byte[] program) throws ScriptException {
-        ScriptParserResult result = ScriptParser.parseScriptProgram(program);
-        chunks = result.getChunks();
-        if (result.getException().isPresent()) {
-            throw new ScriptException("There was an error parsing the script", result.getException().get());
+        try {
+            chunks = ScriptParser.parseScriptProgram(program);
+        } catch (Exception ex) {
+            throw new ScriptException("There was an error parsing the script", ex);
         }
     }
 

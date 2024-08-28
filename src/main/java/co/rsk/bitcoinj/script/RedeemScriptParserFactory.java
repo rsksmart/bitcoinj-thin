@@ -14,8 +14,8 @@ public class RedeemScriptParserFactory {
         // Due to a validation error, during the time this federation existed in testnet
         // bitcoinj-thin would not detect it correctly as an ERP fed
         // We need to keep this behaviour for the given redeem script to keep the consensus in testnet
-        ScriptParserResult scriptParserResult = ScriptParser.parseScriptProgram(ERP_TESTNET_REDEEM_SCRIPT_BYTES);
-        if (scriptParserResult.getChunks().equals(chunks)) {
+        List<ScriptChunk> erpTestnetRedeemScriptChunks = ScriptParser.parseScriptProgram(ERP_TESTNET_REDEEM_SCRIPT_BYTES);
+        if (erpTestnetRedeemScriptChunks.equals(chunks)) {
             logger.debug("[get] Received redeem script matches the testnet federation hardcoded one. Return NonStandardErpRedeemScriptParserHardcoded");
             return new NonStandardErpRedeemScriptParserHardcoded();
         }
@@ -26,46 +26,42 @@ public class RedeemScriptParserFactory {
             return new NonStandardErpRedeemScriptParserHardcoded();
         }
 
-        ParseResult result = extractRedeemScriptFromChunks(chunks);
+        List<ScriptChunk> redeemScriptChunks = extractRedeemScriptFromChunks(chunks);
 
-        if (result == null) {
-            return new NonStandardErpRedeemScriptParserHardcoded();
-        }
-
-        if (FastBridgeRedeemScriptParser.isFastBridgeMultiSig(result.internalScript)) {
+        if (FastBridgeRedeemScriptParser.isFastBridgeMultiSig(redeemScriptChunks)) {
             logger.debug("[get] Return FastBridgeRedeemScriptParser");
             return new FastBridgeRedeemScriptParser(
-                result.internalScript
+                redeemScriptChunks
             );
         }
-        if (StandardRedeemScriptParser.isStandardMultiSig(result.internalScript)) {
+        if (StandardRedeemScriptParser.isStandardMultiSig(redeemScriptChunks)) {
             logger.debug("[get] Return StandardRedeemScriptParser");
             return new StandardRedeemScriptParser(
-                result.internalScript
+                redeemScriptChunks
             );
         }
-        if (P2shErpFederationRedeemScriptParser.isP2shErpFed(result.internalScript)) {
+        if (P2shErpFederationRedeemScriptParser.isP2shErpFed(redeemScriptChunks)) {
             logger.debug("[get] Return P2shErpFederationRedeemScriptParser");
             return new P2shErpFederationRedeemScriptParser(
-                result.internalScript
+                redeemScriptChunks
             );
         }
-        if (FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(result.internalScript)) {
+        if (FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(redeemScriptChunks)) {
             logger.debug("[get] Return FastBridgeP2shErpRedeemScriptParser");
             return new FastBridgeP2shErpRedeemScriptParser(
-                result.internalScript
+                redeemScriptChunks
             );
         }
-        if (ErpFederationRedeemScriptParser.isErpFed(result.internalScript)) {
+        if (ErpFederationRedeemScriptParser.isErpFed(redeemScriptChunks)) {
             logger.debug("[get] Return ErpFederationRedeemScriptParser");
             return new ErpFederationRedeemScriptParser(
-                result.internalScript
+                redeemScriptChunks
             );
         }
-        if (FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(result.internalScript)) {
+        if (FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(redeemScriptChunks)) {
             logger.debug("[get] Return FastBridgeErpRedeemScriptParser");
             return new FastBridgeErpRedeemScriptParser(
-                result.internalScript
+                redeemScriptChunks
             );
         }
 
@@ -73,10 +69,10 @@ public class RedeemScriptParserFactory {
         return new NonStandardErpRedeemScriptParserHardcoded();
     }
 
-    private static ParseResult extractRedeemScriptFromChunks(List<ScriptChunk> chunks) {
+    private static List<ScriptChunk> extractRedeemScriptFromChunks(List<ScriptChunk> chunks) {
         ScriptChunk lastChunk = chunks.get(chunks.size() - 1);
         if (RedeemScriptValidator.isRedeemLikeScript(chunks)) {
-            return new ParseResult(chunks);
+            return chunks;
         }
         if (lastChunk.data != null && lastChunk.data.length > 0) {
             int lastByte = lastChunk.data[lastChunk.data.length - 1] & 0xff;
@@ -86,17 +82,11 @@ public class RedeemScriptParserFactory {
                     lastByte == ScriptOpCodes.OP_CHECKMULTISIGVERIFY ||
                     lastByte == ScriptOpCodes.OP_ENDIF
             ) {
-                ScriptParserResult result = ScriptParser.parseScriptProgram(lastChunk.data);
-                if (result.getException().isPresent()) {
-                    String message = String.format("Error trying to parse inner script. %s", result.getException().get());
-                    logger.debug("[extractRedeemScriptFromChunks] {}", message);
-                    throw new ScriptException(message);
-                }
-                return new ParseResult(result.getChunks());
+                return ScriptParser.parseScriptProgram(lastChunk.data);
             }
         }
         logger.debug("[extractRedeemScriptFromChunks] Could not get redeem script from given chunks");
-        return null;
+        throw new ScriptException("Could not get redeem script from given chunks");
     }
 
     private static class ParseResult {
