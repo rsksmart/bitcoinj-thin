@@ -654,20 +654,22 @@ public class ScriptTest {
         Script erpTestnetRedeemScript = new Script(erpTestnetRedeemScriptBytes);
 
         ScriptBuilder erpTestnetScriptSigBuilder = new ScriptBuilder();
-        erpTestnetScriptSigBuilder.number(0);
+        erpTestnetScriptSigBuilder.number(OP_0);
         erpTestnetScriptSigBuilder.data(new byte[]{}).data(TransactionSignature.dummy().encodeToBitcoin());
         erpTestnetScriptSigBuilder.data(new byte[]{}).data(TransactionSignature.dummy().encodeToBitcoin());
         erpTestnetScriptSigBuilder.data(new byte[]{}).data(TransactionSignature.dummy().encodeToBitcoin());
+        erpTestnetScriptSigBuilder.number(OP_0);
         erpTestnetScriptSigBuilder.data(erpTestnetRedeemScript.getProgram());
+
         Script erpTestnetScriptSig = erpTestnetScriptSigBuilder.build();
 
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         int actualSigInsertionIndex = erpTestnetScriptSig.getSigInsertionIndex(hashForSignature, signingKey);
-        // This return zero because the script is being parsed identified as NoRedeemScriptParser,
-        // and is using its findKeyInRedeem implementation that is returning -1 as default value
-        // instead of throwing an exception
+        // This hardcode redeemScript is identified as NoRedeemScriptParser, and is using its findKeyInRedeem implementation
+        // which is returning -1 as default value. This means that the signature insertion index will always be
+        // 0 which is the initial value set when getting the signature insertion index
         Assert.assertEquals(0, actualSigInsertionIndex);
     }
 
@@ -685,8 +687,9 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
-        // This return zero because the NoRedeemScriptParser.findKeyInRedeem is being used and is
-        // returning -1 as default value instead of throwing an exception
+        // This hardcode redeemScript is identified as NoRedeemScriptParser, and is using its findKeyInRedeem implementation
+        // which is returning -1 as default value. This means that the signature insertion index will always be
+        // 0 which is the initial value set when getting the signature insertion index
         Assert.assertEquals(0, sigInsertionIndex);
 
         assertScriptIsNoRedeemScript(customRedeemScript);
@@ -705,8 +708,9 @@ public class ScriptTest {
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = FEDERATION_KEYS.get(1);
 
-        // This return zero because the NoRedeemScriptParser.findKeyInRedeem is being used and is
-        // returning -1 as default value instead of throwing an exception
+        // This hardcode redeemScript is identified as NoRedeemScriptParser, and is using its findKeyInRedeem implementation
+        // which is returning -1 as default value. This means that the signature insertion index will always be
+        // 0 which is the initial value set when getting the signature insertion index
         int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
         Assert.assertEquals(0, sigInsertionIndex);
 
