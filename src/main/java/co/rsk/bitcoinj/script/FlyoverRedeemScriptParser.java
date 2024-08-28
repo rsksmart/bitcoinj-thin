@@ -24,7 +24,7 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
 
     public FlyoverRedeemScriptParser(List<ScriptChunk> redeemScriptChunks) {
         this.redeemScriptChunks = extractStandardRedeemScriptChunks(redeemScriptChunks);
-        this.redeemScriptParser = RedeemScriptParserFactory.get(redeemScriptChunks);
+        this.redeemScriptParser = RedeemScriptParserFactory.get(this.redeemScriptChunks.subList(2, this.redeemScriptChunks.size()));
         this.multiSigType = MultiSigType.FLYOVER;
     }
 
