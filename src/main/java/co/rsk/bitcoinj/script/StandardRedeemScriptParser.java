@@ -9,34 +9,25 @@ import co.rsk.bitcoinj.crypto.TransactionSignature;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     protected MultiSigType multiSigType;
-    protected ScriptType scriptType;
     // In case of P2SH represents a scriptSig, where the last chunk is the redeem script (either standard or extended)
     // Standard redeem script
     protected List<ScriptChunk> redeemScriptChunks;
 
     public StandardRedeemScriptParser(
-        ScriptType scriptType,
         List<ScriptChunk> redeemScriptChunks
     ) {
         this.multiSigType = MultiSigType.STANDARD_MULTISIG;
-        this.scriptType = scriptType;
         this.redeemScriptChunks = redeemScriptChunks;
     }
 
     @Override
     public MultiSigType getMultiSigType() {
         return this.multiSigType;
-    }
-
-    @Override
-    public ScriptType getScriptType() {
-        return this.scriptType;
     }
 
     @Override

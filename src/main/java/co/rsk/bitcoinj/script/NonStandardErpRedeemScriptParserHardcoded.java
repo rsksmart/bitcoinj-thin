@@ -13,11 +13,6 @@ public class NonStandardErpRedeemScriptParserHardcoded implements RedeemScriptPa
     }
 
     @Override
-    public ScriptType getScriptType() {
-        return ScriptType.UNDEFINED;
-    }
-
-    @Override
     public int getM() {
         return -1;
     }

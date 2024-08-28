@@ -2,7 +2,6 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Utils;
-import co.rsk.bitcoinj.script.RedeemScriptParser.ScriptType;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,42 +35,36 @@ public class RedeemScriptParserFactory {
         if (FastBridgeRedeemScriptParser.isFastBridgeMultiSig(result.internalScript)) {
             logger.debug("[get] Return FastBridgeRedeemScriptParser");
             return new FastBridgeRedeemScriptParser(
-                result.scriptType,
                 result.internalScript
             );
         }
         if (StandardRedeemScriptParser.isStandardMultiSig(result.internalScript)) {
             logger.debug("[get] Return StandardRedeemScriptParser");
             return new StandardRedeemScriptParser(
-                result.scriptType,
                 result.internalScript
             );
         }
         if (P2shErpFederationRedeemScriptParser.isP2shErpFed(result.internalScript)) {
             logger.debug("[get] Return P2shErpFederationRedeemScriptParser");
             return new P2shErpFederationRedeemScriptParser(
-                result.scriptType,
                 result.internalScript
             );
         }
         if (FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(result.internalScript)) {
             logger.debug("[get] Return FastBridgeP2shErpRedeemScriptParser");
             return new FastBridgeP2shErpRedeemScriptParser(
-                result.scriptType,
                 result.internalScript
             );
         }
         if (ErpFederationRedeemScriptParser.isErpFed(result.internalScript)) {
             logger.debug("[get] Return ErpFederationRedeemScriptParser");
             return new ErpFederationRedeemScriptParser(
-                result.scriptType,
                 result.internalScript
             );
         }
         if (FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(result.internalScript)) {
             logger.debug("[get] Return FastBridgeErpRedeemScriptParser");
             return new FastBridgeErpRedeemScriptParser(
-                result.scriptType,
                 result.internalScript
             );
         }
@@ -83,7 +76,7 @@ public class RedeemScriptParserFactory {
     private static ParseResult extractRedeemScriptFromChunks(List<ScriptChunk> chunks) {
         ScriptChunk lastChunk = chunks.get(chunks.size() - 1);
         if (RedeemScriptValidator.isRedeemLikeScript(chunks)) {
-            return new ParseResult(chunks, ScriptType.REDEEM_SCRIPT);
+            return new ParseResult(chunks);
         }
         if (lastChunk.data != null && lastChunk.data.length > 0) {
             int lastByte = lastChunk.data[lastChunk.data.length - 1] & 0xff;
@@ -99,7 +92,7 @@ public class RedeemScriptParserFactory {
                     logger.debug("[extractRedeemScriptFromChunks] {}", message);
                     throw new ScriptException(message);
                 }
-                return new ParseResult(result.getChunks(), ScriptType.P2SH);
+                return new ParseResult(result.getChunks());
             }
         }
         logger.debug("[extractRedeemScriptFromChunks] Could not get redeem script from given chunks");
@@ -108,11 +101,9 @@ public class RedeemScriptParserFactory {
 
     private static class ParseResult {
         public final List<ScriptChunk> internalScript;
-        public final ScriptType scriptType;
 
-        public ParseResult(List<ScriptChunk> internalScript, ScriptType scriptType) {
+        public ParseResult(List<ScriptChunk> internalScript) {
             this.internalScript = internalScript;
-            this.scriptType = scriptType;
         }
     }
 }

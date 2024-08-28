@@ -16,15 +16,7 @@ public interface RedeemScriptParser {
         FAST_BRIDGE_P2SH_ERP_FED
     }
 
-    enum ScriptType {
-        P2SH,
-        REDEEM_SCRIPT,
-        UNDEFINED
-    }
-
     MultiSigType getMultiSigType();
-
-    ScriptType getScriptType();
 
     int getM();
 
