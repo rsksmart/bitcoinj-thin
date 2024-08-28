@@ -12,11 +12,9 @@ public class FastBridgeRedeemScriptParser extends StandardRedeemScriptParser {
     protected final byte[] derivationHash;
 
     public FastBridgeRedeemScriptParser(
-        ScriptType scriptType,
         List<ScriptChunk> redeemScriptChunks
     ) {
         super(
-            scriptType,
             redeemScriptChunks.subList(2, redeemScriptChunks.size())
         );
         this.multiSigType = MultiSigType.FAST_BRIDGE_MULTISIG;
