@@ -13,7 +13,8 @@ public interface RedeemScriptParser {
         ERP_FED,
         FAST_BRIDGE_ERP_FED,
         P2SH_ERP_FED,
-        FAST_BRIDGE_P2SH_ERP_FED
+        FAST_BRIDGE_P2SH_ERP_FED,
+        FLYOVER
     }
 
     MultiSigType getMultiSigType();
