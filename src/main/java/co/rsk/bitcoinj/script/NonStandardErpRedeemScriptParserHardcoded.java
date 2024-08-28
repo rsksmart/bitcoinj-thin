@@ -23,11 +23,6 @@ public class NonStandardErpRedeemScriptParserHardcoded implements RedeemScriptPa
     }
 
     @Override
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return 0;
-    }
-
-    @Override
     public int findKeyInRedeem(BtcECKey key) {
         return -1;
     }

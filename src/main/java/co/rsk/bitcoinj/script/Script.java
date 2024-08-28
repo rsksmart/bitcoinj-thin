@@ -20,6 +20,7 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -32,6 +33,7 @@ import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -493,8 +495,33 @@ public class Script {
      * Returns the index where a signature by the key should be inserted. Only applicable to
      * a P2SH scriptSig.
      */
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return this.getRedeemScriptParser().getSigInsertionIndex(hash, signingKey);
+    public int getSigInsertionIndex(Sha256Hash hashForSignature, BtcECKey signingKey) {
+        // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
+        // and any placeholder OP_0 sigs.
+
+        final int redeemScriptChunkIndex = chunks.size() - 1;
+        ScriptChunk redeemScriptChunk = chunks.get(redeemScriptChunkIndex);
+        checkNotNull(redeemScriptChunk.data);
+        List<ScriptChunk> chunksWithoutRedeemScript = chunks.subList(1, redeemScriptChunkIndex);
+
+        Script redeemScript = new Script(redeemScriptChunk.data);
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+
+        int sigInsertionIndex = 0;
+        int keyIndexInRedeem = redeemScriptParser.findKeyInRedeem(signingKey);
+
+        for (ScriptChunk chunk : chunksWithoutRedeemScript) {
+            if (chunk.opcode != OP_0) {
+                Preconditions.checkNotNull(chunk.data);
+                if (keyIndexInRedeem < redeemScriptParser.findSigInRedeem(chunk.data, hashForSignature)) {
+                    return sigInsertionIndex;
+                }
+
+                sigInsertionIndex++;
+            }
+        }
+
+        return sigInsertionIndex;
     }
 
     public int findKeyInRedeem(BtcECKey key) {
