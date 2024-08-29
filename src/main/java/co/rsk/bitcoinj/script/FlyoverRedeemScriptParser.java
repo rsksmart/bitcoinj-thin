@@ -19,16 +19,6 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public ScriptType getScriptType() {
-        return null;
-    }
-
-    @Override
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return 0;
-    }
-
-    @Override
     public MultiSigType getMultiSigType() {
         return MultiSigType.FLYOVER;
     }
