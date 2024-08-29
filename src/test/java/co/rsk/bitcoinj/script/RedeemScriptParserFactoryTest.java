@@ -1,6 +1,7 @@
 package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
@@ -236,5 +237,46 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser parser = RedeemScriptParserFactory.get(erpTestnetRedeemScript.getChunks());
 
         Assert.assertEquals(MultiSigType.NO_MULTISIG_TYPE, parser.getMultiSigType());
+    }
+
+    // TODO: Once RedeemScriptFactory get refactored and only accept redeem script type
+    //  this test should fail and it will need to be update to throw an ScriptException
+    @Test
+    public void createRedeemScriptParser_whenScriptSig() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, redeemScript);
+
+        Exception actualException = null;
+        try {
+            RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(
+                scriptSig.getChunks());
+            Assert.assertTrue(redeemScriptParser instanceof StandardRedeemScriptParser);
+        } catch (Exception ex) {
+            actualException = ex;
+        } finally {
+            Assert.assertNull(actualException);
+        }
+    }
+
+    // TODO: Once RedeemScriptFactory get refactored and only accept redeem script type
+    //  this test should fail and it will need to be update to throw an ScriptException
+    @Test
+    public void createRedeemScriptParser_whenP2shOutput() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(redeemScript);
+
+        Exception actualException = null;
+        try {
+            RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(
+                p2SHOutputScript.getChunks());
+            Assert.assertTrue(redeemScriptParser instanceof NonStandardErpRedeemScriptParserHardcoded);
+        } catch (Exception ex) {
+            actualException = ex;
+        } finally {
+            Assert.assertNull(actualException);
+        }
     }
 }
