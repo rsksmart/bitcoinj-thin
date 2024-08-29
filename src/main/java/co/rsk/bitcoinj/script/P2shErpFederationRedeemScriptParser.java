@@ -16,14 +16,13 @@ public class P2shErpFederationRedeemScriptParser implements RedeemScriptParser {
 
     public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
-    private final RedeemScriptParser redeemScriptParser;
+    private final RedeemScriptParser standardRedeemScriptParser;
 
     public P2shErpFederationRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
-        super(
-            extractStandardRedeemScriptChunks(redeemScriptChunks)
-        );
+        List<ScriptChunk> standardRedeemScriptChunks = extractStandardRedeemScriptChunks(redeemScriptChunks);
+        this.standardRedeemScriptParser = new StandardRedeemScriptParser(standardRedeemScriptChunks);
     }
 
     @Override
@@ -33,32 +32,27 @@ public class P2shErpFederationRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int getM() {
-        return redeemScriptParser.getM();
-    }
-
-    @Override
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return redeemScriptParser.getSigInsertionIndex(hash, signingKey);
+        return standardRedeemScriptParser.getM();
     }
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
-        return redeemScriptParser.findKeyInRedeem(key);
+        return standardRedeemScriptParser.findKeyInRedeem(key);
     }
 
     @Override
     public List<BtcECKey> getPubKeys() {
-        return redeemScriptParser.getPubKeys();
+        return standardRedeemScriptParser.getPubKeys();
     }
 
     @Override
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return redeemScriptParser.findSigInRedeem(signatureBytes, hash);
+        return standardRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
     }
 
     @Override
     public List<ScriptChunk> extractStandardRedeemScriptChunks() {
-        return redeemScriptParser.extractStandardRedeemScriptChunks();
+        return standardRedeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
     public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {

@@ -4,7 +4,6 @@ import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
-import co.rsk.bitcoinj.script.RedeemScriptParser.ScriptType;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,7 +15,7 @@ public class P2shErpFederationRedeemScriptParserTest {
 
     private List<BtcECKey> defaultRedeemScriptKeys;
     private List<BtcECKey> emergencyRedeemScriptKeys;
-    private static final long VALID_CSV_VALUE = 300L;
+    private static final long VALID_CSV_VALUE = 52_560L;
     private P2shErpFederationRedeemScriptParser p2shErpFederationRedeemScriptParser;
 
     @Before
@@ -31,8 +30,6 @@ public class P2shErpFederationRedeemScriptParserTest {
 
         List<ScriptChunk> p2shErpRedeemScriptChunks = validP2shErpRedeemScript.getChunks();
         p2shErpFederationRedeemScriptParser = new P2shErpFederationRedeemScriptParser(
-            ScriptType.REDEEM_SCRIPT,
-            p2shErpRedeemScriptChunks,
             p2shErpRedeemScriptChunks
         );
     }
@@ -366,14 +363,16 @@ public class P2shErpFederationRedeemScriptParserTest {
     @Test
     public void findKeyInRedeem_whenKeyDoesNotExists_shouldThrowIllegalStateException() {
         BtcECKey unknownKey = BtcECKey.fromPrivate(BigInteger.valueOf(1234567890L));
-        for (int i = 0; i < defaultRedeemScriptKeys.size(); i++) {
-            try {
-                p2shErpFederationRedeemScriptParser.findKeyInRedeem(unknownKey);
-            } catch (Exception ex) {
-                Assert.assertTrue(ex instanceof IllegalStateException);
-                Assert.assertTrue(ex.getMessage().contains("Could not find matching key " + unknownKey
+        Exception actualException = null;
+        try {
+            p2shErpFederationRedeemScriptParser.findKeyInRedeem(unknownKey);
+        } catch (Exception ex) {
+            actualException = ex;
+        } finally {
+            Assert.assertTrue(actualException instanceof IllegalStateException);
+            Assert.assertTrue(
+                actualException.getMessage().contains("Could not find matching key " + unknownKey
                     + " in script "));
-            }
         }
     }
 
