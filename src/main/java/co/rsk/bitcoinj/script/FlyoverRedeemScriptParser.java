@@ -3,7 +3,6 @@ package co.rsk.bitcoinj.script;
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
-import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +13,8 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
     private final RedeemScriptParser redeemScriptParser;
 
     public FlyoverRedeemScriptParser(List<ScriptChunk> redeemScriptChunks) {
-        List<ScriptChunk> standardRedeemScriptChunks = extractStandardRedeemScriptChunks(redeemScriptChunks);
-        this.redeemScriptParser = RedeemScriptParserFactory.get(standardRedeemScriptChunks);
+        List<ScriptChunk> internalRedeemScriptChunks = extractInternalRedeemScriptChunks(redeemScriptChunks);
+        this.redeemScriptParser = RedeemScriptParserFactory.get(internalRedeemScriptChunks);
     }
 
     @Override
@@ -48,22 +47,13 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
         return redeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
-    public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
-        List<ScriptChunk> chunksForRedeem = new ArrayList<>();
-
-        int i = 1;
-        while (i < chunks.size() && !chunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
-            chunksForRedeem.add(chunks.get(i));
-            i++;
-        }
-
-        // Validate the obtained redeem script has a valid format
-        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
+    public static List<ScriptChunk> extractInternalRedeemScriptChunks(List<ScriptChunk> chunks) {
+        if (chunks.size() <= 2) {
             String message = "Flyover redeem script obtained has an invalid structure";
-            logger.debug("[extractStandardRedeemScriptChunks] {} {}", message, chunksForRedeem);
+            logger.debug("[extractInternalRedeemScriptChunks] {} {}", message, chunks);
             throw new VerificationException(message);
         }
 
-        return chunksForRedeem;
+        return chunks.subList(2, chunks.size());
     }
 }
