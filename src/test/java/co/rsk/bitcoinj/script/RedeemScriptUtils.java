@@ -8,13 +8,16 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
-public class RedeemScriptUtils {
+public final class RedeemScriptUtils {
 
-    protected static Script createStandardRedeemScript(List<BtcECKey> publicKeys) {
+    private RedeemScriptUtils() {
+    }
+
+    public static Script createStandardRedeemScript(List<BtcECKey> publicKeys) {
         return ScriptBuilder.createRedeemScript(publicKeys.size() / 2 + 1, publicKeys);
     }
 
-    protected static Script createFastBridgeRedeemScript(
+    public static Script createFastBridgeRedeemScript(
         byte[] derivationArgumentsHashBytes,
         List<BtcECKey> publicKeys
     ) {
@@ -31,7 +34,7 @@ public class RedeemScriptUtils {
             .build();
     }
 
-    protected static Script createFastBridgeErpRedeemScript(
+    public static Script createFastBridgeErpRedeemScript(
         List<BtcECKey> defaultRedeemScriptKeys,
         List<BtcECKey> emergencyRedeemScriptKeys,
         Long csvValue,
@@ -52,7 +55,7 @@ public class RedeemScriptUtils {
             .build();
     }
 
-    protected static Script createFastBridgeP2shErpRedeemScript(
+    public static Script createFastBridgeP2shErpRedeemScript(
         List<BtcECKey> defaultRedeemScriptKeys,
         List<BtcECKey> emergencyRedeemScriptKeys,
         Long csvValue,
@@ -73,7 +76,7 @@ public class RedeemScriptUtils {
             .build();
     }
 
-    protected static Script createCustomRedeemScript(List<BtcECKey> publicKeys) {
+    public static Script createCustomRedeemScript(List<BtcECKey> publicKeys) {
         Script redeem = ScriptBuilder.createRedeemScript(
             publicKeys.size() / 2 + 1,
             publicKeys
@@ -86,7 +89,7 @@ public class RedeemScriptUtils {
             .build();
     }
 
-    protected static Script createErpRedeemScript(
+    public static Script createErpRedeemScript(
         List<BtcECKey> defaultRedeemScriptKeys,
         List<BtcECKey> emergencyRedeemScriptKeys,
         Long csvValue
@@ -117,7 +120,7 @@ public class RedeemScriptUtils {
             .build();
     }
 
-    protected static Script createP2shErpRedeemScript(
+    public static Script createP2shErpRedeemScript(
         List<BtcECKey> defaultRedeemScriptKeys,
         List<BtcECKey> emergencyRedeemScriptKeys,
         Long csvValue
@@ -147,7 +150,16 @@ public class RedeemScriptUtils {
             .build();
     }
 
-    protected static List<BtcECKey> getDefaultRedeemScriptKeys() {
+    public static Script createFlyoverRedeemScript(byte[] derivationArgumentsHashBytes, List<ScriptChunk> redeemScriptChunks) {
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        return scriptBuilder
+            .data(derivationArgumentsHashBytes)
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(redeemScriptChunks)
+            .build();
+    }
+
+    public static List<BtcECKey> getDefaultRedeemScriptKeys() {
         List<BtcECKey> keys = Arrays.asList(
             BtcECKey.fromPrivate(BigInteger.valueOf(100)),
             BtcECKey.fromPrivate(BigInteger.valueOf(200)),
@@ -164,7 +176,7 @@ public class RedeemScriptUtils {
         return keys;
     }
 
-    protected static List<BtcECKey> getEmergencyRedeemScriptKeys() {
+    public static List<BtcECKey> getEmergencyRedeemScriptKeys() {
         List<BtcECKey> keys = Arrays.asList(
             BtcECKey.fromPrivate(BigInteger.valueOf(101)),
             BtcECKey.fromPrivate(BigInteger.valueOf(202)),
