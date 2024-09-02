@@ -3,10 +3,18 @@ package co.rsk.bitcoinj.script;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
+import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.BtcECKey.ECDSASignature;
+import co.rsk.bitcoinj.core.BtcTransaction;
+import co.rsk.bitcoinj.core.Coin;
+import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
+import co.rsk.bitcoinj.crypto.TransactionSignature;
+import co.rsk.bitcoinj.params.MainNetParams;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
 import java.util.List;
 import org.junit.Test;
@@ -145,6 +153,40 @@ public class FlyoverRedeemScriptParserTest {
 
         // Assert
         defaultRedeemScriptKeys.forEach(key -> assertThat(actualPubKeys.get(defaultRedeemScriptKeys.indexOf(key)).getPubKey(), equalTo(key.getPubKey())));
+    }
+
+    @Test
+    public void findSigInRedeem_whenSignatureIsInRedeemScript_shouldReturnSignatureIndexPosition() {
+        // Arrange
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+
+        final NetworkParameters mainNetParams = MainNetParams.get();
+        BtcECKey privateKey = defaultRedeemScriptKeys.get(0);
+
+        BtcTransaction fundTx = new BtcTransaction(mainNetParams);
+        Address userAddress = privateKey.toAddress(mainNetParams);
+        fundTx.addOutput(Coin.FIFTY_COINS, userAddress);
+
+        BtcTransaction spendTx = new BtcTransaction(mainNetParams);
+        spendTx.addInput(fundTx.getOutput(0));
+
+        Sha256Hash hashForSignatureHash = spendTx.hashForSignature(
+            0,
+            standardRedeemScript,
+            BtcTransaction.SigHash.ALL,
+            false);
+
+        ECDSASignature signature = privateKey.sign(hashForSignatureHash);
+        TransactionSignature transactionSignature = new TransactionSignature(signature, BtcTransaction.SigHash.ALL, false);
+
+        // Act
+        int actualSignatureIndex = flyoverRedeemScriptParser.findSigInRedeem(transactionSignature.encodeToBitcoin(), hashForSignatureHash);
+
+        // Assert
+        assertEquals(0, actualSignatureIndex);
     }
 
     @Test
