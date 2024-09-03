@@ -24,7 +24,7 @@ public class FlyoverRedeemScriptParserTest {
     private final List<BtcECKey> emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
 
     @Test
-    public void getMultiSigType_fromStandardRedeemScript() {
+    public void getMultiSigType_whenIsStandardRedeemScript_shouldReturnFlyoverMultiSigType() {
         // Arrange
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(standardRedeemScript.getChunks());
