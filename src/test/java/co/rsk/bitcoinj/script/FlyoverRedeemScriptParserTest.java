@@ -39,6 +39,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getM_whenFlyoverRedeemScriptContainsStandardRedeemScript_shouldReturnMValue() {
         // Arrange
+        final int EXPECTED_M = 5;
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
@@ -48,12 +49,13 @@ public class FlyoverRedeemScriptParserTest {
         int actualM = flyoverRedeemScriptParser.getM();
 
         // Assert
-        assertEquals(5, actualM);
+        assertEquals(EXPECTED_M, actualM);
     }
 
     @Test
     public void getM_whenFlyoverRedeemScriptContainsErpRedeemScript_shouldReturnMValue() {
         // Arrange
+        final int EXPECTED_M = 5;
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
         Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L
         );
@@ -64,12 +66,13 @@ public class FlyoverRedeemScriptParserTest {
         int actualM = flyoverRedeemScriptParser.getM();
 
         // Assert
-        assertEquals(5, actualM);
+        assertEquals(EXPECTED_M, actualM);
     }
 
     @Test
     public void getM_whenFlyoverRedeemScriptContainsP2shErpRedeemScript_shouldReturnMValue() {
         // Arrange
+        final int EXPECTED_M = 5;
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
         Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), p2shErpRedeemScript);
@@ -79,7 +82,7 @@ public class FlyoverRedeemScriptParserTest {
         int actualM = flyoverRedeemScriptParser.getM();
 
         // Assert
-        assertEquals(5, actualM);
+        assertEquals(EXPECTED_M, actualM);
     }
 
     @Test
