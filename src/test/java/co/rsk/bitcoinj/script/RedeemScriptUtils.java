@@ -150,12 +150,13 @@ public final class RedeemScriptUtils {
             .build();
     }
 
-    public static Script createFlyoverRedeemScript(byte[] derivationArgumentsHashBytes, List<ScriptChunk> redeemScriptChunks) {
+    public static Script createFlyoverRedeemScript(byte[] derivationArgumentsHashBytes, Script internalRedeemScript) {
+        List<ScriptChunk> internalRedeemScriptChunks = internalRedeemScript.getChunks();
         ScriptBuilder scriptBuilder = new ScriptBuilder();
         return scriptBuilder
             .data(derivationArgumentsHashBytes)
             .op(ScriptOpCodes.OP_DROP)
-            .addChunks(redeemScriptChunks)
+            .addChunks(internalRedeemScriptChunks)
             .build();
     }
 
