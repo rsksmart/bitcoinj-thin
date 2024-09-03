@@ -10,11 +10,11 @@ import org.slf4j.LoggerFactory;
 public class FlyoverRedeemScriptParser implements RedeemScriptParser {
 
     private static final Logger logger = LoggerFactory.getLogger(FlyoverRedeemScriptParser.class);
-    private final RedeemScriptParser redeemScriptParser;
+    private final RedeemScriptParser internalRedeemScriptParser;
 
     public FlyoverRedeemScriptParser(List<ScriptChunk> redeemScriptChunks) {
         List<ScriptChunk> internalRedeemScriptChunks = extractInternalRedeemScriptChunks(redeemScriptChunks);
-        this.redeemScriptParser = RedeemScriptParserFactory.get(internalRedeemScriptChunks);
+        this.internalRedeemScriptParser = RedeemScriptParserFactory.get(internalRedeemScriptChunks);
     }
 
     @Override
@@ -24,27 +24,27 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int getM() {
-        return redeemScriptParser.getM();
+        return internalRedeemScriptParser.getM();
     }
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
-        return redeemScriptParser.findKeyInRedeem(key);
+        return internalRedeemScriptParser.findKeyInRedeem(key);
     }
 
     @Override
     public List<BtcECKey> getPubKeys() {
-        return redeemScriptParser.getPubKeys();
+        return internalRedeemScriptParser.getPubKeys();
     }
 
     @Override
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return redeemScriptParser.findSigInRedeem(signatureBytes, hash);
+        return internalRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
     }
 
     @Override
     public List<ScriptChunk> extractStandardRedeemScriptChunks() {
-        return redeemScriptParser.extractStandardRedeemScriptChunks();
+        return internalRedeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
     public static List<ScriptChunk> extractInternalRedeemScriptChunks(List<ScriptChunk> chunks) {
