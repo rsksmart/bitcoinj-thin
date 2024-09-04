@@ -47,7 +47,7 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
         return internalRedeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
-    public static List<ScriptChunk> extractInternalRedeemScriptChunks(List<ScriptChunk> chunks) {
+    private static List<ScriptChunk> extractInternalRedeemScriptChunks(List<ScriptChunk> chunks) {
         if (chunks.size() <= 2) {
             String message = "Flyover redeem script obtained has an invalid structure";
             logger.debug("[extractInternalRedeemScriptChunks] {}", message);

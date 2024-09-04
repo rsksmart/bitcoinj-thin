@@ -254,56 +254,6 @@ public class FlyoverRedeemScriptParserTest {
         assertEquals(expectedRedeemScriptChunks, actualRedeemScriptChunks);
     }
 
-    @Test
-    public void extractInternalRedeemScriptChunks_whenIsStandardRedeemScript_shouldReturnStandardRedeemScriptChunks() {
-        // Arrange
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
-        List<ScriptChunk> expectedRedeemScriptChunks = standardRedeemScriptChunks.subList(2, standardRedeemScriptChunks.size());
-
-        // Act
-        List<ScriptChunk> actualRedeemScriptChunks = FlyoverRedeemScriptParser.extractInternalRedeemScriptChunks(standardRedeemScriptChunks);
-
-        // Assert
-        assertEquals(expectedRedeemScriptChunks, actualRedeemScriptChunks);
-    }
-
-    @Test
-    public void extractInternalRedeemScriptChunks_whenIsErpRedeemScript_shouldReturnErpRedeemScriptChunks(){
-        // Arrange
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            500L
-        );
-        List<ScriptChunk> erpRedeemScriptChunks = erpRedeemScript.getChunks();
-        List<ScriptChunk> expectedRedeemScriptChunks = erpRedeemScriptChunks.subList(2, erpRedeemScript.getChunks().size());
-
-        // Act
-        List<ScriptChunk> actualRedeemScriptChunks = FlyoverRedeemScriptParser.extractInternalRedeemScriptChunks(erpRedeemScript.getChunks());
-
-        // Assert
-        assertEquals(expectedRedeemScriptChunks, actualRedeemScriptChunks);
-    }
-
-    @Test
-    public void extractInternalRedeemScriptChunks_whenIsP2shErpRedeemScript_shouldReturnP2shErpRedeemScript(){
-        // Arrange
-        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            500L
-        );
-        List<ScriptChunk> p2shErpRedeemScriptChunks = p2shErpRedeemScript.getChunks();
-        List<ScriptChunk> expectedRedeemScriptChunks = p2shErpRedeemScriptChunks.subList(2, p2shErpRedeemScript.getChunks().size());
-
-        // Act
-        List<ScriptChunk> actualRedeemScriptChunks = FlyoverRedeemScriptParser.extractInternalRedeemScriptChunks(p2shErpRedeemScript.getChunks());
-
-        // Assert
-        assertEquals(expectedRedeemScriptChunks, actualRedeemScriptChunks);
-    }
-
     @Test(expected = VerificationException.class)
     public void extractInternalRedeemScriptChunks_whenRedeemScriptChunksSizeIsZero_shouldThrowVerificationException(){
         // Arrange
@@ -311,7 +261,8 @@ public class FlyoverRedeemScriptParserTest {
         List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
 
         // Act / Assert
-        FlyoverRedeemScriptParser.extractInternalRedeemScriptChunks(redeemScriptChunks);
+        // Executed the private method extractInternalRedeemScriptChunks through the constructor
+        new FlyoverRedeemScriptParser(redeemScriptChunks);
     }
 
     @Test(expected = VerificationException.class)
@@ -321,6 +272,7 @@ public class FlyoverRedeemScriptParserTest {
         List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
 
         // Act / Assert
-        FlyoverRedeemScriptParser.extractInternalRedeemScriptChunks(redeemScriptChunks);
+        // Executed the private method extractInternalRedeemScriptChunks through the constructor
+        new FlyoverRedeemScriptParser(redeemScriptChunks);
     }
 }
