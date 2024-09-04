@@ -122,13 +122,14 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void findKeyInRedeem_whenKeyIsInRedeemScript_shouldReturnKeyIndexPosition() {
         // Arrange
+        final int EXPECTED_KEY_INDEX = 5;
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act
-        int actualKeyIndex = flyoverRedeemScriptParser.findKeyInRedeem(defaultRedeemScriptKeys.get(0));
+        int actualKeyIndex = flyoverRedeemScriptParser.findKeyInRedeem(defaultRedeemScriptKeys.get(EXPECTED_KEY_INDEX));
 
         // Assert
-        assertEquals(0, actualKeyIndex);
+        assertEquals(EXPECTED_KEY_INDEX, actualKeyIndex);
     }
 
     @Test(expected = IllegalStateException.class)
