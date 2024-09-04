@@ -16,20 +16,37 @@ import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.MainNetParams;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
 import java.util.List;
+import org.junit.Before;
 import org.junit.Test;
 
 public class FlyoverRedeemScriptParserTest {
 
     private final List<BtcECKey> defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
     private final List<BtcECKey> emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+    private final Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+    private Script standardRedeemScript;
+    private Script flyoverStandardRedeemScript;
+    private Script erpRedeemScript;
+    private Script flyoverErpRedeemScript;
+    private Script p2shErpRedeemScript;
+    private Script flyoverP2shErpRedeemScript;
+
+    @Before
+    public void setUp() {
+        standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        flyoverStandardRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
+
+        erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
+        flyoverErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
+
+        p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
+        flyoverP2shErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), p2shErpRedeemScript);
+    }
 
     @Test
     public void getMultiSigType_whenIsStandardRedeemScript_shouldReturnFlyoverMultiSigType() {
         // Arrange
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act
         MultiSigType actualMultiSigType = flyoverRedeemScriptParser.getMultiSigType();
@@ -41,10 +58,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getMultiSigType_whenIsErpRedeemScript_shouldReturnFlyoverMultiSigType() {
         // Arrange
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverErpRedeemScript.getChunks());
 
         // Act
         MultiSigType actualMultiSigType = flyoverRedeemScriptParser.getMultiSigType();
@@ -56,10 +70,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getMultiSigType_whenIsP2shErpRedeemScript_shouldReturnFlyoverMultiSigType() {
         // Arrange
-        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), p2shErpRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverP2shErpRedeemScript.getChunks());
 
         // Act
         MultiSigType actualMultiSigType = flyoverRedeemScriptParser.getMultiSigType();
@@ -72,10 +83,7 @@ public class FlyoverRedeemScriptParserTest {
     public void getM_whenFlyoverRedeemScriptContainsStandardRedeemScript_shouldReturnMValue() {
         // Arrange
         final int EXPECTED_M = 5;
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act
         int actualM = flyoverRedeemScriptParser.getM();
@@ -88,10 +96,7 @@ public class FlyoverRedeemScriptParserTest {
     public void getM_whenFlyoverRedeemScriptContainsErpRedeemScript_shouldReturnMValue() {
         // Arrange
         final int EXPECTED_M = 5;
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverErpRedeemScript.getChunks());
 
         // Act
         int actualM = flyoverRedeemScriptParser.getM();
@@ -104,10 +109,7 @@ public class FlyoverRedeemScriptParserTest {
     public void getM_whenFlyoverRedeemScriptContainsP2shErpRedeemScript_shouldReturnMValue() {
         // Arrange
         final int EXPECTED_M = 5;
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), p2shErpRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverP2shErpRedeemScript.getChunks());
 
         // Act
         int actualM = flyoverRedeemScriptParser.getM();
@@ -119,10 +121,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void findKeyInRedeem_whenKeyIsInRedeemScript_shouldReturnKeyIndexPosition() {
         // Arrange
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act
         int actualKeyIndex = flyoverRedeemScriptParser.findKeyInRedeem(defaultRedeemScriptKeys.get(0));
@@ -134,10 +133,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test(expected = IllegalStateException.class)
     public void findKeyInRedeem_whenKeyIsNotInRedeemScript_shouldThrowIllegalStateException() {
         // Arrange
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act / Assert
         flyoverRedeemScriptParser.findKeyInRedeem(emergencyRedeemScriptKeys.get(0));
@@ -146,10 +142,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getPubKeys_whenFlyoverRedeemScriptContainsStandardRedeemScript_shouldReturnPubKeys() {
         // Arrange
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act
         List<BtcECKey> actualPubKeys = flyoverRedeemScriptParser.getPubKeys();
@@ -163,10 +156,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getPubKeys_whenFlyoverRedeemScriptContainsErpRedeemScript_shouldReturnPubKeys() {
         // Arrange
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverErpRedeemScript.getChunks());
 
         // Act
         List<BtcECKey> actualPubKeys = flyoverRedeemScriptParser.getPubKeys();
@@ -180,10 +170,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getPubKeys_whenFlyoverRedeemScriptContainsP2shErpRedeemScript_shouldReturnPubKeys() {
         // Arrange
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), p2shErpRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverP2shErpRedeemScript.getChunks());
 
         // Act
         List<BtcECKey> actualPubKeys = flyoverRedeemScriptParser.getPubKeys();
@@ -204,10 +191,7 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void findSigInRedeem_whenSignatureIsInRedeemScript_shouldReturnSignatureIndexPosition() {
         // Arrange
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         final NetworkParameters mainNetParams = MainNetParams.get();
         BtcECKey privateKey = defaultRedeemScriptKeys.get(0);
@@ -223,7 +207,8 @@ public class FlyoverRedeemScriptParserTest {
             0,
             standardRedeemScript,
             BtcTransaction.SigHash.ALL,
-            false);
+            false
+        );
 
         ECDSASignature signature = privateKey.sign(hashForSignatureHash);
         TransactionSignature transactionSignature = new TransactionSignature(signature, BtcTransaction.SigHash.ALL, false);
@@ -238,11 +223,8 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void extractStandardRedeemScriptChunks_whenIsStandardRedeemScript_shouldReturnStandardRedeemScriptChunks() {
         // Arrange
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
         List<ScriptChunk> expectedRedeemScriptChunks = standardRedeemScript.getChunks();
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act
         List<ScriptChunk> actualRedeemScriptChunks = flyoverRedeemScriptParser.extractStandardRedeemScriptChunks();
@@ -254,12 +236,8 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void extractStandardRedeemScriptChunks_whenIsErpRedeemScript_shouldReturnStandardRedeemScriptChunks() {
         // Arrange
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
         List<ScriptChunk> expectedRedeemScriptChunks = ErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks(erpRedeemScript.getChunks());
-
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverErpRedeemScript.getChunks());
 
         // Act
         List<ScriptChunk> actualRedeemScriptChunks = flyoverRedeemScriptParser.extractStandardRedeemScriptChunks();
@@ -271,12 +249,8 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void extractStandardRedeemScriptChunks_whenIsP2shErpRedeemScript_shouldReturnStandardRedeemScriptChunks() {
         // Arrange
-        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
         List<ScriptChunk> expectedRedeemScriptChunks = P2shErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks(p2shErpRedeemScript.getChunks());
-
-        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), p2shErpRedeemScript);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverP2shErpRedeemScript.getChunks());
 
         // Act
         List<ScriptChunk> actualRedeemScriptChunks = flyoverRedeemScriptParser.extractStandardRedeemScriptChunks();
