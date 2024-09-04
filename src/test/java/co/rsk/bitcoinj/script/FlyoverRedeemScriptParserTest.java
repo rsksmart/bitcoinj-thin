@@ -191,8 +191,6 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void findSigInRedeem_whenSignatureIsInRedeemScript_shouldReturnSignatureIndexPosition() {
         // Arrange
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
-
         final NetworkParameters mainNetParams = MainNetParams.get();
         BtcECKey privateKey = defaultRedeemScriptKeys.get(0);
 
@@ -212,6 +210,8 @@ public class FlyoverRedeemScriptParserTest {
 
         ECDSASignature signature = privateKey.sign(hashForSignatureHash);
         TransactionSignature transactionSignature = new TransactionSignature(signature, BtcTransaction.SigHash.ALL, false);
+
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act
         int actualSignatureIndex = flyoverRedeemScriptParser.findSigInRedeem(transactionSignature.encodeToBitcoin(), hashForSignatureHash);
