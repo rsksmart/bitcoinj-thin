@@ -194,6 +194,7 @@ public class FlyoverRedeemScriptParserTest {
         final NetworkParameters mainNetParams = MainNetParams.get();
         BtcECKey privateKey = defaultRedeemScriptKeys.get(0);
 
+        // Creating a transaction
         BtcTransaction fundTx = new BtcTransaction(mainNetParams);
         Address userAddress = privateKey.toAddress(mainNetParams);
         fundTx.addOutput(Coin.FIFTY_COINS, userAddress);
@@ -201,6 +202,7 @@ public class FlyoverRedeemScriptParserTest {
         BtcTransaction spendTx = new BtcTransaction(mainNetParams);
         spendTx.addInput(fundTx.getOutput(0));
 
+        // Getting the transaction hash for the signature
         Sha256Hash hashForSignatureHash = spendTx.hashForSignature(
             0,
             standardRedeemScript,
@@ -208,6 +210,7 @@ public class FlyoverRedeemScriptParserTest {
             false
         );
 
+        // Signing the transaction hash
         ECDSASignature signature = privateKey.sign(hashForSignatureHash);
         TransactionSignature transactionSignature = new TransactionSignature(signature, BtcTransaction.SigHash.ALL, false);
 
