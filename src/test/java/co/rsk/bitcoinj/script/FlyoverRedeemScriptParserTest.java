@@ -15,6 +15,7 @@ import co.rsk.bitcoinj.core.VerificationException;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.MainNetParams;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
+import java.math.BigInteger;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -135,10 +136,11 @@ public class FlyoverRedeemScriptParserTest {
     @Test(expected = IllegalStateException.class)
     public void findKeyInRedeem_whenKeyIsNotInRedeemScript_shouldThrowIllegalStateException() {
         // Arrange
+        final BtcECKey differentKey = BtcECKey.fromPrivate(BigInteger.valueOf(1000));
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act / Assert
-        flyoverRedeemScriptParser.findKeyInRedeem(emergencyRedeemScriptKeys.get(0));
+        flyoverRedeemScriptParser.findKeyInRedeem(differentKey);
     }
 
     @Test
