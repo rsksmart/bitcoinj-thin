@@ -27,7 +27,39 @@ public class FlyoverRedeemScriptParserTest {
     public void getMultiSigType_whenIsStandardRedeemScript_shouldReturnFlyoverMultiSigType() {
         // Arrange
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(standardRedeemScript.getChunks());
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+
+        // Act
+        MultiSigType actualMultiSigType = flyoverRedeemScriptParser.getMultiSigType();
+
+        // Assert
+        assertEquals(MultiSigType.FLYOVER, actualMultiSigType);
+    }
+
+    @Test
+    public void getMultiSigType_whenIsErpRedeemScript_shouldReturnFlyoverMultiSigType() {
+        // Arrange
+        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
+
+        // Act
+        MultiSigType actualMultiSigType = flyoverRedeemScriptParser.getMultiSigType();
+
+        // Assert
+        assertEquals(MultiSigType.FLYOVER, actualMultiSigType);
+    }
+
+    @Test
+    public void getMultiSigType_whenIsP2shErpRedeemScript_shouldReturnFlyoverMultiSigType() {
+        // Arrange
+        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), p2shErpRedeemScript);
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
 
         // Act
         MultiSigType actualMultiSigType = flyoverRedeemScriptParser.getMultiSigType();
@@ -57,8 +89,7 @@ public class FlyoverRedeemScriptParserTest {
         // Arrange
         final int EXPECTED_M = 5;
         Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L
-        );
+        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, 500L);
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
 
