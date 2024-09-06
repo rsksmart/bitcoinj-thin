@@ -22,6 +22,7 @@ import org.junit.Test;
 
 public class FlyoverRedeemScriptParserTest {
 
+    private static final int EXPECTED_M = 5;
     private final List<BtcECKey> defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
     private final List<BtcECKey> emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
     private final Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
@@ -84,7 +85,6 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getM_whenFlyoverRedeemScriptContainsStandardRedeemScript_shouldReturnMValue() {
         // Arrange
-        final int EXPECTED_M = 5;
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverStandardRedeemScript.getChunks());
 
         // Act
@@ -97,7 +97,6 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getM_whenFlyoverRedeemScriptContainsErpRedeemScript_shouldReturnMValue() {
         // Arrange
-        final int EXPECTED_M = 5;
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverErpRedeemScript.getChunks());
 
         // Act
@@ -110,7 +109,6 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void getM_whenFlyoverRedeemScriptContainsP2shErpRedeemScript_shouldReturnMValue() {
         // Arrange
-        final int EXPECTED_M = 5;
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverP2shErpRedeemScript.getChunks());
 
         // Act
