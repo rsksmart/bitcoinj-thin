@@ -125,17 +125,13 @@ public class FlyoverRedeemScriptParserTest {
             List<BtcECKey> actualPubKeys = flyoverRedeemScriptParser.getPubKeys();
 
             // Assert
-            defaultRedeemScriptKeys.forEach(
-                expectedPubKey -> assertPublicKey(expectedPubKey, actualPubKeys)
-            );
+            defaultRedeemScriptKeys.forEach(expectedPubKey -> {
+                int btcECKeyIndex = defaultRedeemScriptKeys.indexOf(expectedPubKey);
+                BtcECKey btcECKey = actualPubKeys.get(btcECKeyIndex);
+                byte[] actualPubKey = btcECKey.getPubKey();
+                assertThat(actualPubKey, equalTo(expectedPubKey.getPubKey()));
+            });
         }
-    }
-
-    private void assertPublicKey(BtcECKey expectedPubKey, List<BtcECKey> actualPubKeys) {
-        int btcECKeyIndex = defaultRedeemScriptKeys.indexOf(expectedPubKey);
-        BtcECKey btcECKey = actualPubKeys.get(btcECKeyIndex);
-        byte[] actualPubKey = btcECKey.getPubKey();
-        assertThat(actualPubKey, equalTo(expectedPubKey.getPubKey()));
     }
 
     @Test
