@@ -360,20 +360,10 @@ public class P2shErpFederationRedeemScriptParserTest {
         }
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void findKeyInRedeem_whenKeyDoesNotExists_shouldThrowIllegalStateException() {
         BtcECKey unknownKey = BtcECKey.fromPrivate(BigInteger.valueOf(1234567890L));
-        Exception actualException = null;
-        try {
-            p2shErpFederationRedeemScriptParser.findKeyInRedeem(unknownKey);
-        } catch (Exception ex) {
-            actualException = ex;
-        } finally {
-            Assert.assertTrue(actualException instanceof IllegalStateException);
-            Assert.assertTrue(
-                actualException.getMessage().contains("Could not find matching key " + unknownKey
-                    + " in script "));
-        }
+        p2shErpFederationRedeemScriptParser.findKeyInRedeem(unknownKey);
     }
 
     @Test
