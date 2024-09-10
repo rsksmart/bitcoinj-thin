@@ -239,25 +239,16 @@ public class RedeemScriptParserFactoryTest {
         Assert.assertEquals(MultiSigType.NO_MULTISIG_TYPE, parser.getMultiSigType());
     }
 
-    // TODO: Once RedeemScriptFactory get refactored and only accept redeem script type
-    //  this test should fail and it will need to be update to throw an ScriptException
     @Test
-    public void createRedeemScriptParser_whenScriptSig() {
+    public void createRedeemScriptParser_whenPassingStandardScriptSig_shouldReturnStandardRedeemScriptParser() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
 
         Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(redeemScript);
         Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, redeemScript);
 
-        Exception actualException = null;
-        try {
-            RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(
-                scriptSig.getChunks());
-            Assert.assertTrue(redeemScriptParser instanceof StandardRedeemScriptParser);
-        } catch (Exception ex) {
-            actualException = ex;
-        } finally {
-            Assert.assertNull(actualException);
-        }
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(
+            scriptSig.getChunks());
+        Assert.assertTrue(redeemScriptParser instanceof StandardRedeemScriptParser);
     }
 
     // TODO: Once RedeemScriptFactory get refactored and only accept redeem script type
