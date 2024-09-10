@@ -1,16 +1,12 @@
 package co.rsk.bitcoinj.script;
 
-import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.junit.Assert.assertArrayEquals;
 
 import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.Utils;
-import co.rsk.bitcoinj.crypto.TransactionSignature;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 
 public class ScriptParserTest {
     private final List<BtcECKey> fedPublicKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
@@ -18,7 +14,7 @@ public class ScriptParserTest {
     private final List<BtcECKey> emergencyPublicKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
 
     @Test
-    public void parseScriptProgram_whenStandardRedeemScript_shouldParseOk() {
+    public void parseScriptProgram_whenStandardMultiSigRedeemScript_shouldParseOk() {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(fedPublicKeys);
 
         List<ScriptChunk> actualScriptChunks = ScriptParser.parseScriptProgram(
@@ -29,7 +25,7 @@ public class ScriptParserTest {
     }
 
     @Test
-    public void parseScriptProgram_whenP2shRedeemScript_shouldParseOk() {
+    public void parseScriptProgram_whenP2shErpRedeemScript_shouldParseOk() {
         Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(fedPublicKeys,
             emergencyPublicKeys, csv);
 

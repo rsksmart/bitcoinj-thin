@@ -197,11 +197,7 @@ public class Script {
      * Bitcoin Core does something similar.</p>
      */
     private void parse(byte[] program) throws ScriptException {
-        try {
-            chunks = ScriptParser.parseScriptProgram(program);
-        } catch (Exception ex) {
-            throw new ScriptException("There was an error parsing the script", ex);
-        }
+        chunks = ScriptParser.parseScriptProgram(program);
     }
 
     /**
