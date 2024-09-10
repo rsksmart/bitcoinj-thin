@@ -617,8 +617,6 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         assertThrows(ArrayIndexOutOfBoundsException.class, () -> redeemScript.getSigInsertionIndex(hashForSignature, signingKey));
-
-        assertScriptIsNoRedeemScript(redeemScript);
     }
 
     @Test
@@ -632,8 +630,6 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         assertThrows(NullPointerException.class, () -> p2shOutputScript.getSigInsertionIndex(hashForSignature, signingKey));
-
-        assertScriptIsNoRedeemScript(p2shOutputScript);
     }
 
     @Test
@@ -645,7 +641,6 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         assertThrows(NullPointerException.class, () -> erpTestnetRedeemScript.getSigInsertionIndex(hashForSignature, signingKey));
-        assertScriptIsNoRedeemScript(erpTestnetRedeemScript);
     }
 
     @Test
@@ -673,26 +668,14 @@ public class ScriptTest {
         Assert.assertEquals(0, actualSigInsertionIndex);
     }
 
-    private static void assertScriptIsNoRedeemScript(Script redeemScript) {
-        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(
-            redeemScript.getChunks());
-        Assert.assertTrue(redeemScriptParser instanceof NonStandardErpRedeemScriptParserHardcoded);
-    }
-
-    @Test
-    public void getSigInsertionIndex_whenMalformedRedeemScript_shouldReturnZero() {
+    @Test(expected = ScriptException.class)
+    public void getSigInsertionIndex_whenMalformedRedeemScript_shouldThrowException() {
         Script customRedeemScript = new Script(new byte[2]);
 
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
-        int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
-        // This hardcode redeemScript is identified as NoRedeemScriptParser, and is using its findKeyInRedeem implementation
-        // which is returning -1 as default value. This means that the signature insertion index will always be
-        // 0 which is the initial value set when getting the signature insertion index
-        Assert.assertEquals(0, sigInsertionIndex);
-
-        assertScriptIsNoRedeemScript(customRedeemScript);
+        customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
     }
 
     @Test
@@ -713,8 +696,6 @@ public class ScriptTest {
         // 0 which is the initial value set when getting the signature insertion index
         int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
         Assert.assertEquals(0, sigInsertionIndex);
-
-        assertScriptIsNoRedeemScript(customRedeemScript);
     }
 
     @Test
