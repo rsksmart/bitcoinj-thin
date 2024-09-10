@@ -21,8 +21,8 @@ public class P2shErpFederationRedeemScriptParser implements RedeemScriptParser {
     public P2shErpFederationRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
-        List<ScriptChunk> standardRedeemScriptChunks = extractStandardRedeemScriptChunks(redeemScriptChunks);
-        this.standardRedeemScriptParser = new StandardRedeemScriptParser(standardRedeemScriptChunks);
+        List<ScriptChunk> internalRedeemScriptChunks = extractInternalStandardRedeemScriptChunks(redeemScriptChunks);
+        this.standardRedeemScriptParser = new StandardRedeemScriptParser(internalRedeemScriptChunks);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class P2shErpFederationRedeemScriptParser implements RedeemScriptParser {
         return standardRedeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
-    public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
+    private List<ScriptChunk> extractInternalStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
         int i = 1;
