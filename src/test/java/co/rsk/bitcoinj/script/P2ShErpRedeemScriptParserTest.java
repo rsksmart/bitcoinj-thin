@@ -11,25 +11,26 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class P2shErpFederationRedeemScriptParserTest {
+public class P2ShErpRedeemScriptParserTest {
+
+    private static final long CSV_VALUE = 52_560L;
 
     private List<BtcECKey> defaultRedeemScriptKeys;
     private List<BtcECKey> emergencyRedeemScriptKeys;
-    private static final long VALID_CSV_VALUE = 52_560L;
-    private P2shErpFederationRedeemScriptParser p2shErpFederationRedeemScriptParser;
+    private P2shErpRedeemScriptParser p2ShErpRedeemScriptParser;
 
     @Before
     public void setUp() {
         defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
         emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
-        Script validP2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            VALID_CSV_VALUE
+            CSV_VALUE
         );
 
-        List<ScriptChunk> p2shErpRedeemScriptChunks = validP2shErpRedeemScript.getChunks();
-        p2shErpFederationRedeemScriptParser = new P2shErpFederationRedeemScriptParser(
+        List<ScriptChunk> p2shErpRedeemScriptChunks = p2shErpRedeemScript.getChunks();
+        p2ShErpRedeemScriptParser = new P2shErpRedeemScriptParser(
             p2shErpRedeemScriptChunks
         );
     }
@@ -42,12 +43,12 @@ public class P2shErpFederationRedeemScriptParserTest {
             100L
         );
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
+        List<ScriptChunk> expectedStandardRedeemScriptChunks = standardRedeemScript.getChunks();
 
-        P2shErpFederationRedeemScriptParser p2shErpFederationRedeemScriptParser = new P2shErpFederationRedeemScriptParser(erpRedeemScript.getChunks());
-        List<ScriptChunk> obtainedRedeemScriptChunks = p2shErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks();
+        P2shErpRedeemScriptParser actualP2ShErpRedeemScriptParser = new P2shErpRedeemScriptParser(erpRedeemScript.getChunks());
+        List<ScriptChunk> actualStandardRedeemScriptChunks = actualP2ShErpRedeemScriptParser.extractStandardRedeemScriptChunks();
 
-        Assert.assertEquals(standardRedeemScriptChunks, obtainedRedeemScriptChunks);
+        Assert.assertEquals(expectedStandardRedeemScriptChunks, actualStandardRedeemScriptChunks);
     }
 
     @Test(expected = VerificationException.class)
@@ -56,9 +57,7 @@ public class P2shErpFederationRedeemScriptParserTest {
             defaultRedeemScriptKeys
         );
 
-        P2shErpFederationRedeemScriptParser p2shErpFederationRedeemScriptParser = new P2shErpFederationRedeemScriptParser(
-            standardRedeemScript.getChunks());
-        p2shErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks();
+        new P2shErpRedeemScriptParser(standardRedeemScript.getChunks());
     }
 
     @Test
@@ -70,13 +69,13 @@ public class P2shErpFederationRedeemScriptParserTest {
             emergencyRedeemScriptKeys
         );
 
-        Script erpRedeemScript = P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        Script erpRedeemScript = P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            VALID_CSV_VALUE
+            CSV_VALUE
         );
 
-        validateP2shErpRedeemScript(erpRedeemScript, VALID_CSV_VALUE);
+        validateP2shErpRedeemScript(erpRedeemScript, CSV_VALUE);
     }
 
     @Test(expected = VerificationException.class)
@@ -89,7 +88,7 @@ public class P2shErpFederationRedeemScriptParserTest {
         );
         Long csvValue = 300L;
 
-        P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -106,7 +105,7 @@ public class P2shErpFederationRedeemScriptParserTest {
         );
         Long csvValue = 300L;
 
-        P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -123,7 +122,7 @@ public class P2shErpFederationRedeemScriptParserTest {
         );
         Long csvValue = -100L;
 
-        P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -140,7 +139,7 @@ public class P2shErpFederationRedeemScriptParserTest {
         );
         Long csvValue = 0L;
 
-        P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -155,9 +154,9 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
-        Long csvValue = P2shErpFederationRedeemScriptParser.MAX_CSV_VALUE + 1;
+        Long csvValue = P2shErpRedeemScriptParser.MAX_CSV_VALUE + 1;
 
-        P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -172,9 +171,9 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
-        Long csvValue = P2shErpFederationRedeemScriptParser.MAX_CSV_VALUE;
+        Long csvValue = P2shErpRedeemScriptParser.MAX_CSV_VALUE;
 
-        Script erpRedeemScript = P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        Script erpRedeemScript = P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -191,15 +190,15 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
-        long csvValue = 20L;
+        long validCsvValue = 20L;
 
-        Script erpRedeemScript = P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        Script erpRedeemScript = P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue
+            validCsvValue
         );
 
-        validateP2shErpRedeemScript(erpRedeemScript, csvValue);
+        validateP2shErpRedeemScript(erpRedeemScript, validCsvValue);
     }
 
     @Test
@@ -210,15 +209,15 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
-        long csvValue = 500L;
+        long validCsvValue = 500L;
 
-        Script erpRedeemScript = P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        Script erpRedeemScript = P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue
+            validCsvValue
         );
 
-        validateP2shErpRedeemScript(erpRedeemScript, csvValue);
+        validateP2shErpRedeemScript(erpRedeemScript, validCsvValue);
     }
 
     @Test
@@ -231,7 +230,7 @@ public class P2shErpFederationRedeemScriptParserTest {
         );
         long csvValue = 130; // Any value above 127 needs an extra byte to indicate the sign
 
-        Script erpRedeemScript = P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        Script erpRedeemScript = P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -248,13 +247,13 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
-        long csvValue = 100_000L;
+        long invalidCsvValue = 100_000L;
 
         // Should fail since this value is above the max value
-        P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue
+            invalidCsvValue
         );
     }
 
@@ -268,7 +267,7 @@ public class P2shErpFederationRedeemScriptParserTest {
         );
         long csvValue = 33_000L; // Any value above 32_767 needs an extra byte to indicate the sign
 
-        Script erpRedeemScript = P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        Script erpRedeemScript = P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -285,13 +284,13 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
-        long csvValue = 10_000_000L;
+        long invalidCsvValue = 10_000_000L;
 
         // Should fail since this value is above the max value
-        P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue
+            invalidCsvValue
         );
     }
 
@@ -303,13 +302,13 @@ public class P2shErpFederationRedeemScriptParserTest {
         Script erpFederationRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
             emergencyRedeemScriptKeys
         );
-        long csvValue = 8_400_000L; // Any value above 8_388_607 needs an extra byte to indicate the sign
+        long invalidCsvValue = 8_400_000L; // Any value above 8_388_607 needs an extra byte to indicate the sign
 
         // Should fail since this value is above the max value
-        P2shErpFederationRedeemScriptParser.createP2shErpRedeemScript(
+        P2shErpRedeemScriptParser.createP2shErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
-            csvValue
+            invalidCsvValue
         );
     }
 
@@ -321,7 +320,7 @@ public class P2shErpFederationRedeemScriptParserTest {
             200L
         );
 
-        Assert.assertTrue(P2shErpFederationRedeemScriptParser.isP2shErpFed(erpRedeemScript.getChunks()));
+        Assert.assertTrue(P2shErpRedeemScriptParser.isP2shErpFed(erpRedeemScript.getChunks()));
     }
 
     @Test
@@ -341,37 +340,37 @@ public class P2shErpFederationRedeemScriptParserTest {
             defaultRedeemScriptKeys
         );
 
-        Assert.assertFalse(P2shErpFederationRedeemScriptParser.isP2shErpFed(customRedeemScript.getChunks()));
+        Assert.assertFalse(P2shErpRedeemScriptParser.isP2shErpFed(customRedeemScript.getChunks()));
     }
 
     @Test
     public void getMultiSigType_shouldReturnP2shErpFedType() {
-        Assert.assertEquals(MultiSigType.P2SH_ERP_FED, p2shErpFederationRedeemScriptParser.getMultiSigType());
+        Assert.assertEquals(MultiSigType.P2SH_ERP_FED, p2ShErpRedeemScriptParser.getMultiSigType());
     }
 
     @Test
     public void getM_shouldReturnM() {
         int expectedM = defaultRedeemScriptKeys.size() / 2 + 1;
-        Assert.assertEquals(expectedM, p2shErpFederationRedeemScriptParser.getM());
+        Assert.assertEquals(expectedM, p2ShErpRedeemScriptParser.getM());
     }
 
     @Test
     public void findKeyInRedeem_whenKeyExists_shouldReturnIndex() {
         for (int i = 0; i < defaultRedeemScriptKeys.size(); i++) {
             BtcECKey expectedKey = defaultRedeemScriptKeys.get(i);
-            Assert.assertEquals(i, p2shErpFederationRedeemScriptParser.findKeyInRedeem(expectedKey));
+            Assert.assertEquals(i, p2ShErpRedeemScriptParser.findKeyInRedeem(expectedKey));
         }
     }
 
     @Test(expected = IllegalStateException.class)
     public void findKeyInRedeem_whenKeyDoesNotExists_shouldThrowIllegalStateException() {
         BtcECKey unknownKey = BtcECKey.fromPrivate(BigInteger.valueOf(1234567890L));
-        p2shErpFederationRedeemScriptParser.findKeyInRedeem(unknownKey);
+        p2ShErpRedeemScriptParser.findKeyInRedeem(unknownKey);
     }
 
     @Test
     public void getPubKeys_shouldReturnPubKeys() {
-        List<BtcECKey> actualPubKeys = p2shErpFederationRedeemScriptParser.getPubKeys();
+        List<BtcECKey> actualPubKeys = p2ShErpRedeemScriptParser.getPubKeys();
         List<BtcECKey> expectedPubKeys = defaultRedeemScriptKeys.stream()
             .map(btcECKey -> BtcECKey.fromPublicOnly(btcECKey.getPubKey())).collect(
                 Collectors.toList());
@@ -383,7 +382,7 @@ public class P2shErpFederationRedeemScriptParserTest {
         List<ScriptChunk> expectedStandardRedeemScriptChunks = RedeemScriptUtils.createStandardRedeemScript(
             defaultRedeemScriptKeys
         ).getChunks();
-        Assert.assertEquals(expectedStandardRedeemScriptChunks, p2shErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks());
+        Assert.assertEquals(expectedStandardRedeemScriptChunks, p2ShErpRedeemScriptParser.extractStandardRedeemScriptChunks());
     }
 
     private void validateP2shErpRedeemScript(

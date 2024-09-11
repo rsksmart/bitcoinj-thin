@@ -43,9 +43,9 @@ public class RedeemScriptParserFactory {
                 redeemScriptChunks
             );
         }
-        if (P2shErpFederationRedeemScriptParser.isP2shErpFed(redeemScriptChunks)) {
-            logger.debug("[get] Return P2shErpFederationRedeemScriptParser");
-            return new P2shErpFederationRedeemScriptParser(
+        if (P2shErpRedeemScriptParser.isP2shErpFed(redeemScriptChunks)) {
+            logger.debug("[get] Return P2shErpRedeemScriptParser");
+            return new P2shErpRedeemScriptParser(
                 redeemScriptChunks
             );
         }

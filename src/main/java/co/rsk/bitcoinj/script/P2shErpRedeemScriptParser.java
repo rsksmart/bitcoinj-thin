@@ -11,18 +11,18 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class P2shErpFederationRedeemScriptParser implements RedeemScriptParser {
-    private static final Logger logger = LoggerFactory.getLogger(P2shErpFederationRedeemScriptParser.class);
+public class P2shErpRedeemScriptParser implements RedeemScriptParser {
+    private static final Logger logger = LoggerFactory.getLogger(P2shErpRedeemScriptParser.class);
 
     public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
-    private final RedeemScriptParser standardRedeemScriptParser;
+    private final RedeemScriptParser internalStandardMultiSigRedeemScriptParser;
 
-    public P2shErpFederationRedeemScriptParser(
+    public P2shErpRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
-        List<ScriptChunk> internalRedeemScriptChunks = extractInternalStandardRedeemScriptChunks(redeemScriptChunks);
-        this.standardRedeemScriptParser = new StandardRedeemScriptParser(internalRedeemScriptChunks);
+        List<ScriptChunk> internalStandardMultiSigRedeemScriptChunks = extractInternalStandardMultiSigRedeemScriptChunks(redeemScriptChunks);
+        this.internalStandardMultiSigRedeemScriptParser = new StandardRedeemScriptParser(internalStandardMultiSigRedeemScriptChunks);
     }
 
     @Override
@@ -32,30 +32,30 @@ public class P2shErpFederationRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int getM() {
-        return standardRedeemScriptParser.getM();
+        return internalStandardMultiSigRedeemScriptParser.getM();
     }
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
-        return standardRedeemScriptParser.findKeyInRedeem(key);
+        return internalStandardMultiSigRedeemScriptParser.findKeyInRedeem(key);
     }
 
     @Override
     public List<BtcECKey> getPubKeys() {
-        return standardRedeemScriptParser.getPubKeys();
+        return internalStandardMultiSigRedeemScriptParser.getPubKeys();
     }
 
     @Override
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return standardRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
+        return internalStandardMultiSigRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
     }
 
     @Override
     public List<ScriptChunk> extractStandardRedeemScriptChunks() {
-        return standardRedeemScriptParser.extractStandardRedeemScriptChunks();
+        return internalStandardMultiSigRedeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
-    private List<ScriptChunk> extractInternalStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
+    private List<ScriptChunk> extractInternalStandardMultiSigRedeemScriptChunks(List<ScriptChunk> chunks) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
         int i = 1;
