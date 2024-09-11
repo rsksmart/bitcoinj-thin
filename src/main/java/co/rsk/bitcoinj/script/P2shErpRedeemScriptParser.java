@@ -16,13 +16,13 @@ public class P2shErpRedeemScriptParser implements RedeemScriptParser {
 
     public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
-    private final RedeemScriptParser internalStandardMultiSigRedeemScriptParser;
+    private final RedeemScriptParser defaultRedeemScriptParser;
 
     public P2shErpRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
-        List<ScriptChunk> internalStandardMultiSigRedeemScriptChunks = extractInternalStandardMultiSigRedeemScriptChunks(redeemScriptChunks);
-        this.internalStandardMultiSigRedeemScriptParser = new StandardRedeemScriptParser(internalStandardMultiSigRedeemScriptChunks);
+        List<ScriptChunk> defaultRedeemScriptChunks = extractDefaultRedeemScriptChunks(redeemScriptChunks);
+        this.defaultRedeemScriptParser = new StandardRedeemScriptParser(defaultRedeemScriptChunks);
     }
 
     @Override
@@ -32,30 +32,30 @@ public class P2shErpRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int getM() {
-        return internalStandardMultiSigRedeemScriptParser.getM();
+        return defaultRedeemScriptParser.getM();
     }
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
-        return internalStandardMultiSigRedeemScriptParser.findKeyInRedeem(key);
+        return defaultRedeemScriptParser.findKeyInRedeem(key);
     }
 
     @Override
     public List<BtcECKey> getPubKeys() {
-        return internalStandardMultiSigRedeemScriptParser.getPubKeys();
+        return defaultRedeemScriptParser.getPubKeys();
     }
 
     @Override
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return internalStandardMultiSigRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
+        return defaultRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
     }
 
     @Override
     public List<ScriptChunk> extractStandardRedeemScriptChunks() {
-        return internalStandardMultiSigRedeemScriptParser.extractStandardRedeemScriptChunks();
+        return defaultRedeemScriptParser.extractStandardRedeemScriptChunks();
     }
 
-    private List<ScriptChunk> extractInternalStandardMultiSigRedeemScriptChunks(List<ScriptChunk> chunks) {
+    private List<ScriptChunk> extractDefaultRedeemScriptChunks(List<ScriptChunk> chunks) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
         int i = 1;
