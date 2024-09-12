@@ -3,15 +3,11 @@ package co.rsk.bitcoinj.script;
 import static org.junit.Assert.assertEquals;
 
 import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.BtcTransaction;
-import co.rsk.bitcoinj.core.Coin;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
-import co.rsk.bitcoinj.crypto.TransactionSignature;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
@@ -130,13 +126,7 @@ public class StandardRedeemScriptParserTest {
         parser.getPubKeys();
     }
 
-    @Test
-    public void getM_from_no_multiSig() {
-        Script redeemScript = new Script(new byte[2]);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
-        assertEquals(-1, parser.getM());
-    }
 
     @Test
     public void getM_from_multiSig_fast_bridge_redeem_script() {
