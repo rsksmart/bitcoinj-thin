@@ -140,8 +140,9 @@ public class FlyoverRedeemScriptParserTest {
         final int EXPECTED_SIGNATURE_INDEX = 0;
         final int SIGNATURE_INPUT_INDEX = 0;
         final int OUTPUT_INDEX = 0;
+        final int KEY_INDEX = 0;
         final NetworkParameters mainNetParams = MainNetParams.get();
-        BtcECKey privateKey = defaultRedeemScriptKeys.get(SIGNATURE_INPUT_INDEX);
+        BtcECKey privateKey = defaultRedeemScriptKeys.get(KEY_INDEX);
 
         // Creating a transaction
         BtcTransaction fundTx = new BtcTransaction(mainNetParams);
