@@ -138,8 +138,10 @@ public class FlyoverRedeemScriptParserTest {
     public void findSigInRedeem_whenSignatureIsInValidRedeemScript_shouldReturnSignatureIndexPosition() {
         // Arrange
         final int EXPECTED_SIGNATURE_INDEX = 0;
+        final int SIGNATURE_INPUT_INDEX = 0;
+        final int OUTPUT_INDEX = 0;
         final NetworkParameters mainNetParams = MainNetParams.get();
-        BtcECKey privateKey = defaultRedeemScriptKeys.get(EXPECTED_SIGNATURE_INDEX);
+        BtcECKey privateKey = defaultRedeemScriptKeys.get(SIGNATURE_INPUT_INDEX);
 
         // Creating a transaction
         BtcTransaction fundTx = new BtcTransaction(mainNetParams);
@@ -147,11 +149,11 @@ public class FlyoverRedeemScriptParserTest {
         fundTx.addOutput(Coin.FIFTY_COINS, userAddress);
 
         BtcTransaction spendTx = new BtcTransaction(mainNetParams);
-        spendTx.addInput(fundTx.getOutput(EXPECTED_SIGNATURE_INDEX));
+        spendTx.addInput(fundTx.getOutput(OUTPUT_INDEX));
 
         // Getting the transaction hash for the signature
         Sha256Hash hashForSignatureHash = spendTx.hashForSignature(
-            EXPECTED_SIGNATURE_INDEX,
+            SIGNATURE_INPUT_INDEX,
             standardRedeemScript,
             BtcTransaction.SigHash.ALL,
             false
