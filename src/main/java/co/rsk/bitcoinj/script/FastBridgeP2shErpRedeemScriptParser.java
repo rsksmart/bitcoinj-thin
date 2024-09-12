@@ -2,6 +2,7 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,9 +20,28 @@ public class FastBridgeP2shErpRedeemScriptParser extends StandardRedeemScriptPar
         this.multiSigType = MultiSigType.FAST_BRIDGE_P2SH_ERP_FED;
     }
 
+    /**
+     * @deprecated This method will be removed once FlyoverRedeemScriptParser is implemented.
+     *
+     */
+    @Deprecated
     public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
-        return P2shErpFederationRedeemScriptParser.
-            extractStandardRedeemScriptChunks(chunks.subList(2, chunks.size()));
+        List<ScriptChunk> redeemScriptChunks = chunks.subList(2, chunks.size());
+        List<ScriptChunk> chunksForRedeem = new ArrayList<>();
+        int i = 1;
+        while (i < redeemScriptChunks.size() && !redeemScriptChunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
+            chunksForRedeem.add(redeemScriptChunks.get(i));
+            i++;
+        }
+
+        // Validate the obtained redeem script has a valid format
+        if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
+            String message = "Standard redeem script obtained from P2SH ERP redeem script has an invalid structure";
+            logger.debug("[extractStandardRedeemScript] {} {}", message, chunksForRedeem);
+            throw new VerificationException(message);
+        }
+
+        return chunksForRedeem;
     }
 
     public static Script createFastBridgeP2shErpRedeemScript(
