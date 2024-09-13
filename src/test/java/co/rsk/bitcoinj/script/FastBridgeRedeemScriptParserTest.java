@@ -1,9 +1,16 @@
 package co.rsk.bitcoinj.script;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.VerificationException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -112,5 +119,77 @@ public class FastBridgeRedeemScriptParserTest {
         Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(publicKeys);
 
         Assert.assertFalse(FastBridgeRedeemScriptParser.isFastBridgeMultiSig(customRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void findKeyInRedeem_fast_bridge_redeem_script() {
+        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+            data,
+            publicKeys
+        );
+
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
+        List<BtcECKey> actualPubKeys = parser.getPubKeys();
+
+        List<BtcECKey> expectedPubKeys = publicKeys.stream()
+            .map(btcECKey -> BtcECKey.fromPublicOnly(btcECKey.getPubKey())).collect(
+                Collectors.toList());
+        assertEquals(expectedPubKeys, actualPubKeys);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void findKeyInRedeem_fast_bridge_redeem_script_no_matching_key() {
+        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+            data,
+            publicKeys
+        );
+
+        BtcECKey unmatchingBtcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(1400));
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
+
+        parser.findKeyInRedeem(unmatchingBtcECKey);
+    }
+
+    @Test
+    public void getPubKeys_fast_bridge_redeem_script() {
+        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+            data,
+            publicKeys
+        );
+
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
+        List<BtcECKey> obtainedList = parser.getPubKeys();
+
+        List<String> expectedKeysList = new ArrayList<>();
+        for (BtcECKey key : publicKeys) {
+            expectedKeysList.add(key.getPublicKeyAsHex());
+        }
+
+        List<String> obtainedKeysList = new ArrayList<>();
+        for (BtcECKey key : obtainedList) {
+            obtainedKeysList.add(key.getPublicKeyAsHex());
+        }
+
+        Collections.sort(expectedKeysList);
+        Collections.sort(obtainedKeysList);
+
+        assertEquals(expectedKeysList, obtainedKeysList);
+    }
+
+    @Test
+    public void getM_from_multiSig_fast_bridge_redeem_script() {
+        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
+        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
+            data,
+            publicKeys
+        );
+
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
+
+        int m = publicKeys.size() / 2 + 1;
+        assertEquals(m, parser.getM());
     }
 }

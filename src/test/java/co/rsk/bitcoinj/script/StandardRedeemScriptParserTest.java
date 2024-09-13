@@ -10,156 +10,116 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class StandardRedeemScriptParserTest {
 
-    private final List<BtcECKey> btcECKeyList = new ArrayList<>();
-    private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(100));
-    private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(200));
-    private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(300));
-    private final NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
+    private static final long CSV_VALUE = 52_560L;
+
+    private List<BtcECKey> defaultRedeemScriptKeys;
+    private StandardRedeemScriptParser standardRedeemScriptParser;
 
     @Before
     public void setUp() {
-        btcECKeyList.add(ecKey1);
-        btcECKeyList.add(ecKey2);
-        btcECKeyList.add(ecKey3);
+        defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+            defaultRedeemScriptKeys);
+        standardRedeemScriptParser = new StandardRedeemScriptParser(
+            standardRedeemScript.getChunks());
     }
 
     @Test
-    public void findKeyInRedeem_fast_bridge_redeem_script() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
-        );
-
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
-
-        Assert.assertTrue(parser.findKeyInRedeem(ecKey1) >= 0);
-        Assert.assertTrue(parser.findKeyInRedeem(ecKey2) >= 0);
-        Assert.assertTrue(parser.findKeyInRedeem(ecKey3) >= 0);
+    public void findKeyInRedeem_ok() {
+        BtcECKey federatorBtcKey = defaultRedeemScriptKeys.get(0);
+        standardRedeemScriptParser.findKeyInRedeem(federatorBtcKey);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void findKeyInRedeem_fast_bridge_redeem_script_no_matching_key() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
-        );
-
-        BtcECKey unmatchingBtcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(400));
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
-
-        parser.findKeyInRedeem(unmatchingBtcECKey);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void findKeyInRedeem_standard_redeem_script_no_matching_key() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-        BtcECKey unmatchingBtcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(400));
-
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
-        parser.findKeyInRedeem(unmatchingBtcECKey);
+    public void findKeyInRedeem_whenUnknownKey_shouldFail() {
+        BtcECKey unknownKey = BtcECKey.fromPrivate(BigInteger.valueOf(1400));
+        standardRedeemScriptParser.findKeyInRedeem(unknownKey);
     }
 
     @Test
-    public void getPubKeys_fast_bridge_redeem_script() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
-        );
+    public void getPubKeys_ok() {
+        List<BtcECKey> actualPubKeys = standardRedeemScriptParser.getPubKeys();
+        List<BtcECKey> expectedPubKeys = defaultRedeemScriptKeys.stream()
+            .map(btcECKey -> BtcECKey.fromPublicOnly(btcECKey.getPubKey())).collect(
+                Collectors.toList());
 
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
-        List<BtcECKey> obtainedList = parser.getPubKeys();
-
-        List<String> expectedKeysList = new ArrayList<>();
-        for (BtcECKey key : btcECKeyList) {
-            expectedKeysList.add(key.getPublicKeyAsHex());
-        }
-
-        List<String> obtainedKeysList = new ArrayList<>();
-        for (BtcECKey key : obtainedList) {
-            obtainedKeysList.add(key.getPublicKeyAsHex());
-        }
-
-        Collections.sort(expectedKeysList);
-        Collections.sort(obtainedKeysList);
-
-        assertEquals(expectedKeysList, obtainedKeysList);
+        assertEquals(expectedPubKeys, actualPubKeys);
     }
 
     @Test
-    public void getPubKeys_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-        List<BtcECKey> obtainedList = parser.getPubKeys();
-
-        List<String> expectedKeysList = new ArrayList<>();
-        for (BtcECKey key : btcECKeyList) {
-            expectedKeysList.add(key.getPublicKeyAsHex());
-        }
-
-        List<String> obtainedKeysList = new ArrayList<>();
-        for (BtcECKey key : obtainedList) {
-            obtainedKeysList.add(key.getPublicKeyAsHex());
-        }
-
-        Collections.sort(expectedKeysList);
-        Collections.sort(obtainedKeysList);
-
-        assertEquals(expectedKeysList, obtainedKeysList);
-    }
-
-    @Test(expected = ScriptException.class)
-    public void getPubKeys_invalid_redeem_script() {
-        Script script = ScriptBuilder.createP2SHOutputScript(new byte[20]);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(script.getChunks());
-
-        parser.getPubKeys();
-    }
-
-
-
-    @Test
-    public void getM_from_multiSig_fast_bridge_redeem_script() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
-        );
-
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
-
-        assertEquals(2, parser.getM());
+    public void getM_ok() {
+        int expectedM = defaultRedeemScriptKeys.size() / 2 + 1;
+        assertEquals(expectedM, standardRedeemScriptParser.getM());
     }
 
     @Test
-    public void getM_from_multiSig_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
-        assertEquals(2, parser.getM());
-    }
-
-    @Test
-    public void extractStandardRedeemScriptChunks_whenGetScriptChunksFromStandardRedeemScriptParser_shouldReturnScriptChunks() {
+    public void extractStandardRedeemScriptChunks_ok() {
         // Arrange
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         List<ScriptChunk> expectedRedeemScriptChunks = redeemScript.getChunks();
-        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
         // Act
-        List<ScriptChunk> actualRedeemScripChunks = redeemScriptParser.extractStandardRedeemScriptChunks();
+        List<ScriptChunk> actualRedeemScripChunks = standardRedeemScriptParser.extractStandardRedeemScriptChunks();
 
         // Assert
         assertEquals(expectedRedeemScriptChunks, actualRedeemScripChunks);
+    }
+
+    @Test
+    public void getMultiSigType_ok() {
+        Assert.assertEquals(RedeemScriptParser.MultiSigType.STANDARD_MULTISIG, standardRedeemScriptParser.getMultiSigType());
+    }
+
+    @Test
+    public void isStandardMultiSig_ok() {
+        Assert.assertTrue(StandardRedeemScriptParser.isStandardMultiSig(standardRedeemScriptParser.extractStandardRedeemScriptChunks()));
+    }
+
+    @Test
+    public void isStandardMultiSig_whenEmptyScript_shouldReturnFalse() {
+        Assert.assertFalse(StandardRedeemScriptParser.isStandardMultiSig(new Script(new byte[]{}).getChunks()));
+    }
+
+    @Test
+    public void isStandardMultiSig_whenNonStandardErpRedeemScriptChunks_shouldReturnFalse() {
+        List<ScriptChunk> nonStandardRedeemScriptChunks = RedeemScriptUtils.createNonStandardErpRedeemScript(
+            defaultRedeemScriptKeys,
+            RedeemScriptUtils.getEmergencyRedeemScriptKeys(),
+            CSV_VALUE
+        ).getChunks();
+        Assert.assertFalse(StandardRedeemScriptParser.isStandardMultiSig(nonStandardRedeemScriptChunks));
+    }
+
+    @Test
+    public void isStandardMultiSig_whenP2shRedeemScriptChunks_shouldReturnFalse() {
+        List<ScriptChunk> p2shErpRedeemScriptChunks = RedeemScriptUtils.createP2shErpRedeemScript(
+            defaultRedeemScriptKeys,
+            RedeemScriptUtils.getEmergencyRedeemScriptKeys(),
+            CSV_VALUE
+        ).getChunks();
+        Assert.assertFalse(StandardRedeemScriptParser.isStandardMultiSig(p2shErpRedeemScriptChunks));
+    }
+
+    @Test
+    public void isStandardMultiSig_whenFlyoverRedeemScriptChunks_shouldReturnFalse() {
+        Script p2shRedeemScriptChunks = RedeemScriptUtils.createP2shErpRedeemScript(
+            defaultRedeemScriptKeys,
+            RedeemScriptUtils.getEmergencyRedeemScriptKeys(),
+            CSV_VALUE
+        );
+
+        Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+        List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
+            derivationArgumentsHash.getBytes(), p2shRedeemScriptChunks
+        ).getChunks();
+
+        Assert.assertFalse(StandardRedeemScriptParser.isStandardMultiSig(flyoverRedeemScriptChunks));
     }
 }
