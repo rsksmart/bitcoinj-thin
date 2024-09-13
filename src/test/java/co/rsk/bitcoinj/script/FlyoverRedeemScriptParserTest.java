@@ -262,7 +262,8 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void extractStandardRedeemScriptChunks_whenIsP2shErpRedeemScript_shouldReturnStandardRedeemScriptChunks() {
         // Arrange
-        List<ScriptChunk> expectedRedeemScriptChunks = P2shErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks(p2shErpRedeemScript.getChunks());
+        P2shErpRedeemScriptParser p2shErpRedeemScriptParser = new P2shErpRedeemScriptParser(p2shErpRedeemScript.getChunks());
+        List<ScriptChunk> expectedRedeemScriptChunks = p2shErpRedeemScriptParser.extractStandardRedeemScriptChunks();
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverP2shErpRedeemScript.getChunks());
 
         // Act
