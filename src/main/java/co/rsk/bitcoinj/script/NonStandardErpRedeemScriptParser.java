@@ -2,6 +2,8 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig;
 
+import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import java.util.ArrayList;
@@ -9,21 +11,52 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser {
-    private static final Logger logger = LoggerFactory.getLogger(ErpFederationRedeemScriptParser.class);
+public class NonStandardErpRedeemScriptParser implements RedeemScriptParser {
+
+    private static final Logger logger = LoggerFactory.getLogger(NonStandardErpRedeemScriptParser.class);
 
     public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
-    public ErpFederationRedeemScriptParser(
+    private final RedeemScriptParser defaultRedeemScriptParser;
+
+    public NonStandardErpRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
-        super(
-            extractStandardRedeemScriptChunks(redeemScriptChunks)
-        );
-        this.multiSigType = MultiSigType.ERP_FED;
+        List<ScriptChunk> defaultRedeemScriptChunks = extractDefaultRedeemScriptChunks(redeemScriptChunks);
+        this.defaultRedeemScriptParser = new StandardRedeemScriptParser(defaultRedeemScriptChunks);
     }
 
-    public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
+    @Override
+    public MultiSigType getMultiSigType() {
+        return MultiSigType.NON_STANDARD_ERP_FED;
+    }
+
+    @Override
+    public int getM() {
+        return defaultRedeemScriptParser.getM();
+    }
+
+    @Override
+    public int findKeyInRedeem(BtcECKey key) {
+        return defaultRedeemScriptParser.findKeyInRedeem(key);
+    }
+
+    @Override
+    public List<BtcECKey> getPubKeys() {
+        return defaultRedeemScriptParser.getPubKeys();
+    }
+
+    @Override
+    public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
+        return defaultRedeemScriptParser.findSigInRedeem(signatureBytes, hash);
+    }
+
+    @Override
+    public List<ScriptChunk> extractStandardRedeemScriptChunks() {
+        return defaultRedeemScriptParser.extractStandardRedeemScriptChunks();
+    }
+
+    private List<ScriptChunk> extractDefaultRedeemScriptChunks(List<ScriptChunk> chunks) {
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
 
         int i = 1;
@@ -37,21 +70,21 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         // Validate the obtained redeem script has a valid format
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
             String message = "Standard redeem script obtained from ERP redeem script has an invalid structure";
-            logger.debug("[extractStandardRedeemScriptChunksFromErpRedeemScript] {} {}", message, chunksForRedeem);
+            logger.debug("[extractDefaultRedeemScriptChunks] {} {}", message, chunksForRedeem);
             throw new VerificationException(message);
         }
 
         return chunksForRedeem;
     }
 
-    public static Script createErpRedeemScript(
+    public static Script createNonStandardErpRedeemScript(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
         byte[] serializedCsvValue = Utils.signedLongToByteArrayLE(csvValue);
 
-        return createErpRedeemScript(
+        return createNonStandardErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue,
@@ -63,15 +96,16 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
     // This method encodes the CSV value as unsigned Big Endian which is not correct.
     // It should be encoded as signed LE
     // Keeping this method for backwards compatibility in rskj
-    public static Script createErpRedeemScriptDeprecated(
+    public static Script createNonStandardErpRedeemScriptDeprecated(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue
     ) {
         final int CSV_SERIALIZED_LENGTH = 2;
-        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue, CSV_SERIALIZED_LENGTH);
+        byte[] serializedCsvValue = Utils.unsignedLongToByteArrayBE(csvValue,
+            CSV_SERIALIZED_LENGTH);
 
-        return createErpRedeemScript(
+        return createNonStandardErpRedeemScript(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue,
@@ -79,17 +113,17 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
         );
     }
 
-    public static boolean isErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
+    public static boolean isNonStandardErpFed(List<ScriptChunk> chunks) {
+        return RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(chunks);
     }
 
-    private static Script createErpRedeemScript(
+    private static Script createNonStandardErpRedeemScript(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue,
         byte[] serializedCsvValue) {
 
-        validateErpRedeemScriptValues(
+        validateNonStandardErpRedeemScriptValues(
             defaultFederationRedeemScript,
             erpFederationRedeemScript,
             csvValue
@@ -97,7 +131,7 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
-        Script erpRedeemScript = scriptBuilder
+        Script nonStandardErpRedeemScript = scriptBuilder
             .op(ScriptOpCodes.OP_NOTIF)
             .addChunks(removeOpCheckMultisig(defaultFederationRedeemScript))
             .op(ScriptOpCodes.OP_ELSE)
@@ -110,18 +144,18 @@ public class ErpFederationRedeemScriptParser extends StandardRedeemScriptParser 
             .build();
 
         // Validate the created redeem script has a valid structure
-        if (!RedeemScriptValidator.hasErpRedeemScriptStructure(erpRedeemScript.getChunks())) {
+        if (!RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(nonStandardErpRedeemScript.getChunks())) {
             String message = String.format(
-                "Created redeem script has an invalid structure, not ERP redeem script. Redeem script created: %s",
-                erpRedeemScript
+                "Created redeem script has an invalid structure, it is not a non standard ERP redeem script. Redeem script created: %s",
+                nonStandardErpRedeemScript
             );
-            logger.debug("[createErpRedeemScript] {}", message);
+            logger.debug("[createNonStandardErpRedeemScript] {}", message);
             throw new VerificationException(message);
         }
-        return erpRedeemScript;
+        return nonStandardErpRedeemScript;
     }
 
-    private static void validateErpRedeemScriptValues(
+    private static void validateNonStandardErpRedeemScriptValues(
         Script defaultFederationRedeemScript,
         Script erpFederationRedeemScript,
         Long csvValue

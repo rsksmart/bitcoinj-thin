@@ -90,7 +90,7 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void get_whenErpRedeemScript_shouldReturnRedeemScriptParser() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -98,7 +98,7 @@ public class RedeemScriptParserFactoryTest {
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
-        Assert.assertEquals(MultiSigType.ERP_FED, redeemScriptParser.getMultiSigType());
+        Assert.assertEquals(MultiSigType.NON_STANDARD_ERP_FED, redeemScriptParser.getMultiSigType());
     }
 
     @Test

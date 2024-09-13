@@ -38,7 +38,7 @@ public class ScriptParserTest {
 
     @Test
     public void parseScriptProgram_whenErpRedeemScript_shouldParseOk() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(fedPublicKeys,
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(fedPublicKeys,
             emergencyPublicKeys, csv);
 
         List<ScriptChunk> actualScriptChunks = ScriptParser.parseScriptProgram(

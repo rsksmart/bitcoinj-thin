@@ -38,7 +38,7 @@ public class FlyoverRedeemScriptParserTest {
         standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         flyoverStandardRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
 
-        erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, CSV_VALUE);
+        erpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, CSV_VALUE);
         flyoverErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
 
         p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, CSV_VALUE);
@@ -195,7 +195,7 @@ public class FlyoverRedeemScriptParserTest {
         assertSigInRedeem(flyoverP2shErpRedeemScript);
     }
 
-    private void assertSigInRedeem(Script flyoverRedeemScript){
+    private void assertSigInRedeem(Script flyoverRedeemScript) {
         // Arrange
         final int EXPECTED_SIGNATURE_INDEX = 0;
         final int SIGNATURE_INPUT_INDEX = 0;
@@ -249,32 +249,33 @@ public class FlyoverRedeemScriptParserTest {
     @Test
     public void extractStandardRedeemScriptChunks_whenIsErpRedeemScript_shouldReturnStandardRedeemScriptChunks() {
         // Arrange
-        List<ScriptChunk> expectedRedeemScriptChunks = ErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks(erpRedeemScript.getChunks());
+        NonStandardErpRedeemScriptParser nonStandardErpRedeemScriptParser = new NonStandardErpRedeemScriptParser(erpRedeemScript.getChunks());
+        List<ScriptChunk> expectedStandardRedeemScriptChunks = nonStandardErpRedeemScriptParser.extractStandardRedeemScriptChunks();
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverErpRedeemScript.getChunks());
 
         // Act
         List<ScriptChunk> actualRedeemScriptChunks = flyoverRedeemScriptParser.extractStandardRedeemScriptChunks();
 
         // Assert
-        assertEquals(expectedRedeemScriptChunks, actualRedeemScriptChunks);
+        assertEquals(expectedStandardRedeemScriptChunks, actualRedeemScriptChunks);
     }
 
     @Test
     public void extractStandardRedeemScriptChunks_whenIsP2shErpRedeemScript_shouldReturnStandardRedeemScriptChunks() {
         // Arrange
-        P2shErpRedeemScriptParser p2shErpRedeemScriptParser = new P2shErpRedeemScriptParser(p2shErpRedeemScript.getChunks());
-        List<ScriptChunk> expectedRedeemScriptChunks = p2shErpRedeemScriptParser.extractStandardRedeemScriptChunks();
+        P2shErpRedeemScriptParser p2shErpFederationRedeemScriptParser = new P2shErpRedeemScriptParser(p2shErpRedeemScript.getChunks());
+        List<ScriptChunk> expectedStandardRedeemScriptChunks = p2shErpFederationRedeemScriptParser.extractStandardRedeemScriptChunks();
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverP2shErpRedeemScript.getChunks());
 
         // Act
         List<ScriptChunk> actualRedeemScriptChunks = flyoverRedeemScriptParser.extractStandardRedeemScriptChunks();
 
         // Assert
-        assertEquals(expectedRedeemScriptChunks, actualRedeemScriptChunks);
+        assertEquals(expectedStandardRedeemScriptChunks, actualRedeemScriptChunks);
     }
 
     @Test(expected = VerificationException.class)
-    public void flyoverRedeemScriptParser_whenRedeemScriptChunksSizeIsZero_shouldThrowVerificationException(){
+    public void flyoverRedeemScriptParser_whenRedeemScriptChunksSizeIsZero_shouldThrowVerificationException() {
         Script malformedScriptZeroSize = new Script(new byte[0]);
 
         // Act
@@ -282,7 +283,7 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     @Test(expected = VerificationException.class)
-    public void flyoverRedeemScriptParser_whenRedeemScriptChunksSizeIsTwo_shouldThrowVerificationException(){
+    public void flyoverRedeemScriptParser_whenRedeemScriptChunksSizeIsTwo_shouldThrowVerificationException() {
         Script malformedScriptTwoSize = new Script(new byte[2]);
 
         // Act

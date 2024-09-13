@@ -10,7 +10,7 @@ public interface RedeemScriptParser {
         NO_MULTISIG_TYPE,
         STANDARD_MULTISIG,
         FAST_BRIDGE_MULTISIG,
-        ERP_FED,
+        NON_STANDARD_ERP_FED,
         FAST_BRIDGE_ERP_FED,
         P2SH_ERP_FED,
         FAST_BRIDGE_P2SH_ERP_FED,

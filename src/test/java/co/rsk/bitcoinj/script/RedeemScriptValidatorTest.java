@@ -53,7 +53,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasStandardRedeemScriptStructure_non_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
@@ -63,100 +63,100 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_standard_redeem_script() {
+    public void hasNonStandardErpRedeemScriptStructure_standard_redeem_script() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_fast_bridge_redeem_script() {
+    public void hasNonStandardErpRedeemScriptStructure_fast_bridge_redeem_script() {
         Script redeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
             Sha256Hash.of(new byte[]{1}).getBytes(),
             defaultRedeemScriptKeys
         );
 
-        Assert.assertFalse(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_one_byte_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptOneByteCsvValue_shouldReturnTrue() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             10L
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_two_bytes_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptTwoBytesCsvValue_shouldReturnTrue() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_two_bytes_including_sign_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptTwoBytesIncludingSignCsvValue_shouldReturnTrue() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             130L // Any value above 127 needs an extra byte to indicate the sign
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_three_bytes_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptThreeBytesCsvValue_shouldReturnTrue() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             100_000L
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_three_bytes_including_sign_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptThreeBytesIncludingSignCsvValue_shouldReturnTrue() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             33_000L // Any value above 32_767 needs an extra byte to indicate the sign
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_four_bytes_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptFourBytesCsvValue_shouldReturnTrue() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             10_000_000L
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_erp_fed_redeem_script_four_bytes_including_sign_csv_value() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptFourBytesIncludingSignCsvValue_shouldReturnTrue() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             8_400_000L // Any value above 8_388_607 needs an extra byte to indicate the sign
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_fast_bridge_erp_redeem_script_removing_prefix() {
+    public void hasErpRedeemScriptStructure_whenFlyoverNonStandardErpRedeemScriptRemovingPrefix_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -168,7 +168,7 @@ public class RedeemScriptValidatorTest {
         List<ScriptChunk> chunks = redeemScript.getChunks();
         List<ScriptChunk> chunksWithoutFastBridgePrefix = chunks.subList(2, chunks.size());
 
-        Assert.assertTrue(RedeemScriptValidator.hasErpRedeemScriptStructure(
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(
             chunksWithoutFastBridgePrefix)
         );
     }
@@ -202,8 +202,8 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test(expected = VerificationException.class)
-    public void removeOpCheckMultiSig_non_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createErpRedeemScript(
+    public void removeOpCheckMultiSig_wehnNonStandardErpRedeemScript_ok() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             500L

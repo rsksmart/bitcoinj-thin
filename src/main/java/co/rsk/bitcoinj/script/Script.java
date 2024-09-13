@@ -456,7 +456,7 @@ public class Script {
     private boolean isErpType(Script redeemScript) {
         List<ScriptChunk> chunks = redeemScript.getChunks();
         boolean isFastBridgeErp = FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(chunks);
-        boolean isErp = RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
+        boolean isErp = RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(chunks);
         boolean isFastBridgeP2shErp = FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(chunks);
         boolean isP2shErp = RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
 

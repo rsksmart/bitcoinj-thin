@@ -48,7 +48,7 @@ public class FastBridgeErpRedeemScriptParserTest {
 
     @Test
     public void createFastBridgeErpRedeemScript_from_Erp_redeem_script() {
-        Script erpRedeemScript = RedeemScriptUtils.createErpRedeemScript(
+        Script erpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             5063L

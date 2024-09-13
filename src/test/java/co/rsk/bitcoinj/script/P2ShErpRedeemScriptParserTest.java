@@ -331,7 +331,7 @@ public class P2ShErpRedeemScriptParserTest {
             200L
         );
 
-        Assert.assertFalse(ErpFederationRedeemScriptParser.isErpFed(erpRedeemScript.getChunks()));
+        Assert.assertFalse(NonStandardErpRedeemScriptParser.isNonStandardErpFed(erpRedeemScript.getChunks()));
     }
 
     @Test
