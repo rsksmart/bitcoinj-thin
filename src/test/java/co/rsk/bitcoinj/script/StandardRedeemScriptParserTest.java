@@ -15,6 +15,7 @@ import org.junit.Test;
 
 public class StandardRedeemScriptParserTest {
 
+    private static final byte[] FLYOVER_DERIVATION_HASH = Sha256Hash.of(new byte[]{1}).getBytes();
     private final List<BtcECKey> btcECKeyList = new ArrayList<>();
     private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(100));
     private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(200));
@@ -28,14 +29,14 @@ public class StandardRedeemScriptParserTest {
     }
 
     @Test
-    public void findKeyInRedeem_fast_bridge_redeem_script() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
+    public void findKeyInRedeem_whenFlyoverRedeemScript_ok() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script flyoverRedeemSCript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
         );
 
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(flyoverRedeemSCript.getChunks());
 
         Assert.assertTrue(parser.findKeyInRedeem(ecKey1) >= 0);
         Assert.assertTrue(parser.findKeyInRedeem(ecKey2) >= 0);
@@ -43,15 +44,15 @@ public class StandardRedeemScriptParserTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void findKeyInRedeem_fast_bridge_redeem_script_no_matching_key() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
+    public void findKeyInRedeem_whenFlyoverRedeemScriptNoMatchingKey_shouldFail() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script flyoverRedeemSCript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
         );
 
         BtcECKey unmatchingBtcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(400));
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(flyoverRedeemSCript.getChunks());
 
         parser.findKeyInRedeem(unmatchingBtcECKey);
     }
@@ -67,14 +68,14 @@ public class StandardRedeemScriptParserTest {
     }
 
     @Test
-    public void getPubKeys_fast_bridge_redeem_script() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
+    public void getPubKeys_whenFlyoverRedeemScript_ok() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script flyoverRedeemSCript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
         );
 
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(flyoverRedeemSCript.getChunks());
         List<BtcECKey> obtainedList = parser.getPubKeys();
 
         List<String> expectedKeysList = new ArrayList<>();
@@ -127,14 +128,14 @@ public class StandardRedeemScriptParserTest {
 
 
     @Test
-    public void getM_from_multiSig_fast_bridge_redeem_script() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            btcECKeyList
+    public void getM_fromMultiSig_whenFlyoverRedeemScript_ok() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
         );
 
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
+        RedeemScriptParser parser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
 
         assertEquals(2, parser.getM());
     }
