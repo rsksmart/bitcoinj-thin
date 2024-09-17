@@ -66,7 +66,7 @@ public class FastBridgeP2shErpRedeemScriptParser extends StandardRedeemScriptPar
     }
 
     public static boolean isFastBridgeP2shErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasFastBridgePrefix(chunks) &&
+        return RedeemScriptValidator.hasFlyoverPrefix(chunks) &&
             RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks.subList(2, chunks.size()));
     }
 }

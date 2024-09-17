@@ -188,7 +188,7 @@ public class RedeemScriptValidator {
             hasStandardRedeemScriptStructure(erpFedRedeemScript.getChunks());
     }
 
-    protected static boolean hasFastBridgePrefix(List<ScriptChunk> chunks) {
+    protected static boolean hasFlyoverPrefix(List<ScriptChunk> chunks) {
         ScriptChunk firstChunk = chunks.get(0);
 
         if (firstChunk.data == null || chunks.size() < 2) {
@@ -198,6 +198,15 @@ public class RedeemScriptValidator {
         return firstChunk.opcode == 32 &&
             firstChunk.data.length == 32 &&
             chunks.get(1).opcode == ScriptOpCodes.OP_DROP;
+    }
+
+    protected static boolean hasFlyoverRedeemScriptStructure(List<ScriptChunk> chunks) {
+        if (!hasFlyoverPrefix(chunks)) {
+            return false;
+        }
+
+        // Validate the obtained redeem script has a valid format
+        return isRedeemLikeScript(chunks.subList(2, chunks.size()));
     }
 
     protected static List<ScriptChunk> removeOpCheckMultisig(Script redeemScript) {
