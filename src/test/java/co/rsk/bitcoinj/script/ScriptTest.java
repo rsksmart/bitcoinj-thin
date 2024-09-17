@@ -17,7 +17,7 @@
 
 package co.rsk.bitcoinj.script;
 
-import static co.rsk.bitcoinj.script.RedeemScriptUtils.createErpRedeemScript;
+import static co.rsk.bitcoinj.script.RedeemScriptUtils.createNonStandardErpRedeemScript;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -516,7 +516,7 @@ public class ScriptTest {
 
     @Test
     public void getNumberOfSignaturesRequiredToSpend_erp_redeem_script() {
-        Script erpRedeemScript = createErpRedeemScript(
+        Script erpRedeemScript = createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             500L
@@ -558,7 +558,7 @@ public class ScriptTest {
 
     @Test
     public void getSigInsertionIndex_whenScriptSigWithErpRedeemScript_shouldReturnIndex() {
-        Script erpRedeemScript = createErpRedeemScript(
+        Script erpRedeemScript = createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             500L
@@ -680,7 +680,7 @@ public class ScriptTest {
 
     @Test
     public void getSigInsertionIndex_whenScriptWithOnlyOP0AndRedeemScript_shouldReturnZero() {
-        Script erpRedeemScript = createErpRedeemScript(FEDERATION_KEYS, ERP_FEDERATION_KEYS, 500L);
+        Script erpRedeemScript = createNonStandardErpRedeemScript(FEDERATION_KEYS, ERP_FEDERATION_KEYS, 500L);
         Script customRedeemScript = new ScriptBuilder().number(OP_0)
             .data(erpRedeemScript.getProgram()).build();
 
@@ -711,7 +711,7 @@ public class ScriptTest {
 
     @Test
     public void isSentToMultiSig_erp_multiSig() {
-        Script erpRedeemScript = createErpRedeemScript(
+        Script erpRedeemScript = createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             500L
@@ -776,7 +776,7 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_erp_redeemScript() {
-        Script redeemScript = createErpRedeemScript(
+        Script redeemScript = createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             500L

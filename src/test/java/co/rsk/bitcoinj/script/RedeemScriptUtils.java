@@ -42,7 +42,7 @@ public final class RedeemScriptUtils {
     ) {
         ScriptBuilder scriptBuilder = new ScriptBuilder();
 
-        Script erpRedeemScript = createErpRedeemScript(
+        Script erpRedeemScript = createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
             csvValue
@@ -89,7 +89,7 @@ public final class RedeemScriptUtils {
             .build();
     }
 
-    public static Script createErpRedeemScript(
+    public static Script createNonStandardErpRedeemScript(
         List<BtcECKey> defaultRedeemScriptKeys,
         List<BtcECKey> emergencyRedeemScriptKeys,
         Long csvValue

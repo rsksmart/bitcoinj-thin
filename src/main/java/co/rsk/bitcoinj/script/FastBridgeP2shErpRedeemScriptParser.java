@@ -27,6 +27,7 @@ public class FastBridgeP2shErpRedeemScriptParser extends StandardRedeemScriptPar
     @Deprecated
     public static List<ScriptChunk> extractStandardRedeemScriptChunks(List<ScriptChunk> chunks) {
         List<ScriptChunk> redeemScriptChunks = chunks.subList(2, chunks.size());
+
         List<ScriptChunk> chunksForRedeem = new ArrayList<>();
         int i = 1;
         while (i < redeemScriptChunks.size() && !redeemScriptChunks.get(i).equalsOpCode(ScriptOpCodes.OP_ELSE)) {
@@ -37,7 +38,7 @@ public class FastBridgeP2shErpRedeemScriptParser extends StandardRedeemScriptPar
         // Validate the obtained redeem script has a valid format
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
             String message = "Standard redeem script obtained from P2SH ERP redeem script has an invalid structure";
-            logger.debug("[extractStandardRedeemScript] {} {}", message, chunksForRedeem);
+            logger.debug("[extractStandardRedeemScriptChunks] {} {}", message, chunksForRedeem);
             throw new VerificationException(message);
         }
 
