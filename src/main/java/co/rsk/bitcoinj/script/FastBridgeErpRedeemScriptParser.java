@@ -67,7 +67,7 @@ public class FastBridgeErpRedeemScriptParser extends StandardRedeemScriptParser 
     }
 
     public static boolean isFastBridgeErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasFastBridgePrefix(chunks) &&
+        return RedeemScriptValidator.hasFlyoverPrefix(chunks) &&
             RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(chunks.subList(2, chunks.size()));
     }
 }

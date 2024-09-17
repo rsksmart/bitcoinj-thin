@@ -36,7 +36,7 @@ public class FastBridgeRedeemScriptParser extends StandardRedeemScriptParser {
         Script redeemScript,
         Sha256Hash derivationArgumentsHash
     ) {
-        if (RedeemScriptValidator.hasFastBridgePrefix(redeemScript.getChunks())) {
+        if (RedeemScriptValidator.hasFlyoverPrefix(redeemScript.getChunks())) {
             String message = "Provided redeem script is already a fast bridge redeem script";
             logger.debug("[createMultiSigFastBridgeRedeemScript] {}", message);
             throw new VerificationException(message);
@@ -56,7 +56,7 @@ public class FastBridgeRedeemScriptParser extends StandardRedeemScriptParser {
     }
 
     public static boolean isFastBridgeMultiSig(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasFastBridgePrefix(chunks) &&
+        return RedeemScriptValidator.hasFlyoverPrefix(chunks) &&
             RedeemScriptValidator.hasStandardRedeemScriptStructure(chunks.subList(2, chunks.size()));
     }
 }
