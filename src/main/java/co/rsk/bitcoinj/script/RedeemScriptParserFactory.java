@@ -55,9 +55,9 @@ public class RedeemScriptParserFactory {
                 redeemScriptChunks
             );
         }
-        if (ErpFederationRedeemScriptParser.isErpFed(redeemScriptChunks)) {
-            logger.debug("[get] Return ErpFederationRedeemScriptParser");
-            return new ErpFederationRedeemScriptParser(
+        if (NonStandardErpRedeemScriptParser.isNonStandardErpFed(redeemScriptChunks)) {
+            logger.debug("[get] Return NonStandardErpRedeemScriptParser");
+            return new NonStandardErpRedeemScriptParser(
                 redeemScriptChunks
             );
         }

@@ -67,7 +67,7 @@ public class P2shErpRedeemScriptParser implements RedeemScriptParser {
         // Validate the obtained redeem script has a valid format
         if (!RedeemScriptValidator.hasStandardRedeemScriptStructure(chunksForRedeem)) {
             String message = "Standard redeem script obtained from P2SH ERP redeem script has an invalid structure";
-            logger.debug("[extractStandardRedeemScript] {} {}", message, chunksForRedeem);
+            logger.debug("[extractStandardRedeemScriptChunks] {} {}", message, chunksForRedeem);
             throw new VerificationException(message);
         }
 
