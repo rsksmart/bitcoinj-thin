@@ -2,7 +2,6 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Sha256Hash;
-import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 
 import org.slf4j.Logger;
@@ -13,8 +12,6 @@ import java.util.List;
 
 public class P2shErpRedeemScriptParser implements RedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(P2shErpRedeemScriptParser.class);
-
-    public static long MAX_CSV_VALUE = 65_535L; // 2^16 - 1, since bitcoin will interpret up to 16 bits as the CSV value
 
     private final RedeemScriptParser defaultRedeemScriptParser;
 
