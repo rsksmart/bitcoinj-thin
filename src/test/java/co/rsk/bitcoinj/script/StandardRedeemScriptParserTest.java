@@ -3,12 +3,8 @@ package co.rsk.bitcoinj.script;
 import static org.junit.Assert.assertEquals;
 
 import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.NetworkParameters;
-import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -19,22 +15,23 @@ public class StandardRedeemScriptParserTest {
 
     private static final long CSV_VALUE = 52_560L;
 
-    private List<BtcECKey> defaultRedeemScriptKeys;
+    private List<BtcECKey> keys;
     private StandardRedeemScriptParser standardRedeemScriptParser;
 
     @Before
     public void setUp() {
-        defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+        keys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
-            defaultRedeemScriptKeys);
+            keys);
         standardRedeemScriptParser = new StandardRedeemScriptParser(
             standardRedeemScript.getChunks());
     }
 
     @Test
     public void findKeyInRedeem_ok() {
-        BtcECKey federatorBtcKey = defaultRedeemScriptKeys.get(0);
-        standardRedeemScriptParser.findKeyInRedeem(federatorBtcKey);
+        BtcECKey federatorBtcKey = keys.get(3);
+        int actualKeyPositionInRedeem = standardRedeemScriptParser.findKeyInRedeem(federatorBtcKey);
+        assertEquals(3, actualKeyPositionInRedeem);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -46,7 +43,7 @@ public class StandardRedeemScriptParserTest {
     @Test
     public void getPubKeys_ok() {
         List<BtcECKey> actualPubKeys = standardRedeemScriptParser.getPubKeys();
-        List<BtcECKey> expectedPubKeys = defaultRedeemScriptKeys.stream()
+        List<BtcECKey> expectedPubKeys = keys.stream()
             .map(btcECKey -> BtcECKey.fromPublicOnly(btcECKey.getPubKey())).collect(
                 Collectors.toList());
 
@@ -55,14 +52,14 @@ public class StandardRedeemScriptParserTest {
 
     @Test
     public void getM_ok() {
-        int expectedM = defaultRedeemScriptKeys.size() / 2 + 1;
+        int expectedM = keys.size() / 2 + 1;
         assertEquals(expectedM, standardRedeemScriptParser.getM());
     }
 
     @Test
     public void extractStandardRedeemScriptChunks_ok() {
         // Arrange
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(keys);
         List<ScriptChunk> expectedRedeemScriptChunks = redeemScript.getChunks();
 
         // Act
@@ -84,23 +81,24 @@ public class StandardRedeemScriptParserTest {
 
     @Test
     public void isStandardMultiSig_whenEmptyScript_shouldReturnFalse() {
-        Assert.assertFalse(StandardRedeemScriptParser.isStandardMultiSig(new Script(new byte[]{}).getChunks()));
+        Script emptyScript = new Script(new byte[]{});
+        Assert.assertFalse(StandardRedeemScriptParser.isStandardMultiSig(emptyScript.getChunks()));
     }
 
     @Test
     public void isStandardMultiSig_whenNonStandardErpRedeemScriptChunks_shouldReturnFalse() {
-        List<ScriptChunk> nonStandardRedeemScriptChunks = RedeemScriptUtils.createNonStandardErpRedeemScript(
-            defaultRedeemScriptKeys,
+        List<ScriptChunk> nonStandardErpRedeemScriptChunks = RedeemScriptUtils.createNonStandardErpRedeemScript(
+            keys,
             RedeemScriptUtils.getEmergencyRedeemScriptKeys(),
             CSV_VALUE
         ).getChunks();
-        Assert.assertFalse(StandardRedeemScriptParser.isStandardMultiSig(nonStandardRedeemScriptChunks));
+        Assert.assertFalse(StandardRedeemScriptParser.isStandardMultiSig(nonStandardErpRedeemScriptChunks));
     }
 
     @Test
     public void isStandardMultiSig_whenP2shRedeemScriptChunks_shouldReturnFalse() {
         List<ScriptChunk> p2shErpRedeemScriptChunks = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
+            keys,
             RedeemScriptUtils.getEmergencyRedeemScriptKeys(),
             CSV_VALUE
         ).getChunks();
@@ -110,7 +108,7 @@ public class StandardRedeemScriptParserTest {
     @Test
     public void isStandardMultiSig_whenFlyoverRedeemScriptChunks_shouldReturnFalse() {
         Script p2shRedeemScriptChunks = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
+            keys,
             RedeemScriptUtils.getEmergencyRedeemScriptKeys(),
             CSV_VALUE
         );

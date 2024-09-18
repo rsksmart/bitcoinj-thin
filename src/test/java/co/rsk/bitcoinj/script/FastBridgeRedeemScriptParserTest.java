@@ -1,6 +1,5 @@
 package co.rsk.bitcoinj.script;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import co.rsk.bitcoinj.core.BtcECKey;
