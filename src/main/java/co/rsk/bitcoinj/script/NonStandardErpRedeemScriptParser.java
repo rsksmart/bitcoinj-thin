@@ -70,8 +70,4 @@ public class NonStandardErpRedeemScriptParser implements RedeemScriptParser {
 
         return chunksForRedeem;
     }
-
-    public static boolean isNonStandardErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(chunks);
-    }
 }

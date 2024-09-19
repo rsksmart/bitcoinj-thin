@@ -60,7 +60,7 @@ public class NonStandardErpRedeemScriptParserTest {
             200L
         );
 
-        Assert.assertTrue(NonStandardErpRedeemScriptParser.isNonStandardErpFed(erpRedeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(erpRedeemScript.getChunks()));
     }
 
     @Test
@@ -69,7 +69,7 @@ public class NonStandardErpRedeemScriptParserTest {
             defaultRedeemScriptKeys
         );
 
-        Assert.assertFalse(NonStandardErpRedeemScriptParser.isNonStandardErpFed(customRedeemScript.getChunks()));
+        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(customRedeemScript.getChunks()));
     }
 
     @Test

@@ -27,7 +27,7 @@ public class RedeemScriptParserFactory {
         if (redeemScriptChunks.size() < 4) {
             // A multisig redeem script must have at least 4 redeemScriptChunks (OP_N [PUB1 ...] OP_N CHECK_MULTISIG)
             final String errorMessage = "The provided redeem script has less than 4 redeemScriptChunks.";
-            logger.trace(String.format("[get] %s", errorMessage));
+            logger.trace("[get] {}", errorMessage);
             throw new ScriptException(errorMessage);
         }
 
@@ -55,7 +55,7 @@ public class RedeemScriptParserFactory {
                 redeemScriptChunks
             );
         }
-        if (NonStandardErpRedeemScriptParser.isNonStandardErpFed(redeemScriptChunks)) {
+        if (RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScriptChunks)) {
             logger.debug("[get] Return NonStandardErpRedeemScriptParser");
             return new NonStandardErpRedeemScriptParser(
                 redeemScriptChunks
