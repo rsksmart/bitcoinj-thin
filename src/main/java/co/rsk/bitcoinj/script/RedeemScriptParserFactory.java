@@ -37,7 +37,7 @@ public class RedeemScriptParserFactory {
                 redeemScriptChunks
             );
         }
-        if (StandardRedeemScriptParser.isStandardMultiSig(redeemScriptChunks)) {
+        if (RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScriptChunks)) {
             logger.debug("[get] Return StandardRedeemScriptParser");
             return new StandardRedeemScriptParser(
                 redeemScriptChunks

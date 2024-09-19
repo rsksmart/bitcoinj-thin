@@ -3,7 +3,6 @@ package co.rsk.bitcoinj.script;
 import static org.junit.Assert.assertEquals;
 
 import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import java.math.BigInteger;
@@ -20,7 +19,6 @@ public class StandardRedeemScriptParserTest {
     private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(100));
     private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(200));
     private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(300));
-    private final NetworkParameters networkParameters = NetworkParameters.fromID(NetworkParameters.ID_REGTEST);
 
     @Before
     public void setUp() {
