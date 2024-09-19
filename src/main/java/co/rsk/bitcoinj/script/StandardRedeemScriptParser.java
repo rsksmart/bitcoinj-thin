@@ -81,8 +81,4 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     public List<ScriptChunk> extractStandardRedeemScriptChunks() {
         return redeemScriptChunks;
     }
-
-    public static boolean isStandardMultiSig(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasStandardRedeemScriptStructure(chunks);
-    }
 }
