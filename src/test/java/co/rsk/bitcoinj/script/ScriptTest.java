@@ -508,7 +508,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getNumberOfSignaturesRequiredToSpend_whenFlyoverRedeemScript_ok() {
+    public void getNumberOfSignaturesRequiredToSpend_whenFlyoverRedeemScript_shouldReturnNumberOfRequiredSignatures() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(
             FEDERATION_KEYS);
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
@@ -519,7 +519,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getNumberOfSignaturesRequiredToSpend_whenNonStandardErpRedeemScript_ok() {
+    public void getNumberOfSignaturesRequiredToSpend_whenNonStandardErpRedeemScript_shouldReturnNumberOfRequiredSignatures() {
         Script nonStandardErpRedeemScript = createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
@@ -531,7 +531,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getNumberOfSignaturesRequiredToSpend_whenFlyoverNonStandardRedeemScript_ok() {
+    public void getNumberOfSignaturesRequiredToSpend_whenFlyoverNonStandardRedeemScript_shouldReturnNumberOfRequiredSignatures() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
@@ -548,7 +548,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getNumberOfSignaturesRequiredToSpend_whenStandardRedeemScript_ok() {
+    public void getNumberOfSignaturesRequiredToSpend_whenStandardRedeemScript_shouldReturnNumberOfRequiredSignatures() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
         int actualNumberOfSignaturesRequiredToSpend = redeemScript.getNumberOfSignaturesRequiredToSpend();
 
@@ -737,7 +737,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void isSentToMultiSig_whenFlyoverNonStandardErpRedeemScript_ok() {
+    public void isSentToMultiSig_whenFlyoverNonStandardErpRedeemScript_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
@@ -760,35 +760,35 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_whenStandardRedeemScript() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
-        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
-        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
+        Script standardP2SHOutputScript = ScriptBuilder.createP2SHOutputScript(standardRedeemScript);
+        Script inputScript = standardP2SHOutputScript.createEmptyInputScript(null, standardRedeemScript);
 
         int expectedOpZeroes = 1 + REQUIRED_SIGNATURES;
 
-        assertInputScriptStructure(
+        assertScriptSigStructure(
             inputScript.getChunks(),
             STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
-            redeemScript.getProgram()
+            standardRedeemScript.getProgram()
         );
     }
 
     @Test
-    public void createEmptyInputScript_whenFlyoverStandardMultisig_ok() {
+    public void createEmptyInputScript_whenFlyoverStandardMultisig_shouldCreateValidScriptSig() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
             FLYOVER_DERIVATION_HASH,
             redeemScript
         );
 
-        Script spk = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
-        Script inputScript = spk.createEmptyInputScript(null, flyoverRedeemScript);
+        Script standardP2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+        Script scriptSig = standardP2shOutputScript.createEmptyInputScript(null, flyoverRedeemScript);
 
         int expectedOpZeroes = 1 + REQUIRED_SIGNATURES;
 
-        assertInputScriptStructure(
-            inputScript.getChunks(),
+        assertScriptSigStructure(
+            scriptSig.getChunks(),
             STANDARD_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             flyoverRedeemScript.getProgram()
@@ -797,14 +797,14 @@ public class ScriptTest {
 
     @Test
     public void createEmptyInputScript_whenNonStandardErpRedeemScript() {
-        Script redeemScript = createNonStandardErpRedeemScript(
+        Script nonStandardErpRedeemScript = createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             CSV_VALUE
         );
 
-        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
-        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(nonStandardErpRedeemScript);
+        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, nonStandardErpRedeemScript);
 
         // The expected Erp input script structure is:
         // First element: OP_0 - Belonging to the standard of BTC
@@ -813,17 +813,17 @@ public class ScriptTest {
         // Last element: Program of redeem script
         int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
-        assertInputScriptStructure(
-            inputScript.getChunks(),
+        assertScriptSigStructure(
+            scriptSig.getChunks(),
             P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
-            redeemScript.getProgram()
+            nonStandardErpRedeemScript.getProgram()
         );
     }
 
     @Test
-    public void createEmptyInputScript_whenFlyoverNonStandardErpRedeemScript_ok() {
-        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
+    public void createEmptyInputScript_whenFlyoverNonStandardErpRedeemScript_shouldCreateValidNonStandardErpRedeemScript() {
+        Script nonStandardErpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             CSV_VALUE
@@ -831,11 +831,11 @@ public class ScriptTest {
 
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
             FLYOVER_DERIVATION_HASH,
-            redeemScript
+            nonStandardErpRedeemScript
         );
 
-        Script spk = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
-        Script inputScript = spk.createEmptyInputScript(null, flyoverRedeemScript);
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, flyoverRedeemScript);
 
         // The expected Erp input script structure is:
         // First element: OP_0 - Belonging to the standard of BTC
@@ -844,8 +844,8 @@ public class ScriptTest {
         // Last element: Program of redeem script
         int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
-        assertInputScriptStructure(
-            inputScript.getChunks(),
+        assertScriptSigStructure(
+            scriptSig.getChunks(),
             P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             flyoverRedeemScript.getProgram()
@@ -853,15 +853,15 @@ public class ScriptTest {
     }
 
     @Test
-    public void createEmptyInputScript_whenP2shErpRedeemScript_ok() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+    public void createEmptyInputScript_whenP2shErpRedeemScript_shouldCreateValidScriptSig() {
+        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             CSV_VALUE
         );
 
-        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
-        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(p2shErpRedeemScript);
+        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, p2shErpRedeemScript);
 
         // The expected P2sh Erp input script structure is:
         // First element: OP_0 - Belonging to the standard of BTC
@@ -870,17 +870,17 @@ public class ScriptTest {
         // Last element: Program of redeem script
         int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
-        assertInputScriptStructure(
-            inputScript.getChunks(),
+        assertScriptSigStructure(
+            scriptSig.getChunks(),
             P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
-            redeemScript.getProgram()
+            p2shErpRedeemScript.getProgram()
         );
     }
 
     @Test
     public void createEmptyInputScript_whenFlyoverP2shErpRedeemScript_shouldAddOpZeroFlow() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             FEDERATION_KEYS,
             ERP_FEDERATION_KEYS,
             CSV_VALUE
@@ -888,11 +888,11 @@ public class ScriptTest {
 
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
             FLYOVER_DERIVATION_HASH,
-            redeemScript
+            p2shErpRedeemScript
         );
 
-        Script spk = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
-        Script inputScript = spk.createEmptyInputScript(null, flyoverRedeemScript);
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, flyoverRedeemScript);
 
         // The expected P2sh Erp input script structure is:
         // First element: OP_0 - Belonging to the standard of BTC
@@ -901,15 +901,15 @@ public class ScriptTest {
         // Last element: Program of redeem script
         int expectedOpZeroes = 2 + REQUIRED_SIGNATURES;
 
-        assertInputScriptStructure(
-            inputScript.getChunks(),
+        assertScriptSigStructure(
+            scriptSig.getChunks(),
             P2SH_ERP_MULTISIG_SCRIPT_SIG_CHUNKS,
             expectedOpZeroes,
             flyoverRedeemScript.getProgram()
         );
     }
 
-    private void assertInputScriptStructure(
+    private void assertScriptSigStructure(
         List<ScriptChunk> chunks,
         int expectedChunksSize,
         int expectedOpZeroes,
@@ -942,9 +942,9 @@ public class ScriptTest {
         BtcTransaction spendTx = new BtcTransaction(MAINNET_PARAMS);
         spendTx.addInput(fundTx.getOutput(0));
 
-        Script spk = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(redeemScript);
 
-        Script inputScript = spk.createEmptyInputScript(null, redeemScript);
+        Script inputScript = p2SHOutputScript.createEmptyInputScript(null, redeemScript);
 
         Sha256Hash sigHash = spendTx.hashForSignature(0, redeemScript,
             BtcTransaction.SigHash.ALL, false);
