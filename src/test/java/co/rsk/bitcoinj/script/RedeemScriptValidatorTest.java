@@ -131,7 +131,7 @@ public class RedeemScriptValidatorTest {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            500L
+            CSV_VALUE
         );
 
         Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
@@ -144,13 +144,15 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasNonStandardErpRedeemScriptStructure_fast_bridge_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            Sha256Hash.of(new byte[]{1}).getBytes(),
-            defaultRedeemScriptKeys
+    public void hasNonStandardErpRedeemScriptStructure_whenFlyoverRedeemScript_shouldReturnFalse() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(),
+            redeemScript
         );
 
-        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
+        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(flyoverRedeemScript.getChunks()));
     }
 
     @Test
@@ -169,7 +171,7 @@ public class RedeemScriptValidatorTest {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            500L
+            CSV_VALUE
         );
 
         Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
@@ -232,42 +234,51 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasErpRedeemScriptStructure_whenFlyoverNonStandardErpRedeemScriptRemovingPrefix_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            500L,
-            Sha256Hash.of(new byte[]{1}).getBytes()
+            CSV_VALUE
+        );
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(),
+            redeemScript
         );
 
         // Remove fast bridge prefix
-        List<ScriptChunk> chunks = redeemScript.getChunks();
-        List<ScriptChunk> chunksWithoutFastBridgePrefix = chunks.subList(2, chunks.size());
+        List<ScriptChunk> chunks = flyoverRedeemScript.getChunks();
+        List<ScriptChunk> chunksWithoutFlyoverPrefix = chunks.subList(2, chunks.size());
 
         Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(
-            chunksWithoutFastBridgePrefix)
+            chunksWithoutFlyoverPrefix)
         );
     }
 
     @Test
     public void hasFlyoverPrefix_whenFlyoverStandardMultisigRedeemScript_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            Sha256Hash.of(new byte[]{1}).getBytes(),
-            defaultRedeemScriptKeys
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(),
+            redeemScript
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasFlyoverPrefix(redeemScript.getChunks()));
+        Assert.assertTrue(RedeemScriptValidator.hasFlyoverPrefix(flyoverRedeemScript.getChunks()));
     }
 
     @Test
-    public void hasFlyoverPrefix_whenFlyoverErpRedeemScript_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+    public void hasFlyoverPrefix_whenFlyoverNonStandardErpRedeemScript_shouldReturnTrue() {
+        Script nonStandardErpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            500L,
-            Sha256Hash.of(new byte[]{1}).getBytes()
+            CSV_VALUE
         );
 
-        Assert.assertTrue(RedeemScriptValidator.hasFlyoverPrefix(redeemScript.getChunks()));
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(),
+            nonStandardErpRedeemScript
+        );
+
+        Assert.assertTrue(RedeemScriptValidator.hasFlyoverPrefix(flyoverRedeemScript.getChunks()));
     }
 
     @Test

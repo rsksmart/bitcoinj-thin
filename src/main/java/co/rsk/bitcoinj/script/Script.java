@@ -455,12 +455,22 @@ public class Script {
 
     private boolean isErpType(Script redeemScript) {
         List<ScriptChunk> chunks = redeemScript.getChunks();
-        boolean isFastBridgeErp = FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(chunks);
-        boolean isErp = RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(chunks);
-        boolean isFastBridgeP2shErp = FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(chunks);
-        boolean isP2shErp = RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
 
-        return isFastBridgeErp || isErp || isFastBridgeP2shErp || isP2shErp;
+        // first, check if redeem script is flyover type
+        if (RedeemScriptValidator.hasFlyoverRedeemScriptStructure(chunks)) {
+            // if so, then check if internal redeem script is ERP type
+            chunks = chunks.subList(2, chunks.size());
+        }
+
+        if (RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(chunks)){
+            return true;
+        }
+
+        if (RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks)){
+            return true;
+        }
+
+        return false;
     }
 
     /**

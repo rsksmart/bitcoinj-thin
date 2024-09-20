@@ -31,12 +31,13 @@ public class RedeemScriptParserFactory {
             throw new ScriptException(errorMessage);
         }
 
-        if (FastBridgeRedeemScriptParser.isFastBridgeMultiSig(redeemScriptChunks)) {
-            logger.debug("[get] Return FastBridgeRedeemScriptParser");
-            return new FastBridgeRedeemScriptParser(
+        if (RedeemScriptValidator.hasFlyoverRedeemScriptStructure(redeemScriptChunks)) {
+            logger.debug("[get] Return FlyoverRedeemScriptParser");
+            return new FlyoverRedeemScriptParser(
                 redeemScriptChunks
             );
         }
+
         if (RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScriptChunks)) {
             logger.debug("[get] Return StandardRedeemScriptParser");
             return new StandardRedeemScriptParser(
@@ -49,21 +50,9 @@ public class RedeemScriptParserFactory {
                 redeemScriptChunks
             );
         }
-        if (FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(redeemScriptChunks)) {
-            logger.debug("[get] Return FastBridgeP2shErpRedeemScriptParser");
-            return new FastBridgeP2shErpRedeemScriptParser(
-                redeemScriptChunks
-            );
-        }
         if (RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScriptChunks)) {
             logger.debug("[get] Return NonStandardErpRedeemScriptParser");
             return new NonStandardErpRedeemScriptParser(
-                redeemScriptChunks
-            );
-        }
-        if (FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(redeemScriptChunks)) {
-            logger.debug("[get] Return FastBridgeErpRedeemScriptParser");
-            return new FastBridgeErpRedeemScriptParser(
                 redeemScriptChunks
             );
         }

@@ -22,9 +22,9 @@ import org.junit.Test;
 
 public class FlyoverRedeemScriptParserTest {
 
-    private final List<BtcECKey> defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
-    private final List<BtcECKey> emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
-    private final Sha256Hash derivationArgumentsHash = Sha256Hash.of(new byte[]{1});
+    private final List<BtcECKey> keys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+    private final List<BtcECKey> emergencyKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+    private final Sha256Hash flyoverDerivationHash = Sha256Hash.of(new byte[]{1});
     private Script standardRedeemScript;
     private Script flyoverStandardRedeemScript;
     private Script erpRedeemScript;
@@ -35,14 +35,16 @@ public class FlyoverRedeemScriptParserTest {
     @Before
     public void setUp() {
         final long CSV_VALUE = 52_560L;
-        standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        flyoverStandardRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), standardRedeemScript);
+        standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(keys);
+        flyoverStandardRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            flyoverDerivationHash.getBytes(), standardRedeemScript);
 
-        erpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, CSV_VALUE);
-        flyoverErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), erpRedeemScript);
+        erpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(keys, emergencyKeys, CSV_VALUE);
+        flyoverErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(flyoverDerivationHash.getBytes(), erpRedeemScript);
 
-        p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys, emergencyRedeemScriptKeys, CSV_VALUE);
-        flyoverP2shErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(derivationArgumentsHash.getBytes(), p2shErpRedeemScript);
+        p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(keys, emergencyKeys, CSV_VALUE);
+        flyoverP2shErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            flyoverDerivationHash.getBytes(), p2shErpRedeemScript);
     }
 
     @Test
@@ -114,15 +116,12 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     private void assertKeyInRedeem(Script flyoverRedeemScript) {
-        // Arrange
-        final int EXPECTED_KEY_INDEX = 5;
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
-
-        // Act
-        int actualKeyIndex = flyoverRedeemScriptParser.findKeyInRedeem(defaultRedeemScriptKeys.get(EXPECTED_KEY_INDEX));
-
-        // Assert
-        assertEquals(EXPECTED_KEY_INDEX, actualKeyIndex);
+        for (int expectedIndex = 0; expectedIndex < keys.size(); expectedIndex++) {
+            BtcECKey key = keys.get(expectedIndex);
+            int actualKeyIndex = flyoverRedeemScriptParser.findKeyInRedeem(key);
+            assertEquals(expectedIndex, actualKeyIndex);
+        }
     }
 
     @Test(expected = IllegalStateException.class)
@@ -131,7 +130,7 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void findKeyInRedeem_whenKeyIsNotInErpRedeemScript_shouldThrowIllegalStateException() {
+    public void findKeyInRedeem_whenKeyIsNotInNonStandardErpRedeemScript_shouldThrowIllegalStateException() {
         assertThrowsIllegalStateException(flyoverErpRedeemScript);
     }
 
@@ -172,8 +171,8 @@ public class FlyoverRedeemScriptParserTest {
         List<BtcECKey> actualPubKeys = flyoverRedeemScriptParser.getPubKeys();
 
         // Assert
-        defaultRedeemScriptKeys.forEach(expectedPubKey -> {
-            int btcECKeyIndex = defaultRedeemScriptKeys.indexOf(expectedPubKey);
+        keys.forEach(expectedPubKey -> {
+            int btcECKeyIndex = keys.indexOf(expectedPubKey);
             BtcECKey btcECKey = actualPubKeys.get(btcECKeyIndex);
             byte[] actualPubKey = btcECKey.getPubKey();
             assertThat(actualPubKey, equalTo(expectedPubKey.getPubKey()));
@@ -202,7 +201,7 @@ public class FlyoverRedeemScriptParserTest {
         final int OUTPUT_INDEX = 0;
         final int KEY_INDEX = 0;
         final NetworkParameters mainNetParams = MainNetParams.get();
-        BtcECKey privateKey = defaultRedeemScriptKeys.get(KEY_INDEX);
+        BtcECKey privateKey = keys.get(KEY_INDEX);
 
         // Creating a transaction
         BtcTransaction fundTx = new BtcTransaction(mainNetParams);

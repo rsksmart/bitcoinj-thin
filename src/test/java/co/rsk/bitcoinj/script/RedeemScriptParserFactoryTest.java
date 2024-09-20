@@ -1,6 +1,8 @@
 package co.rsk.bitcoinj.script;
 
+import static co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType.NON_STANDARD_ERP_FED;
 import static co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType.NO_MULTISIG_TYPE;
+import static co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType.P2SH_ERP_FED;
 import static co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType.STANDARD_MULTISIG;
 
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -8,6 +10,7 @@ import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +19,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class RedeemScriptParserFactoryTest {
+
+    private static final byte[] FLYOVER_DERIVATION_HASH = Sha256Hash.of(new byte[]{1}).getBytes();
+    private static final long CSV_VALUE = 52_560L;
 
     private List<BtcECKey> defaultRedeemScriptKeys;
     private List<BtcECKey> emergencyRedeemScriptKeys;
@@ -44,10 +50,10 @@ public class RedeemScriptParserFactoryTest {
 
     @Test(expected = ScriptException.class)
     public void get_whenScriptSig_shouldThrowScriptException() {
-        byte[] flyoverDerivationHash = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            flyoverDerivationHash,
-            defaultRedeemScriptKeys
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
         );
 
         Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(
@@ -55,7 +61,7 @@ public class RedeemScriptParserFactoryTest {
             Arrays.asList(ecKey1, ecKey2, ecKey3)
         );
 
-        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, fastBridgeRedeemScript);
+        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, flyoverRedeemScript);
         RedeemScriptParserFactory.get(scriptSig.getChunks());
     }
 
@@ -70,14 +76,29 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void get_whenFlyoverStandardRedeemScript_shouldReturnRedeemScriptParser() {
-        byte[] data = Sha256Hash.of(new byte[]{1}).getBytes();
-        Script fastBridgeRedeemScript = RedeemScriptUtils.createFastBridgeRedeemScript(
-            data,
-            defaultRedeemScriptKeys
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
         );
 
-        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(fastBridgeRedeemScript.getChunks());
-        Assert.assertEquals(MultiSigType.FAST_BRIDGE_MULTISIG, redeemScriptParser.getMultiSigType());
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
+
+        Assert.assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
+        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, StandardRedeemScriptParser.class, STANDARD_MULTISIG);
+        Assert.assertEquals(MultiSigType.FLYOVER, redeemScriptParser.getMultiSigType());
+    }
+
+    private void assertInternalRedeemScriptParser(FlyoverRedeemScriptParser flyoverRedeemScriptParser, Class<?> expectedInternalRedeemScripParser, MultiSigType expectedType) {
+        try {
+            Field internalRedeemScriptParserField = flyoverRedeemScriptParser.getClass().getDeclaredField("internalRedeemScriptParser");
+            internalRedeemScriptParserField.setAccessible(true);
+            RedeemScriptParser internalRedeemScriptParser = (RedeemScriptParser) internalRedeemScriptParserField.get(flyoverRedeemScriptParser);
+            Assert.assertTrue(expectedInternalRedeemScripParser.isInstance(internalRedeemScriptParser));
+            Assert.assertEquals(expectedType, internalRedeemScriptParser.getMultiSigType());
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            Assert.fail("Internal redeem script parser not found");
+        }
     }
 
     @Test
@@ -93,7 +114,7 @@ public class RedeemScriptParserFactoryTest {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            500L
+            CSV_VALUE
         );
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
@@ -102,17 +123,22 @@ public class RedeemScriptParserFactoryTest {
     }
 
     @Test
-    public void get_whenFlyoverErpRedeemScript_shouldReturnRedeemScriptParser() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeErpRedeemScript(
+    public void get_whenFlyoverNonStandardErpRedeemScript_shouldReturnRedeemScriptParser() {
+        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            500L,
-            Sha256Hash.of(new byte[]{1}).getBytes()
+            CSV_VALUE
+        );
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
         );
 
-        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
 
-        Assert.assertEquals(MultiSigType.FAST_BRIDGE_ERP_FED, redeemScriptParser.getMultiSigType());
+        Assert.assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
+        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, NonStandardErpRedeemScriptParser.class, NON_STANDARD_ERP_FED);
+        Assert.assertEquals(MultiSigType.FLYOVER, redeemScriptParser.getMultiSigType());
     }
 
     @Test
@@ -120,7 +146,7 @@ public class RedeemScriptParserFactoryTest {
         Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            500L
+            CSV_VALUE
         );
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
@@ -130,16 +156,22 @@ public class RedeemScriptParserFactoryTest {
 
     @Test
     public void get_whenFlyoverP2shErpRedeemScript_shouldReturnRedeemScriptParser() {
-        Script redeemScript = RedeemScriptUtils.createFastBridgeP2shErpRedeemScript(
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
-            500L,
-            Sha256Hash.of(new byte[]{1}).getBytes()
+            CSV_VALUE
         );
 
-        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
+        );
 
-        Assert.assertEquals(MultiSigType.FAST_BRIDGE_P2SH_ERP_FED, redeemScriptParser.getMultiSigType());
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
+
+        Assert.assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
+        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, P2shErpRedeemScriptParser.class, P2SH_ERP_FED);
+        Assert.assertEquals(MultiSigType.FLYOVER, redeemScriptParser.getMultiSigType());
     }
 
     @Test
