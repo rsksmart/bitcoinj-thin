@@ -70,8 +70,4 @@ public class P2shErpRedeemScriptParser implements RedeemScriptParser {
 
         return chunksForRedeem;
     }
-
-    public static boolean isP2shErpFed(List<ScriptChunk> chunks) {
-        return RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
-    }
 }

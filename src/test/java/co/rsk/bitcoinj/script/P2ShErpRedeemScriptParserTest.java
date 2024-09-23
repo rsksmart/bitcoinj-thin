@@ -60,17 +60,6 @@ public class P2ShErpRedeemScriptParserTest {
     }
 
     @Test
-    public void isP2shErpFed() {
-        Script erpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            200L
-        );
-
-        Assert.assertTrue(P2shErpRedeemScriptParser.isP2shErpFed(erpRedeemScript.getChunks()));
-    }
-
-    @Test
     public void isErpFed_falseWithP2shErpRedeemScript() {
         Script erpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
@@ -79,15 +68,6 @@ public class P2ShErpRedeemScriptParserTest {
         );
 
         Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(erpRedeemScript.getChunks()));
-    }
-
-    @Test
-    public void isP2shErpFed_falseWithCustomRedeemScript() {
-        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
-            defaultRedeemScriptKeys
-        );
-
-        Assert.assertFalse(P2shErpRedeemScriptParser.isP2shErpFed(customRedeemScript.getChunks()));
     }
 
     @Test
