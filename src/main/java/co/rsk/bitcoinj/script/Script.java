@@ -692,7 +692,15 @@ public class Script {
      */
     public boolean isSentToMultiSig() {
         try {
-            return !this.getRedeemScriptParser().getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
+            MultiSigType multiSigType = this.getRedeemScriptParser().getMultiSigType();
+
+            // If it's a FLYOVER type, we need to get the multi sig type from the internal redeem script
+            if (MultiSigType.FLYOVER == multiSigType){
+                List<ScriptChunk> internalRedeemScriptChunks = this.getChunks().subList(2, chunks.size());
+                RedeemScriptParser internalRedeemScriptParser = RedeemScriptParserFactory.get(internalRedeemScriptChunks);
+                multiSigType = internalRedeemScriptParser.getMultiSigType();
+            }
+            return !multiSigType.equals(MultiSigType.NO_MULTISIG_TYPE);
         } catch (ScriptException e) {
             return false;
         }
