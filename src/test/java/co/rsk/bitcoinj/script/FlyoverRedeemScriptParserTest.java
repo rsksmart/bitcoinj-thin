@@ -288,4 +288,30 @@ public class FlyoverRedeemScriptParserTest {
         // Act
         new FlyoverRedeemScriptParser(malformedScriptTwoSize.getChunks());
     }
+
+    @Test(expected = VerificationException.class)
+    public void flyoverRedeemScriptParser_whenScriptSig_shouldThrowVerificationException() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(keys);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            flyoverDerivationHash.getBytes(),
+            redeemScript
+        );
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, flyoverRedeemScript);
+
+        new FlyoverRedeemScriptParser(scriptSig.getChunks());
+    }
+
+    @Test(expected = VerificationException.class)
+    public void flyoverRedeemScriptParser_whenP2shOutputScript_shouldThrowVerificationException() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(keys);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            flyoverDerivationHash.getBytes(),
+            redeemScript
+        );
+
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+
+        new FlyoverRedeemScriptParser(p2SHOutputScript.getChunks());
+    }
 }
