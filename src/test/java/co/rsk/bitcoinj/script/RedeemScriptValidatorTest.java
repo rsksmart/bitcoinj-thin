@@ -412,6 +412,43 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
+    public void hasFlyoverRedeemScriptStructure_whenEmptyFlyoverDerivationHash_shouldReturnFalse() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
+            new byte[]{},
+            redeemScript
+        ).getChunks();
+        Assert.assertFalse(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(flyoverRedeemScriptChunks));
+    }
+
+    @Test
+    public void hasFlyoverRedeemScriptStructure_whenScriptSig_shouldReturnFalse() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(),
+            redeemScript
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+        Script scriptSig = p2shOutputScript.createEmptyInputScript(null, flyoverRedeemScript);
+
+        Assert.assertFalse(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(scriptSig.getChunks()));
+    }
+
+    @Test
+    public void hasFlyoverRedeemScriptStructure_whenP2shOutputScript_shouldReturnFalse() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(),
+            redeemScript
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+
+        Assert.assertFalse(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(p2shOutputScript.getChunks()));
+    }
+
+    @Test
     public void hasFlyoverRedeemScriptStructure_whenZeroFlyoverDerivationHash_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
