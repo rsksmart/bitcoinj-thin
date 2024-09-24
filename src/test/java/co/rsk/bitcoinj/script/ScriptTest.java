@@ -680,9 +680,6 @@ public class ScriptTest {
         BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
 
         int actualSigInsertionIndex = erpTestnetScriptSig.getSigInsertionIndex(hashForSignature, signingKey);
-        // This hardcode redeemScript is identified as NoRedeemScriptParser, and is using its findKeyInRedeem implementation
-        // which is returning -1 as default value. This means that the signature insertion index will always be
-        // 0 which is the initial value set when getting the signature insertion index
         Assert.assertEquals(0, actualSigInsertionIndex);
     }
 
@@ -709,21 +706,18 @@ public class ScriptTest {
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
         BtcECKey signingKey = FEDERATION_KEYS.get(1);
 
-        // This hardcode redeemScript is identified as NoRedeemScriptParser, and is using its findKeyInRedeem implementation
-        // which is returning -1 as default value. This means that the signature insertion index will always be
-        // 0 which is the initial value set when getting the signature insertion index
         int sigInsertionIndex = customRedeemScript.getSigInsertionIndex(hashForSignature, signingKey);
         Assert.assertEquals(0, sigInsertionIndex);
     }
 
     @Test
-    public void isSentToMultiSig_whenNonStandardErpRedeemScriptParserHardcoded_shouldReturnFalse() {
+    public void isSentToMultiSig_whenNonStandardErpRedeemScriptHardcoded_shouldReturnFalse() {
         Script nonStandardErpTestnetRedeemScript = new Script(NON_STANDARD_ERP_TESTNET_REDEEM_SCRIPT_SERIALIZED);
         Assert.assertFalse(nonStandardErpTestnetRedeemScript.isSentToMultiSig());
     }
 
     @Test
-    public void isSentToMultiSig_whenFlyoverNonStandardErpRedeemScriptParserHardcoded_shouldReturnFalse() {
+    public void isSentToMultiSig_whenFlyoverNonStandardErpRedeemScriptHardcoded_shouldReturnFalse() {
         Script nonStandardErpTestnetRedeemScript = new Script(NON_STANDARD_ERP_TESTNET_REDEEM_SCRIPT_SERIALIZED);
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
             FLYOVER_DERIVATION_HASH, nonStandardErpTestnetRedeemScript);
@@ -794,7 +788,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void isSentToMultiSig_whenFlyoverStandardMultiSig_shouldReturnTrue() {
+    public void isSentToMultiSig_whenFlyoverStandardRedeemScript_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
 
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
@@ -837,6 +831,11 @@ public class ScriptTest {
         Assert.assertTrue(flyoverRedeemScript.isSentToMultiSig());
     }
 
+    /**
+     * This test just prove that the validation when parsing a flyover redeem script
+     * is only checking the structure but not the content of the chunks. To check the
+     * flyover prefix is using {@link RedeemScriptValidator#hasFlyoverPrefix(List<ScriptChunk>) hasFlyoverPrefix}
+     */
     @Test
     public void isSentToMultiSig_whenZeroHashFlyoverPrefix_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
