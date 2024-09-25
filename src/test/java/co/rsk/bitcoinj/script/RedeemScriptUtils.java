@@ -17,65 +17,6 @@ public final class RedeemScriptUtils {
         return ScriptBuilder.createRedeemScript(publicKeys.size() / 2 + 1, publicKeys);
     }
 
-    public static Script createFastBridgeRedeemScript(
-        byte[] derivationArgumentsHashBytes,
-        List<BtcECKey> publicKeys
-    ) {
-        Script redeem = ScriptBuilder.createRedeemScript(
-            publicKeys.size() / 2 + 1,
-            publicKeys
-        );
-
-        ScriptBuilder scriptBuilder = new ScriptBuilder();
-        return scriptBuilder
-            .data(derivationArgumentsHashBytes)
-            .op(ScriptOpCodes.OP_DROP)
-            .addChunks(redeem.getChunks())
-            .build();
-    }
-
-    public static Script createFastBridgeErpRedeemScript(
-        List<BtcECKey> defaultRedeemScriptKeys,
-        List<BtcECKey> emergencyRedeemScriptKeys,
-        Long csvValue,
-        byte[] derivationArgumentsHashBytes
-    ) {
-        ScriptBuilder scriptBuilder = new ScriptBuilder();
-
-        Script erpRedeemScript = createNonStandardErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            csvValue
-        );
-
-        return scriptBuilder
-            .data(derivationArgumentsHashBytes)
-            .op(ScriptOpCodes.OP_DROP)
-            .addChunks(erpRedeemScript.getChunks())
-            .build();
-    }
-
-    public static Script createFastBridgeP2shErpRedeemScript(
-        List<BtcECKey> defaultRedeemScriptKeys,
-        List<BtcECKey> emergencyRedeemScriptKeys,
-        Long csvValue,
-        byte[] derivationArgumentsHashBytes
-    ) {
-        ScriptBuilder scriptBuilder = new ScriptBuilder();
-
-        Script erpRedeemScript = createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            csvValue
-        );
-
-        return scriptBuilder
-            .data(derivationArgumentsHashBytes)
-            .op(ScriptOpCodes.OP_DROP)
-            .addChunks(erpRedeemScript.getChunks())
-            .build();
-    }
-
     public static Script createCustomRedeemScript(List<BtcECKey> publicKeys) {
         Script redeem = ScriptBuilder.createRedeemScript(
             publicKeys.size() / 2 + 1,
