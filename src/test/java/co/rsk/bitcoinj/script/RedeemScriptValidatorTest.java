@@ -24,10 +24,37 @@ public class RedeemScriptValidatorTest {
     private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(220));
     private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(330));
 
+    private Script standardRedeemScript;
+    private Script flyoverStandardRedeemScript;
+    private Script nonstandardErpRedeemScript;
+    private Script flyoverNonStandardErpRedeemScript;
+    private Script p2shErpRedeemScript;
+    private Script flyoverP2shErpRedeemScript;
+    private Script nonStandardErpTestnetRedeemScript;
+
     @Before
     public void setUp() {
         defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
         emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+
+        standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
+            defaultRedeemScriptKeys);
+        flyoverStandardRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(), standardRedeemScript);
+
+        nonstandardErpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
+            defaultRedeemScriptKeys, emergencyRedeemScriptKeys, CSV_VALUE);
+        flyoverNonStandardErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(),
+            nonstandardErpRedeemScript);
+
+        p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(defaultRedeemScriptKeys,
+            emergencyRedeemScriptKeys, CSV_VALUE);
+        flyoverP2shErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH.getBytes(), p2shErpRedeemScript);
+
+        nonStandardErpTestnetRedeemScript = new Script(
+            NON_STANDARD_ERP_TESTNET_REDEEM_SCRIPT_SERIALIZED);
     }
 
     @Test
@@ -383,5 +410,63 @@ public class RedeemScriptValidatorTest {
     public void isOpnN_invalid_opcode() {
         ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_DROP, null);
         Assert.assertFalse(RedeemScriptValidator.isOpN(chunk));
+    }
+
+    @Test
+    public void hasP2shErpRedeemScriptStructure_whenEmptyScript_shouldReturnFalse() {
+        Script emptyScript = new Script(new byte[]{});
+        Assert.assertFalse(RedeemScriptValidator.hasP2shErpRedeemScriptStructure(
+            emptyScript.getChunks()));
+    }
+
+    @Test
+    public void hasP2shErpRedeemScriptStructure_whenScriptSig_shouldReturnFalse() {
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(
+            p2shErpRedeemScript
+        );
+        Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, p2shErpRedeemScript);
+
+        Assert.assertFalse(RedeemScriptValidator.hasP2shErpRedeemScriptStructure(
+            scriptSig.getChunks()));
+    }
+
+    @Test
+    public void hasP2shErpRedeemScriptStructure_whenP2shOutputScript_shouldReturnFalse() {
+        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(
+            p2shErpRedeemScript
+        );
+
+        Assert.assertFalse(RedeemScriptValidator.hasP2shErpRedeemScriptStructure(
+            p2SHOutputScript.getChunks()));
+    }
+
+    @Test
+    public void hasP2shErpRedeemScriptStructure_whenStandardRedeemScript_shouldReturnFalse() {
+        Assert.assertFalse(RedeemScriptValidator.hasP2shErpRedeemScriptStructure(
+            standardRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasP2shErpRedeemScriptStructure_whenNonStandardErpRedeemScript_shouldReturnFalse() {
+        Assert.assertFalse(RedeemScriptValidator.hasP2shErpRedeemScriptStructure(
+            nonstandardErpRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasP2shErpRedeemScriptStructure_whenNonStandardErpRedeemScriptParserHardcoded_shouldReturnFalse() {
+        Assert.assertFalse(RedeemScriptValidator.hasP2shErpRedeemScriptStructure(
+            nonStandardErpTestnetRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasP2shErpRedeemScriptStructure_whenFlyoverP2shRedeemScript_shouldReturnFalse() {
+        Assert.assertFalse(RedeemScriptValidator.hasP2shErpRedeemScriptStructure(
+            flyoverP2shErpRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasP2shErpRedeemScriptStructure_whenP2shRedeemScript_shouldReturnTrue() {
+        Assert.assertTrue(RedeemScriptValidator.hasP2shErpRedeemScriptStructure(
+            p2shErpRedeemScript.getChunks()));
     }
 }
