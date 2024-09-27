@@ -713,7 +713,11 @@ public class ScriptTest {
     @Test
     public void isSentToMultiSig_whenNonStandardErpRedeemScriptHardcoded_shouldReturnFalse() {
         Script nonStandardErpTestnetRedeemScript = new Script(NON_STANDARD_ERP_TESTNET_REDEEM_SCRIPT_SERIALIZED);
-        Assert.assertFalse(nonStandardErpTestnetRedeemScript.isSentToMultiSig());
+        assertScriptIsNotMultiSig(nonStandardErpTestnetRedeemScript);
+    }
+
+    private static void assertScriptIsNotMultiSig(Script script) {
+        Assert.assertFalse(script.isSentToMultiSig());
     }
 
     @Test
@@ -721,19 +725,19 @@ public class ScriptTest {
         Script nonStandardErpTestnetRedeemScript = new Script(NON_STANDARD_ERP_TESTNET_REDEEM_SCRIPT_SERIALIZED);
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
             FLYOVER_DERIVATION_HASH, nonStandardErpTestnetRedeemScript);
-        Assert.assertFalse(flyoverRedeemScript.isSentToMultiSig());
+        assertScriptIsNotMultiSig(flyoverRedeemScript);
     }
 
     @Test
     public void isSentToMultiSig_whenEmptyScript_shouldReturnFalse() {
         Script emptyScript = new ScriptBuilder().build();
-        Assert.assertFalse(emptyScript.isSentToMultiSig());
+        assertScriptIsNotMultiSig(emptyScript);
     }
 
     @Test
     public void isSentToMultiSig_whenInvalidScript_shouldReturnFalse() {
         Script invalidScript = new Script(new byte[5]);
-        Assert.assertFalse(invalidScript.isSentToMultiSig());
+        assertScriptIsNotMultiSig(invalidScript);
     }
 
     @Test
@@ -747,7 +751,7 @@ public class ScriptTest {
 
         Script scriptSig = p2SHOutputScript.createEmptyInputScript(null, redeemScript);
 
-        Assert.assertFalse(scriptSig.isSentToMultiSig());
+        assertScriptIsNotMultiSig(scriptSig);
     }
 
     @Test
@@ -756,13 +760,17 @@ public class ScriptTest {
 
         Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(redeemScript);
 
-        Assert.assertFalse(p2SHOutputScript.isSentToMultiSig());
+        assertScriptIsNotMultiSig(p2SHOutputScript);
     }
 
     @Test
     public void isSentToMultiSig_whenStandardRedeemScript_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
-        Assert.assertTrue(redeemScript.isSentToMultiSig());
+        assertScriptIsMultiSig(redeemScript);
+    }
+
+    private static void assertScriptIsMultiSig(Script script) {
+        Assert.assertTrue(script.isSentToMultiSig());
     }
 
     @Test
@@ -773,7 +781,7 @@ public class ScriptTest {
             CSV_VALUE
         );
 
-        Assert.assertTrue(nonStandardErpRedeemScript.isSentToMultiSig());
+        assertScriptIsMultiSig(nonStandardErpRedeemScript);
     }
 
     @Test
@@ -784,7 +792,7 @@ public class ScriptTest {
             CSV_VALUE
         );
 
-        Assert.assertTrue(p2shErpRedeemScript.isSentToMultiSig());
+        assertScriptIsMultiSig(p2shErpRedeemScript);
     }
 
     @Test
@@ -796,7 +804,7 @@ public class ScriptTest {
             redeemScript
         );
 
-        Assert.assertTrue(flyoverRedeemScript.isSentToMultiSig());
+        assertScriptIsMultiSig(flyoverRedeemScript);
     }
 
     @Test
@@ -812,7 +820,7 @@ public class ScriptTest {
             redeemScript
         );
 
-        Assert.assertTrue(flyoverRedeemScript.isSentToMultiSig());
+        assertScriptIsMultiSig(flyoverRedeemScript);
     }
 
     @Test
@@ -828,7 +836,7 @@ public class ScriptTest {
             redeemScript
         );
 
-        Assert.assertTrue(flyoverRedeemScript.isSentToMultiSig());
+        assertScriptIsMultiSig(flyoverRedeemScript);
     }
 
     /**
@@ -850,7 +858,7 @@ public class ScriptTest {
             redeemScript
         );
 
-        Assert.assertTrue(flyoverRedeemScript.isSentToMultiSig());
+        assertScriptIsMultiSig(flyoverRedeemScript);
     }
 
     @Test

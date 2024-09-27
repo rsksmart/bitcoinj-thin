@@ -694,18 +694,23 @@ public class Script {
         try {
             MultiSigType multiSigType = this.getRedeemScriptParser().getMultiSigType();
 
-            // If it's a FLYOVER type, we need to get the multi sig type from the internal redeem script
             if (MultiSigType.FLYOVER == multiSigType) {
-                List<ScriptChunk> internalRedeemScriptChunks = this.getChunks()
-                    .subList(2, chunks.size());
-                RedeemScriptParser internalRedeemScriptParser = RedeemScriptParserFactory.get(
-                    internalRedeemScriptChunks);
-                multiSigType = internalRedeemScriptParser.getMultiSigType();
+                multiSigType = getMultiSigTypeFromInternalRedeemScript();
             }
-            return !multiSigType.equals(MultiSigType.NO_MULTISIG_TYPE);
+            return multiSigType != MultiSigType.NO_MULTISIG_TYPE;
         } catch (ScriptException e) {
             return false;
         }
+    }
+
+    private MultiSigType getMultiSigTypeFromInternalRedeemScript() {
+        MultiSigType multiSigType;
+        List<ScriptChunk> internalRedeemScriptChunks = this.getChunks()
+            .subList(2, chunks.size());
+        RedeemScriptParser internalRedeemScriptParser = RedeemScriptParserFactory.get(
+            internalRedeemScriptChunks);
+        multiSigType = internalRedeemScriptParser.getMultiSigType();
+        return multiSigType;
     }
 
     public boolean isSentToCLTVPaymentChannel() {
