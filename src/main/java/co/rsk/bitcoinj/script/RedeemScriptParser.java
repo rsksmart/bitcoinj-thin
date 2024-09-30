@@ -9,11 +9,8 @@ public interface RedeemScriptParser {
     enum MultiSigType {
         NO_MULTISIG_TYPE,
         STANDARD_MULTISIG,
-        FAST_BRIDGE_MULTISIG,
         NON_STANDARD_ERP_FED,
-        FAST_BRIDGE_ERP_FED,
         P2SH_ERP_FED,
-        FAST_BRIDGE_P2SH_ERP_FED,
         FLYOVER
     }
 
