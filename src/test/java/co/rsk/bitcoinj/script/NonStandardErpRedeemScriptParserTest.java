@@ -2,7 +2,6 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.VerificationException;
-import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,13 +14,12 @@ public class NonStandardErpRedeemScriptParserTest {
     private static final long CSV_VALUE = 52_560L;
 
     private List<BtcECKey> defaultRedeemScriptKeys;
-    private List<BtcECKey> emergencyRedeemScriptKeys;
     private NonStandardErpRedeemScriptParser nonStandardErpRedeemScriptParser;
 
     @Before
     public void setUp() {
         defaultRedeemScriptKeys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
-        emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+        List<BtcECKey> emergencyRedeemScriptKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
 
         Script erpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
@@ -50,11 +48,6 @@ public class NonStandardErpRedeemScriptParserTest {
         Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
 
         new NonStandardErpRedeemScriptParser(standardRedeemScript.getChunks());
-    }
-
-    @Test
-    public void getMultiSigType_shouldReturnNonStandardErpFedType() {
-        Assert.assertEquals(MultiSigType.NON_STANDARD_ERP_FED, nonStandardErpRedeemScriptParser.getMultiSigType());
     }
 
     @Test
