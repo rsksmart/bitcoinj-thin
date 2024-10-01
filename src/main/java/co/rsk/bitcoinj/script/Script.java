@@ -682,25 +682,10 @@ public class Script {
      */
     public boolean isSentToMultiSig() {
         try {
-            MultiSigType multiSigType = this.getRedeemScriptParser().getMultiSigType();
-
-            if (MultiSigType.FLYOVER == multiSigType) {
-                multiSigType = getMultiSigTypeFromInternalRedeemScript();
-            }
-            return multiSigType != MultiSigType.NO_MULTISIG_TYPE;
+            return this.getRedeemScriptParser().getM() > 0;
         } catch (ScriptException e) {
             return false;
         }
-    }
-
-    private MultiSigType getMultiSigTypeFromInternalRedeemScript() {
-        MultiSigType multiSigType;
-        List<ScriptChunk> internalRedeemScriptChunks = this.getChunks()
-            .subList(2, chunks.size());
-        RedeemScriptParser internalRedeemScriptParser = RedeemScriptParserFactory.get(
-            internalRedeemScriptChunks);
-        multiSigType = internalRedeemScriptParser.getMultiSigType();
-        return multiSigType;
     }
 
     public boolean isSentToCLTVPaymentChannel() {
