@@ -25,4 +25,6 @@ public interface RedeemScriptParser {
     int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash);
 
     List<ScriptChunk> extractStandardRedeemScriptChunks();
+
+    boolean hasErpFormat();
 }

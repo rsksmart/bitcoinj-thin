@@ -12,7 +12,7 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
     private static final Logger logger = LoggerFactory.getLogger(FlyoverRedeemScriptParser.class);
     private final RedeemScriptParser internalRedeemScriptParser;
 
-    public FlyoverRedeemScriptParser(List<ScriptChunk> redeemScriptChunks) {
+    FlyoverRedeemScriptParser(List<ScriptChunk> redeemScriptChunks) {
         List<ScriptChunk> internalRedeemScriptChunks = extractInternalRedeemScriptChunks(redeemScriptChunks);
         this.internalRedeemScriptParser = RedeemScriptParserFactory.get(internalRedeemScriptChunks);
     }
@@ -55,5 +55,10 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
         }
 
         return chunks.subList(2, chunks.size());
+    }
+
+    @Override
+    public boolean hasErpFormat() {
+        return internalRedeemScriptParser.hasErpFormat();
     }
 }

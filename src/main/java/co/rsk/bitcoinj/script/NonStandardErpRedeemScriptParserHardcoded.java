@@ -7,6 +7,8 @@ import java.util.List;
 
 public class NonStandardErpRedeemScriptParserHardcoded implements RedeemScriptParser {
 
+    NonStandardErpRedeemScriptParserHardcoded() { }
+
     @Override
     public MultiSigType getMultiSigType() {
         return MultiSigType.NO_MULTISIG_TYPE;
@@ -35,5 +37,12 @@ public class NonStandardErpRedeemScriptParserHardcoded implements RedeemScriptPa
     @Override
     public List<ScriptChunk> extractStandardRedeemScriptChunks() {
         throw new ScriptException("Only usable for multisig scripts.");
+    }
+
+    @Override
+    public boolean hasErpFormat() {
+        // This parser is exclusive for an invalid redeem script.
+        // Therefore, it is not considered as a valid erp format.
+        return false;
     }
 }
