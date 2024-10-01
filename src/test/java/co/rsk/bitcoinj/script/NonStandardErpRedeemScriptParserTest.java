@@ -113,4 +113,9 @@ public class NonStandardErpRedeemScriptParserTest {
         ).getChunks();
         Assert.assertEquals(expectedStandardRedeemScriptChunks, nonStandardErpRedeemScriptParser.extractStandardRedeemScriptChunks());
     }
+
+    @Test
+    public void hasErpFormat_shouldReturnTrue() {
+        Assert.assertTrue(nonStandardErpRedeemScriptParser.hasErpFormat());
+    }
 }
