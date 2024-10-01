@@ -53,26 +53,6 @@ public class NonStandardErpRedeemScriptParserTest {
     }
 
     @Test
-    public void isNonStandardErpFed_whenNonStandardErpRedeemScript_shouldReturnTrue() {
-        Script erpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            200L
-        );
-
-        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(erpRedeemScript.getChunks()));
-    }
-
-    @Test
-    public void isNonStandardErpFed_whenCustomRedeemScript_shouldReturnFalse() {
-        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
-            defaultRedeemScriptKeys
-        );
-
-        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(customRedeemScript.getChunks()));
-    }
-
-    @Test
     public void getMultiSigType_shouldReturnNonStandardErpFedType() {
         Assert.assertEquals(MultiSigType.NON_STANDARD_ERP_FED, nonStandardErpRedeemScriptParser.getMultiSigType());
     }
