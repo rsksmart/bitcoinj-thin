@@ -2,7 +2,9 @@ package co.rsk.bitcoinj.script;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -11,6 +13,7 @@ import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.core.Coin;
 import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.core.Sha256Hash;
+import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.MainNetParams;
@@ -25,10 +28,16 @@ public class FlyoverRedeemScriptParserTest {
     private final List<BtcECKey> keys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
     private final List<BtcECKey> emergencyKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
     private final Sha256Hash flyoverDerivationHash = Sha256Hash.of(new byte[]{1});
+
     private Script standardRedeemScript;
     private Script flyoverStandardRedeemScript;
-    private Script erpRedeemScript;
-    private Script flyoverErpRedeemScript;
+
+    private final byte[] nonStandardErpRedeemScriptSerialized = Utils.HEX.decode("6453210208f40073a9e43b3e9103acec79767a6de9b0409749884e989960fee578012fce210225e892391625854128c5c4ea4340de0c2a70570f33db53426fc9c746597a03f42102afc230c2d355b1a577682b07bc2646041b5d0177af0f98395a46018da699b6da210344a3c38cd59afcba3edcebe143e025574594b001700dec41e59409bdbd0f2a0921039a060badbeb24bee49eb2063f616c0f0f0765d4ca646b20a88ce828f259fcdb955670300cd50b27552210216c23b2ea8e4f11c3f9e22711addb1d16a93964796913830856b568cc3ea21d3210275562901dd8faae20de0a4166362a4f82188db77dbed4ca887422ea1ec185f1421034db69f2112f4fb1bb6141bf6e2bd6631f0484d0bd95b16767902c9fe219d4a6f5368ae");
+    private Script flyoverNonStandardErpRedeemScriptParserHardcoded;
+
+    private Script nonStandardErpRedeemScript;
+    private Script flyoverNonStandardErpRedeemScript;
+
     private Script p2shErpRedeemScript;
     private Script flyoverP2shErpRedeemScript;
 
@@ -39,8 +48,14 @@ public class FlyoverRedeemScriptParserTest {
         flyoverStandardRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
             flyoverDerivationHash.getBytes(), standardRedeemScript);
 
-        erpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(keys, emergencyKeys, CSV_VALUE);
-        flyoverErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(flyoverDerivationHash.getBytes(), erpRedeemScript);
+        Script nonStandardErpRedeemScriptParserHardcoded = new Script(
+            nonStandardErpRedeemScriptSerialized);
+        flyoverNonStandardErpRedeemScriptParserHardcoded = RedeemScriptUtils.createFlyoverRedeemScript(flyoverDerivationHash.getBytes(),
+            nonStandardErpRedeemScriptParserHardcoded);
+
+        nonStandardErpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(keys, emergencyKeys, CSV_VALUE);
+        flyoverNonStandardErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(flyoverDerivationHash.getBytes(),
+            nonStandardErpRedeemScript);
 
         p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(keys, emergencyKeys, CSV_VALUE);
         flyoverP2shErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
@@ -53,8 +68,8 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     @Test
-    public void getMultiSigType_whenIsErpRedeemScript_shouldReturnFlyoverMultiSigType() {
-        assertIsFlyoverMultiSigType(flyoverErpRedeemScript);
+    public void getMultiSigType_whenIsNonStandardErpRedeemScriptErpRedeemScript_shouldReturnFlyoverMultiSigType() {
+        assertIsFlyoverMultiSigType(flyoverNonStandardErpRedeemScript);
     }
 
     @Test
@@ -79,8 +94,8 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     @Test
-    public void getM_whenFlyoverRedeemScriptContainsErpRedeemScript_shouldReturnMValue() {
-        assertGetMValue(flyoverErpRedeemScript);
+    public void getM_whenFlyoverRedeemScriptContainsNonStandardErpRedeemScript_shouldReturnMValue() {
+        assertGetMValue(flyoverNonStandardErpRedeemScript);
     }
 
     @Test
@@ -106,8 +121,8 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     @Test
-    public void findKeyInRedeem_whenKeyIsInErpRedeemScript_shouldReturnKeyIndexPosition() {
-        assertKeyInRedeem(flyoverErpRedeemScript);
+    public void findKeyInRedeem_whenKeyIsInNonStandardErpRedeemScript_shouldReturnKeyIndexPosition() {
+        assertKeyInRedeem(flyoverNonStandardErpRedeemScript);
     }
 
     @Test
@@ -131,7 +146,7 @@ public class FlyoverRedeemScriptParserTest {
 
     @Test(expected = IllegalStateException.class)
     public void findKeyInRedeem_whenKeyIsNotInNonStandardErpRedeemScript_shouldThrowIllegalStateException() {
-        assertThrowsIllegalStateException(flyoverErpRedeemScript);
+        assertThrowsIllegalStateException(flyoverNonStandardErpRedeemScript);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -154,8 +169,8 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     @Test
-    public void getPubKeys_whenFlyoverRedeemScriptContainsErpRedeemScript_shouldReturnPubKeys() {
-        assertPubKeys(flyoverErpRedeemScript);
+    public void getPubKeys_whenFlyoverRedeemScriptContainsNonStandardErpRedeemScript_shouldReturnPubKeys() {
+        assertPubKeys(flyoverNonStandardErpRedeemScript);
     }
 
     @Test
@@ -185,8 +200,8 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     @Test
-    public void findSigInRedeem_whenSignatureIsInErpRedeemScript_shouldReturnSignatureIndexPosition() {
-        assertSigInRedeem(flyoverErpRedeemScript);
+    public void findSigInRedeem_whenSignatureIsInNonStandardErpRedeemScript_shouldReturnSignatureIndexPosition() {
+        assertSigInRedeem(flyoverNonStandardErpRedeemScript);
     }
 
     @Test
@@ -246,11 +261,13 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     @Test
-    public void extractStandardRedeemScriptChunks_whenIsErpRedeemScript_shouldReturnStandardRedeemScriptChunks() {
+    public void extractStandardRedeemScriptChunks_whenIsNonStandardErpRedeemScript_shouldReturnStandardRedeemScriptChunks() {
         // Arrange
-        NonStandardErpRedeemScriptParser nonStandardErpRedeemScriptParser = new NonStandardErpRedeemScriptParser(erpRedeemScript.getChunks());
+        NonStandardErpRedeemScriptParser nonStandardErpRedeemScriptParser = new NonStandardErpRedeemScriptParser(
+            nonStandardErpRedeemScript.getChunks());
         List<ScriptChunk> expectedStandardRedeemScriptChunks = nonStandardErpRedeemScriptParser.extractStandardRedeemScriptChunks();
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverErpRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(
+            flyoverNonStandardErpRedeemScript.getChunks());
 
         // Act
         List<ScriptChunk> actualRedeemScriptChunks = flyoverRedeemScriptParser.extractStandardRedeemScriptChunks();
@@ -271,6 +288,36 @@ public class FlyoverRedeemScriptParserTest {
 
         // Assert
         assertEquals(expectedStandardRedeemScriptChunks, actualRedeemScriptChunks);
+    }
+
+    @Test
+    public void hasErpFormat_whenFlyoverStandardRedeemScript_shouldReturnFalse() {
+        assertHasNotErpFormat(flyoverStandardRedeemScript);
+    }
+
+    @Test
+    public void hasErpFormat_whenFlyoverNonStandardErpRedeemScriptHardcoded_shouldReturnFalse() {
+        assertHasNotErpFormat(flyoverNonStandardErpRedeemScriptParserHardcoded);
+    }
+
+    @Test
+    public void hasErpFormat_whenFlyoverNonStandardErpRedeemScript_shouldReturnTrue() {
+        assertHasErpFormat(flyoverNonStandardErpRedeemScript);
+    }
+
+    @Test
+    public void hasErpFormat_whenFlyoverP2shRedeemScript_shouldReturnTrue() {
+        assertHasErpFormat(flyoverP2shErpRedeemScript);
+    }
+
+    private void assertHasErpFormat(Script flyoverRedeemScript) {
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = (FlyoverRedeemScriptParser) RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
+        assertTrue(flyoverRedeemScriptParser.hasErpFormat());
+    }
+
+    private void assertHasNotErpFormat(Script flyoverRedeemScript) {
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = (FlyoverRedeemScriptParser) RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
+        assertFalse(flyoverRedeemScriptParser.hasErpFormat());
     }
 
     @Test(expected = VerificationException.class)
