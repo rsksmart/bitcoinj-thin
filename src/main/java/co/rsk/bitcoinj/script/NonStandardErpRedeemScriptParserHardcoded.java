@@ -10,11 +10,6 @@ public class NonStandardErpRedeemScriptParserHardcoded implements RedeemScriptPa
     NonStandardErpRedeemScriptParserHardcoded() { }
 
     @Override
-    public MultiSigType getMultiSigType() {
-        return MultiSigType.NO_MULTISIG_TYPE;
-    }
-
-    @Override
     public int getM() {
         return -1;
     }

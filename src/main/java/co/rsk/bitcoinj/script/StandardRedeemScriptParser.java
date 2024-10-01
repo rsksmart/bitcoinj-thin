@@ -13,7 +13,6 @@ import java.util.List;
 
 public class StandardRedeemScriptParser implements RedeemScriptParser {
 
-    protected MultiSigType multiSigType;
     // In case of P2SH represents a scriptSig, where the last chunk is the redeem script (either standard or extended)
     // Standard redeem script
     protected List<ScriptChunk> redeemScriptChunks;
@@ -21,13 +20,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     StandardRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
-        this.multiSigType = MultiSigType.STANDARD_MULTISIG;
         this.redeemScriptChunks = redeemScriptChunks;
-    }
-
-    @Override
-    public MultiSigType getMultiSigType() {
-        return this.multiSigType;
     }
 
     @Override

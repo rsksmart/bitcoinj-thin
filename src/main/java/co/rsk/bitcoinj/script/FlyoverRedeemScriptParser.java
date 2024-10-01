@@ -18,11 +18,6 @@ public class FlyoverRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public MultiSigType getMultiSigType() {
-        return MultiSigType.FLYOVER;
-    }
-
-    @Override
     public int getM() {
         return internalRedeemScriptParser.getM();
     }
