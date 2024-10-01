@@ -454,23 +454,13 @@ public class Script {
     }
 
     private boolean isErpType(Script redeemScript) {
-        List<ScriptChunk> chunks = redeemScript.getChunks();
-
-        // first, check if redeem script is flyover type
-        if (RedeemScriptValidator.hasFlyoverRedeemScriptStructure(chunks)) {
-            // if so, then check if internal redeem script is ERP type
-            chunks = chunks.subList(2, chunks.size());
+        List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
+        try {
+            return RedeemScriptParserFactory.get(redeemScriptChunks).hasErpFormat();
+        } catch (ScriptException ex) {
+            log.debug("Error while checking if redeem script is ERP type", ex);
+            return false;
         }
-
-        if (RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(chunks)){
-            return true;
-        }
-
-        if (RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks)){
-            return true;
-        }
-
-        return false;
     }
 
     /**
