@@ -1,5 +1,6 @@
 package co.rsk.bitcoinj.script;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -81,18 +82,7 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
 
         assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
-        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, StandardRedeemScriptParser.class);
-    }
-
-    private void assertInternalRedeemScriptParser(FlyoverRedeemScriptParser flyoverRedeemScriptParser, Class<?> expectedInternalRedeemScripParser) {
-        try {
-            Field internalRedeemScriptParserField = flyoverRedeemScriptParser.getClass().getDeclaredField("internalRedeemScriptParser");
-            internalRedeemScriptParserField.setAccessible(true);
-            RedeemScriptParser internalRedeemScriptParser = (RedeemScriptParser) internalRedeemScriptParserField.get(flyoverRedeemScriptParser);
-            assertTrue(expectedInternalRedeemScripParser.isInstance(internalRedeemScriptParser));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            Assert.fail("Internal redeem script parser not found");
-        }
+        assertFalse(redeemScriptParser.hasErpFormat());
     }
 
     @Test
@@ -129,7 +119,7 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
 
         assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
-        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, NonStandardErpRedeemScriptParser.class);
+        assertTrue(redeemScriptParser.hasErpFormat());
     }
 
     @Test
@@ -161,7 +151,7 @@ public class RedeemScriptParserFactoryTest {
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
 
         assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
-        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, P2shErpRedeemScriptParser.class);
+        assertTrue(redeemScriptParser.hasErpFormat());
     }
 
     @Test
