@@ -2,7 +2,6 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.VerificationException;
-import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,11 +56,6 @@ public class P2ShErpRedeemScriptParserTest {
         );
 
         new P2shErpRedeemScriptParser(standardRedeemScript.getChunks());
-    }
-
-    @Test
-    public void getMultiSigType_shouldReturnP2shErpFedType() {
-        Assert.assertEquals(MultiSigType.P2SH_ERP_FED, p2ShErpRedeemScriptParser.getMultiSigType());
     }
 
     @Test

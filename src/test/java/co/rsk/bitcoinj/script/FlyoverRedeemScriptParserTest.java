@@ -17,7 +17,6 @@ import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.MainNetParams;
-import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
 import java.math.BigInteger;
 import java.util.List;
 import org.junit.Before;
@@ -60,32 +59,6 @@ public class FlyoverRedeemScriptParserTest {
         p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(keys, emergencyKeys, CSV_VALUE);
         flyoverP2shErpRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
             flyoverDerivationHash.getBytes(), p2shErpRedeemScript);
-    }
-
-    @Test
-    public void getMultiSigType_whenIsStandardRedeemScript_shouldReturnFlyoverMultiSigType() {
-        assertIsFlyoverMultiSigType(flyoverStandardRedeemScript);
-    }
-
-    @Test
-    public void getMultiSigType_whenIsNonStandardErpRedeemScriptErpRedeemScript_shouldReturnFlyoverMultiSigType() {
-        assertIsFlyoverMultiSigType(flyoverNonStandardErpRedeemScript);
-    }
-
-    @Test
-    public void getMultiSigType_whenIsP2shErpRedeemScript_shouldReturnFlyoverMultiSigType() {
-        assertIsFlyoverMultiSigType(flyoverP2shErpRedeemScript);
-    }
-
-    private void assertIsFlyoverMultiSigType(Script flyoverRedeemScript) {
-        // Arrange
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
-
-        // Act
-        MultiSigType actualMultiSigType = flyoverRedeemScriptParser.getMultiSigType();
-
-        // Assert
-        assertEquals(MultiSigType.FLYOVER, actualMultiSigType);
     }
 
     @Test

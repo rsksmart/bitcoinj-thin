@@ -1,16 +1,12 @@
 package co.rsk.bitcoinj.script;
 
-import static co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType.NON_STANDARD_ERP_FED;
-import static co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType.NO_MULTISIG_TYPE;
-import static co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType.P2SH_ERP_FED;
-import static co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType.STANDARD_MULTISIG;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
-import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
-import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
@@ -84,33 +80,19 @@ public class RedeemScriptParserFactoryTest {
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
 
-        Assert.assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
-        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, StandardRedeemScriptParser.class, STANDARD_MULTISIG);
-        Assert.assertEquals(MultiSigType.FLYOVER, redeemScriptParser.getMultiSigType());
-    }
-
-    private void assertInternalRedeemScriptParser(FlyoverRedeemScriptParser flyoverRedeemScriptParser, Class<?> expectedInternalRedeemScripParser, MultiSigType expectedType) {
-        try {
-            Field internalRedeemScriptParserField = flyoverRedeemScriptParser.getClass().getDeclaredField("internalRedeemScriptParser");
-            internalRedeemScriptParserField.setAccessible(true);
-            RedeemScriptParser internalRedeemScriptParser = (RedeemScriptParser) internalRedeemScriptParserField.get(flyoverRedeemScriptParser);
-            Assert.assertTrue(expectedInternalRedeemScripParser.isInstance(internalRedeemScriptParser));
-            Assert.assertEquals(expectedType, internalRedeemScriptParser.getMultiSigType());
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            Assert.fail("Internal redeem script parser not found");
-        }
+        assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
+        assertFalse(redeemScriptParser.hasErpFormat());
     }
 
     @Test
     public void get_whenStandardRedeemScript_shouldReturnRedeemScriptParser() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
-        Assert.assertEquals(STANDARD_MULTISIG, redeemScriptParser.getMultiSigType());
+        assertTrue(redeemScriptParser instanceof StandardRedeemScriptParser);
     }
 
     @Test
-    public void get_whenErpRedeemScript_shouldReturnRedeemScriptParser() {
+    public void get_whenNonStandardErpRedeemScriptParser_shouldReturnRedeemScriptParser() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -118,8 +100,7 @@ public class RedeemScriptParserFactoryTest {
         );
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
-        Assert.assertEquals(MultiSigType.NON_STANDARD_ERP_FED, redeemScriptParser.getMultiSigType());
+        assertTrue(redeemScriptParser instanceof  NonStandardErpRedeemScriptParser);
     }
 
     @Test
@@ -136,9 +117,8 @@ public class RedeemScriptParserFactoryTest {
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
 
-        Assert.assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
-        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, NonStandardErpRedeemScriptParser.class, NON_STANDARD_ERP_FED);
-        Assert.assertEquals(MultiSigType.FLYOVER, redeemScriptParser.getMultiSigType());
+        assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
+        assertTrue(redeemScriptParser.hasErpFormat());
     }
 
     @Test
@@ -151,7 +131,7 @@ public class RedeemScriptParserFactoryTest {
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
 
-        Assert.assertEquals(MultiSigType.P2SH_ERP_FED, redeemScriptParser.getMultiSigType());
+        Assert.assertTrue(redeemScriptParser instanceof P2shErpRedeemScriptParser);
     }
 
     @Test
@@ -169,9 +149,8 @@ public class RedeemScriptParserFactoryTest {
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
 
-        Assert.assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
-        assertInternalRedeemScriptParser((FlyoverRedeemScriptParser) redeemScriptParser, P2shErpRedeemScriptParser.class, P2SH_ERP_FED);
-        Assert.assertEquals(MultiSigType.FLYOVER, redeemScriptParser.getMultiSigType());
+        assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
+        assertTrue(redeemScriptParser.hasErpFormat());
     }
 
     @Test
@@ -180,7 +159,6 @@ public class RedeemScriptParserFactoryTest {
         Script erpTestnetRedeemScript = new Script(erpTestnetRedeemScriptSerialized);
 
         RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(erpTestnetRedeemScript.getChunks());
-
-        Assert.assertEquals(NO_MULTISIG_TYPE, redeemScriptParser.getMultiSigType());
+        Assert.assertTrue(redeemScriptParser instanceof NonStandardErpRedeemScriptParserHardcoded);
     }
 }
