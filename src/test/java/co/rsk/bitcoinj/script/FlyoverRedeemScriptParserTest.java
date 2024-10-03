@@ -311,7 +311,7 @@ public class FlyoverRedeemScriptParserTest {
     }
 
     private void assertHasErpFormat(Script flyoverRedeemScript) {
-        FlyoverRedeemScriptParser flyoverRedeemScriptParser = (FlyoverRedeemScriptParser) RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
+        FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
         assertTrue(flyoverRedeemScriptParser.hasErpFormat());
     }
 
