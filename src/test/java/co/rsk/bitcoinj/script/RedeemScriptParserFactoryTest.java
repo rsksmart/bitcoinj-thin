@@ -7,7 +7,6 @@ import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
-import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
