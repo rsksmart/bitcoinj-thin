@@ -32,7 +32,6 @@ import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
-import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
@@ -682,25 +681,18 @@ public class Script {
      */
     public boolean isSentToMultiSig() {
         try {
-            MultiSigType multiSigType = this.getRedeemScriptParser().getMultiSigType();
-
-            if (MultiSigType.FLYOVER == multiSigType) {
-                multiSigType = getMultiSigTypeFromInternalRedeemScript();
-            }
-            return multiSigType != MultiSigType.NO_MULTISIG_TYPE;
+            /*
+             * Since NonStandardErpRedeemScriptParserHardcoded shouldn't
+             * be considered a multisig, we cannot rely only on being able to parse the script.
+             * This is why we also check if M is greater than 0, so in case this script is a NonStandardErpRedeemScriptParserHardcoded
+             * it will return -1. Therefore, the condition will be false.
+             *
+             * Any no parseable script will fail when parsing and return false.
+            */
+            return this.getRedeemScriptParser().getM() > 0;
         } catch (ScriptException e) {
             return false;
         }
-    }
-
-    private MultiSigType getMultiSigTypeFromInternalRedeemScript() {
-        MultiSigType multiSigType;
-        List<ScriptChunk> internalRedeemScriptChunks = this.getChunks()
-            .subList(2, chunks.size());
-        RedeemScriptParser internalRedeemScriptParser = RedeemScriptParserFactory.get(
-            internalRedeemScriptChunks);
-        multiSigType = internalRedeemScriptParser.getMultiSigType();
-        return multiSigType;
     }
 
     public boolean isSentToCLTVPaymentChannel() {
