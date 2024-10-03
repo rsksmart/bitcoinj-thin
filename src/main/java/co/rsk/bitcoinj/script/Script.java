@@ -32,7 +32,6 @@ import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
-import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
@@ -682,6 +681,14 @@ public class Script {
      */
     public boolean isSentToMultiSig() {
         try {
+            /*
+             * Since NonStandardErpRedeemScriptParserHardcoded shouldn't
+             * be considered a multisig, we cannot rely only on being able to parse the script.
+             * This is why we also check if M is greater than 0, so in case this script is a NonStandardErpRedeemScriptParserHardcoded
+             * it will return -1. Therefore, the condition will be false.
+             *
+             * Any no parseable script will fail when parsing and return false.
+            */
             return this.getRedeemScriptParser().getM() > 0;
         } catch (ScriptException e) {
             return false;
