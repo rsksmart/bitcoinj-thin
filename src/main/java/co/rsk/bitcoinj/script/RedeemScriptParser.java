@@ -5,17 +5,6 @@ import co.rsk.bitcoinj.core.Sha256Hash;
 import java.util.List;
 
 public interface RedeemScriptParser {
-
-    enum MultiSigType {
-        NO_MULTISIG_TYPE,
-        STANDARD_MULTISIG,
-        NON_STANDARD_ERP_FED,
-        P2SH_ERP_FED,
-        FLYOVER
-    }
-
-    MultiSigType getMultiSigType();
-
     int getM();
 
     int findKeyInRedeem(BtcECKey key);

@@ -21,11 +21,6 @@ public class NonStandardErpRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public MultiSigType getMultiSigType() {
-        return MultiSigType.NON_STANDARD_ERP_FED;
-    }
-
-    @Override
     public int getM() {
         return defaultRedeemScriptParser.getM();
     }

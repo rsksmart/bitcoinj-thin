@@ -23,11 +23,6 @@ public class P2shErpRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public MultiSigType getMultiSigType() {
-        return MultiSigType.P2SH_ERP_FED;
-    }
-
-    @Override
     public int getM() {
         return defaultRedeemScriptParser.getM();
     }
