@@ -13,7 +13,7 @@ public class NonStandardErpRedeemScriptParser implements RedeemScriptParser {
 
     private final RedeemScriptParser defaultRedeemScriptParser;
 
-    public NonStandardErpRedeemScriptParser(
+    NonStandardErpRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
         List<ScriptChunk> defaultRedeemScriptChunks = extractDefaultRedeemScriptChunks(redeemScriptChunks);
@@ -69,5 +69,10 @@ public class NonStandardErpRedeemScriptParser implements RedeemScriptParser {
         }
 
         return chunksForRedeem;
+    }
+
+    @Override
+    public boolean hasErpFormat() {
+        return true;
     }
 }

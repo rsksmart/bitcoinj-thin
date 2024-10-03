@@ -1,9 +1,9 @@
 package co.rsk.bitcoinj.script;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.ScriptException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,30 +17,30 @@ public class StandardRedeemScriptParserTest {
     private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(100));
     private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(200));
     private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(300));
+    private Script standardRedeemScript;
+    private StandardRedeemScriptParser standardRedeemScriptParser;
 
     @Before
     public void setUp() {
         btcECKeyList.add(ecKey1);
         btcECKeyList.add(ecKey2);
         btcECKeyList.add(ecKey3);
+
+        standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
+        // Cast object returned by RedeemScriptParserFactory.get() to ensure it is a StandardRedeemScriptParser
+        standardRedeemScriptParser = (StandardRedeemScriptParser) RedeemScriptParserFactory.get(standardRedeemScript.getChunks());
     }
 
     @Test(expected = IllegalStateException.class)
     public void findKeyInRedeem_standard_redeem_script_no_matching_key() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
         BtcECKey unmatchingBtcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(400));
 
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
-        parser.findKeyInRedeem(unmatchingBtcECKey);
+        standardRedeemScriptParser.findKeyInRedeem(unmatchingBtcECKey);
     }
 
     @Test
     public void getPubKeys_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-        List<BtcECKey> obtainedList = parser.getPubKeys();
+        List<BtcECKey> obtainedList = standardRedeemScriptParser.getPubKeys();
 
         List<String> expectedKeysList = new ArrayList<>();
         for (BtcECKey key : btcECKeyList) {
@@ -58,33 +58,22 @@ public class StandardRedeemScriptParserTest {
         assertEquals(expectedKeysList, obtainedKeysList);
     }
 
-    @Test(expected = ScriptException.class)
-    public void getPubKeys_invalid_redeem_script() {
-        Script script = ScriptBuilder.createP2SHOutputScript(new byte[20]);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(script.getChunks());
-
-        parser.getPubKeys();
+    @Test
+    public void getM_shouldReturnM() {
+        assertEquals(2, standardRedeemScriptParser.getM());
     }
 
     @Test
-    public void getM_from_multiSig_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-        RedeemScriptParser parser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
-        assertEquals(2, parser.getM());
-    }
-
-    @Test
-    public void extractStandardRedeemScriptChunks_whenGetScriptChunksFromStandardRedeemScriptParser_shouldReturnScriptChunks() {
-        // Arrange
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(btcECKeyList);
-        List<ScriptChunk> expectedRedeemScriptChunks = redeemScript.getChunks();
-        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
-
+    public void extractStandardRedeemScriptChunks_shouldReturnScriptChunks() {
         // Act
-        List<ScriptChunk> actualRedeemScripChunks = redeemScriptParser.extractStandardRedeemScriptChunks();
+        List<ScriptChunk> actualRedeemScripChunks = standardRedeemScriptParser.extractStandardRedeemScriptChunks();
 
         // Assert
-        assertEquals(expectedRedeemScriptChunks, actualRedeemScripChunks);
+        assertEquals(standardRedeemScript.getChunks(), actualRedeemScripChunks);
+    }
+
+    @Test
+    public void hasErpFormat_shouldReturnFalse() {
+        assertFalse(standardRedeemScriptParser.hasErpFormat());
     }
 }

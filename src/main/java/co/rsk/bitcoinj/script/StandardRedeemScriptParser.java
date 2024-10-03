@@ -18,7 +18,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     // Standard redeem script
     protected List<ScriptChunk> redeemScriptChunks;
 
-    public StandardRedeemScriptParser(
+    StandardRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
         this.multiSigType = MultiSigType.STANDARD_MULTISIG;
@@ -80,5 +80,10 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     @Override
     public List<ScriptChunk> extractStandardRedeemScriptChunks() {
         return redeemScriptChunks;
+    }
+
+    @Override
+    public boolean hasErpFormat() {
+        return false;
     }
 }

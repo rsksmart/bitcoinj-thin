@@ -165,25 +165,31 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasNonStandardErpRedeemScriptStructure_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
-    }
-
-    @Test
-    public void hasNonStandardErpRedeemScriptStructure_whenFlyoverRedeemScript_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
+    public void hasNonStandardErpRedeemScriptStructure_whenCustomRedeemScript_shouldReturnFalse() {
+        Script customRedeemScript = RedeemScriptUtils.createCustomRedeemScript(
+            defaultRedeemScriptKeys
         );
 
-        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(flyoverRedeemScript.getChunks()));
+        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(customRedeemScript.getChunks()));
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptOneByteCsvValue_shouldReturnTrue() {
+    public void hasNonStandardErpRedeemScriptStructure_whenStandardRedeemScript_shouldReturnFalse() {
+        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(standardRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasNonStandardErpRedeemScriptStructure_whenP2shErpRedeemScript_shouldReturnFalse() {
+        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(p2shErpRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasNonStandardErpRedeemScriptStructure_whenFlyoverStandardRedeemScript_shouldReturnFalse() {
+        Assert.assertFalse(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(flyoverStandardRedeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasNonStandardErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptOneByteCsvValue_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -194,7 +200,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptTwoBytesCsvValue_shouldReturnTrue() {
+    public void hasNonStandardErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptTwoBytesCsvValue_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -205,7 +211,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptTwoBytesIncludingSignCsvValue_shouldReturnTrue() {
+    public void hasNonStandardErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptTwoBytesIncludingSignCsvValue_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -216,7 +222,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptThreeBytesCsvValue_shouldReturnTrue() {
+    public void hasNonStandardErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptThreeBytesCsvValue_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -227,7 +233,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptThreeBytesIncludingSignCsvValue_shouldReturnTrue() {
+    public void hasNonStandardErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptThreeBytesIncludingSignCsvValue_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -238,7 +244,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptFourBytesCsvValue_shouldReturnTrue() {
+    public void hasNonStandardErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptFourBytesCsvValue_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -249,7 +255,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptFourBytesIncludingSignCsvValue_shouldReturnTrue() {
+    public void hasNonStandardErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptFourBytesIncludingSignCsvValue_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,
@@ -260,7 +266,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasErpRedeemScriptStructure_whenFlyoverNonStandardErpRedeemScriptRemovingPrefix_shouldReturnTrue() {
+    public void hasNonStandardErpRedeemScriptStructure_whenFlyoverNonStandardErpRedeemScriptRemovingPrefix_shouldReturnTrue() {
         Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
             defaultRedeemScriptKeys,
             emergencyRedeemScriptKeys,

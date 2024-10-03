@@ -15,7 +15,7 @@ public class P2shErpRedeemScriptParser implements RedeemScriptParser {
 
     private final RedeemScriptParser defaultRedeemScriptParser;
 
-    public P2shErpRedeemScriptParser(
+    P2shErpRedeemScriptParser(
         List<ScriptChunk> redeemScriptChunks
     ) {
         List<ScriptChunk> defaultRedeemScriptChunks = extractDefaultRedeemScriptChunks(redeemScriptChunks);
@@ -69,5 +69,10 @@ public class P2shErpRedeemScriptParser implements RedeemScriptParser {
         }
 
         return chunksForRedeem;
+    }
+
+    @Override
+    public boolean hasErpFormat() {
+        return true;
     }
 }
