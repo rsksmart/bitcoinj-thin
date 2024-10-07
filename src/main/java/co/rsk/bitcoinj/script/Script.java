@@ -179,13 +179,6 @@ public class Script {
         return Collections.unmodifiableList(chunks);
     }
 
-    private static final ScriptChunk[] STANDARD_TRANSACTION_SCRIPT_CHUNKS = {
-        new ScriptChunk(ScriptOpCodes.OP_DUP, null, 0),
-        new ScriptChunk(ScriptOpCodes.OP_HASH160, null, 1),
-        new ScriptChunk(ScriptOpCodes.OP_EQUALVERIFY, null, 23),
-        new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null, 24),
-    };
-
     /**
      * <p>To run a script, first we parse it which breaks it up into chunks representing pushes of data or logical
      * opcodes. Then we can run the parsed chunks.</p>
