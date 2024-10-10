@@ -165,14 +165,11 @@ public class CheckpointManager {
             checkState(numCheckpoints > 0);
             // Hash numCheckpoints in a way compatible to the binary format.
             hasher.putBytes(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
-            ByteBuffer buffer = ByteBuffer.allocate(size);
+
             for (int i = 0; i < numCheckpoints; i++) {
                 byte[] bytes = BASE64.decode(reader.readLine());
                 hasher.putBytes(bytes);
-                buffer.position(0);
-                buffer.put(bytes);
-                buffer.position(0);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
                 StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
