@@ -135,7 +135,7 @@ public class CheckpointManager {
             for (int i = 0; i < numCheckpoints; i++) {
                 if (dis.read(buffer.array(), 0, size) < size)
                     throw new IOException("Incomplete read whilst loading checkpoints.");
-                StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
+                StoredBlock block = deserializeCompact(buffer);
                 buffer.position(0);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
@@ -148,6 +148,16 @@ public class CheckpointManager {
             if (dis != null) dis.close();
             inputStream.close();
         }
+    }
+
+    private StoredBlock deserializeCompact(ByteBuffer buffer) {
+        byte[] bytes = buffer.array();
+        if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE)
+            return StoredBlock.deserializeCompact(params, buffer);
+        else if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE_V2)
+            return StoredBlock.deserializeCompactV2(params, buffer);
+        else
+            throw new IllegalStateException("unexpected length of checkpoint: " + bytes.length);
     }
 
     private Sha256Hash readTextual(InputStream inputStream) throws IOException {
@@ -165,15 +175,12 @@ public class CheckpointManager {
             checkState(numCheckpoints > 0);
             // Hash numCheckpoints in a way compatible to the binary format.
             hasher.putBytes(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
-            ByteBuffer buffer = ByteBuffer.allocate(size);
+
             for (int i = 0; i < numCheckpoints; i++) {
                 byte[] bytes = BASE64.decode(reader.readLine());
                 hasher.putBytes(bytes);
-                buffer.position(0);
-                buffer.put(bytes);
-                buffer.position(0);
-                StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                StoredBlock block = deserializeCompact(buffer);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
             HashCode hash = hasher.hash();
