@@ -70,9 +70,7 @@ import static com.google.common.base.Preconditions.*;
 public class CheckpointManager {
     private static final Logger log = LoggerFactory.getLogger(CheckpointManager.class);
 
-    private static final String BINARY_MAGIC = "CHECKPOINTS 1";
     private static final String TEXTUAL_MAGIC = "TXT CHECKPOINTS 1";
-    private static final int MAX_SIGNATURES = 256;
 
     // Map of block header time to data.
     protected final TreeMap<Long, StoredBlock> checkpoints = new TreeMap<Long, StoredBlock>();
@@ -97,9 +95,7 @@ public class CheckpointManager {
         inputStream.mark(1);
         int first = inputStream.read();
         inputStream.reset();
-        if (first == BINARY_MAGIC.charAt(0))
-            dataHash = readBinary(inputStream);
-        else if (first == TEXTUAL_MAGIC.charAt(0))
+        if (first == TEXTUAL_MAGIC.charAt(0))
             dataHash = readTextual(inputStream);
         else
             throw new IOException("Unsupported format.");
@@ -108,46 +104,6 @@ public class CheckpointManager {
     /** Returns a checkpoints stream pointing to inside the bitcoinj JAR */
     public static InputStream openStream(NetworkParameters params) {
         return CheckpointManager.class.getResourceAsStream("/" + params.getId() + ".checkpoints.txt");
-    }
-
-    private Sha256Hash readBinary(InputStream inputStream) throws IOException {
-        DataInputStream dis = null;
-        try {
-            MessageDigest digest = Sha256Hash.newDigest();
-            DigestInputStream digestInputStream = new DigestInputStream(inputStream, digest);
-            dis = new DataInputStream(digestInputStream);
-            digestInputStream.on(false);
-            byte[] header = new byte[BINARY_MAGIC.length()];
-            dis.readFully(header);
-            if (!Arrays.equals(header, BINARY_MAGIC.getBytes("US-ASCII")))
-                throw new IOException("Header bytes did not match expected version");
-            int numSignatures = checkPositionIndex(dis.readInt(), MAX_SIGNATURES, "Num signatures out of range");
-            for (int i = 0; i < numSignatures; i++) {
-                byte[] sig = new byte[65];
-                dis.readFully(sig);
-                // TODO: Do something with the signature here.
-            }
-            digestInputStream.on(true);
-            int numCheckpoints = dis.readInt();
-            checkState(numCheckpoints > 0);
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
-            ByteBuffer buffer = ByteBuffer.allocate(size);
-            for (int i = 0; i < numCheckpoints; i++) {
-                if (dis.read(buffer.array(), 0, size) < size)
-                    throw new IOException("Incomplete read whilst loading checkpoints.");
-                StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
-                buffer.position(0);
-                checkpoints.put(block.getHeader().getTimeSeconds(), block);
-            }
-            Sha256Hash dataHash = Sha256Hash.wrap(digest.digest());
-            log.debug("Read {} checkpoints, hash is {}", checkpoints.size(), dataHash);
-            return dataHash;
-        } catch (ProtocolException e) {
-            throw new IOException(e);
-        } finally {
-            if (dis != null) dis.close();
-            inputStream.close();
-        }
     }
 
     private Sha256Hash readTextual(InputStream inputStream) throws IOException {
