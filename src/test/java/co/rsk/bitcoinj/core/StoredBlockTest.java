@@ -159,7 +159,7 @@ public class StoredBlockTest {
         ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
         block.serializeCompact(buf);
         assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE, buf.position());
-        ((Buffer) buf).rewind();
+        buf.rewind();
         assertEquals(StoredBlock.deserializeCompact(mainnet, buf), block);
     }
 
@@ -198,10 +198,10 @@ public class StoredBlockTest {
     private void roundtripSerializeCompactV2(BigInteger chainWork) {
         StoredBlock block = new StoredBlock(BLOCK, chainWork, 0);
         ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
-        block.serializeCompactV2(buf);
+        block.serializeCompact(buf);
         assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE_V2, buf.position());
-        ((Buffer) buf).rewind();
-        assertEquals(StoredBlock.deserializeCompactV2(mainnet, buf), block);
+        buf.rewind();
+        assertEquals(StoredBlock.deserializeCompact(mainnet, buf), block);
     }
 
     @Test

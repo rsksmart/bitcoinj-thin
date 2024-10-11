@@ -122,14 +122,7 @@ public class CheckpointManager {
                 byte[] bytes = BASE64.decode(reader.readLine());
                 hasher.putBytes(bytes);
                 ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                StoredBlock block;
-                if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE)
-                    block = StoredBlock.deserializeCompact(params, buffer);
-                else if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE_V2)
-                    block = StoredBlock.deserializeCompactV2(params, buffer);
-                else
-                    throw new IllegalStateException("unexpected length of checkpoint: " + bytes.length);
-
+                StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
             HashCode hash = hasher.hash();

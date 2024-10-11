@@ -121,6 +121,18 @@ public class StoredBlock {
         return store.get(getHeader().getPrevBlockHash());
     }
 
+    public void serializeCompact(ByteBuffer buffer) {
+        int size = buffer.array().length;
+        if (size == COMPACT_SERIALIZED_SIZE) {
+            serializeCompactV1(buffer);
+        } else if (size == COMPACT_SERIALIZED_SIZE_V2) {
+            serializeCompactV2(buffer);
+        } else {
+            throw new IllegalStateException("Invalid buffer size: " + size);
+        }
+
+    }
+
     /**
      * Serializes the stored block to a custom packed format. Used internally.
      * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
@@ -128,7 +140,7 @@ public class StoredBlock {
      *
      * @param buffer buffer to write to
      */
-    public void serializeCompact(ByteBuffer buffer) {
+    private void serializeCompactV1(ByteBuffer buffer) {
         byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES_V1);
         if (chainWorkBytes.length < CHAIN_WORK_BYTES_V1) {
             // Pad to the right size.
@@ -145,7 +157,7 @@ public class StoredBlock {
      *
      * @param buffer buffer to write to
      */
-    public void serializeCompactV2(ByteBuffer buffer) {
+    private void serializeCompactV2(ByteBuffer buffer) {
         byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES_V2);
         if (chainWorkBytes.length < CHAIN_WORK_BYTES_V2) {
             // Pad to the right size.
@@ -157,6 +169,16 @@ public class StoredBlock {
         buffer.put(bytes, 0, BtcBlock.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
     }
 
+    public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+        if (buffer.array().length == COMPACT_SERIALIZED_SIZE) {
+            return deserializeCompactV1(params, buffer);
+        } else if (buffer.array().length == COMPACT_SERIALIZED_SIZE_V2) {
+            return deserializeCompactV2(params, buffer);
+        } else {
+            throw new IllegalStateException("Invalid buffer size: " + buffer.array().length);
+        }
+    }
+
     /**
      * Deserializes the stored block from a custom packed format. Used internally.
      * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
@@ -165,7 +187,7 @@ public class StoredBlock {
      * @param buffer data to deserialize
      * @return deserialized stored block
      */
-    public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+    private static StoredBlock deserializeCompactV1(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V1];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
@@ -181,7 +203,7 @@ public class StoredBlock {
      * @param buffer data to deserialize
      * @return deserialized stored block
      */
-    public static StoredBlock deserializeCompactV2(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+    private static StoredBlock deserializeCompactV2(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V2];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
