@@ -5,26 +5,13 @@ import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Sha256Hash;
 import java.util.List;
 
-public class NoRedeemScriptParser implements RedeemScriptParser {
+public class NonStandardErpRedeemScriptParserHardcoded implements RedeemScriptParser {
 
-    @Override
-    public MultiSigType getMultiSigType() {
-        return MultiSigType.NO_MULTISIG_TYPE;
-    }
-
-    @Override
-    public ScriptType getScriptType() {
-        return ScriptType.UNDEFINED;
-    }
+    NonStandardErpRedeemScriptParserHardcoded() { }
 
     @Override
     public int getM() {
         return -1;
-    }
-
-    @Override
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return 0;
     }
 
     @Override
@@ -43,7 +30,14 @@ public class NoRedeemScriptParser implements RedeemScriptParser {
     }
 
     @Override
-    public Script extractStandardRedeemScript() {
+    public List<ScriptChunk> extractStandardRedeemScriptChunks() {
         throw new ScriptException("Only usable for multisig scripts.");
+    }
+
+    @Override
+    public boolean hasErpFormat() {
+        // This parser is exclusive for an invalid redeem script.
+        // Therefore, it is not considered as a valid erp format.
+        return false;
     }
 }

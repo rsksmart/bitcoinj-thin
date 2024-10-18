@@ -20,6 +20,7 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -31,7 +32,7 @@ import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
-import co.rsk.bitcoinj.script.RedeemScriptParser.MultiSigType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -120,7 +121,6 @@ public class Script {
     Script(List<ScriptChunk> chunks) {
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
         creationTimeSeconds = Utils.currentTimeSeconds();
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
     }
 
     /**
@@ -132,7 +132,6 @@ public class Script {
         program = programBytes;
         parse(programBytes);
         creationTimeSeconds = 0;
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
 
     }
 
@@ -140,7 +139,6 @@ public class Script {
         program = programBytes;
         parse(programBytes);
         this.creationTimeSeconds = creationTimeSeconds;
-        redeemScriptParser = RedeemScriptParserFactory.get(this.chunks);
     }
 
     public long getCreationTimeSeconds() {
@@ -181,13 +179,6 @@ public class Script {
         return Collections.unmodifiableList(chunks);
     }
 
-    private static final ScriptChunk[] STANDARD_TRANSACTION_SCRIPT_CHUNKS = {
-        new ScriptChunk(ScriptOpCodes.OP_DUP, null, 0),
-        new ScriptChunk(ScriptOpCodes.OP_HASH160, null, 1),
-        new ScriptChunk(ScriptOpCodes.OP_EQUALVERIFY, null, 23),
-        new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null, 24),
-    };
-
     /**
      * <p>To run a script, first we parse it which breaks it up into chunks representing pushes of data or logical
      * opcodes. Then we can run the parsed chunks.</p>
@@ -198,11 +189,7 @@ public class Script {
      * Bitcoin Core does something similar.</p>
      */
     private void parse(byte[] program) throws ScriptException {
-        ScriptParserResult result = ScriptParser.parseScriptProgram(program);
-        chunks = result.getChunks();
-        if (result.getException().isPresent()) {
-            throw new ScriptException("There was an error parsing the script", result.getException().get());
-        }
+        chunks = ScriptParser.parseScriptProgram(program);
     }
 
     /**
@@ -459,13 +446,13 @@ public class Script {
     }
 
     private boolean isErpType(Script redeemScript) {
-        List<ScriptChunk> chunks = redeemScript.getChunks();
-        boolean isFastBridgeErp = FastBridgeErpRedeemScriptParser.isFastBridgeErpFed(chunks);
-        boolean isErp = RedeemScriptValidator.hasErpRedeemScriptStructure(chunks);
-        boolean isFastBridgeP2shErp = FastBridgeP2shErpRedeemScriptParser.isFastBridgeP2shErpFed(chunks);
-        boolean isP2shErp = RedeemScriptValidator.hasP2shErpRedeemScriptStructure(chunks);
-
-        return isFastBridgeErp || isErp || isFastBridgeP2shErp || isP2shErp;
+        List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
+        try {
+            return RedeemScriptParserFactory.get(redeemScriptChunks).hasErpFormat();
+        } catch (ScriptException ex) {
+            log.debug("Error while checking if redeem script is ERP type", ex);
+            return false;
+        }
     }
 
     /**
@@ -485,24 +472,56 @@ public class Script {
         return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, sigsPrefixCount, sigsSuffixCount);
     }
 
+    private RedeemScriptParser getRedeemScriptParser() {
+        if (redeemScriptParser == null){
+            redeemScriptParser = RedeemScriptParserFactory.get(chunks);
+        }
+        return redeemScriptParser;
+    }
+
     /**
      * Returns the index where a signature by the key should be inserted. Only applicable to
      * a P2SH scriptSig.
      */
-    public int getSigInsertionIndex(Sha256Hash hash, BtcECKey signingKey) {
-        return this.redeemScriptParser.getSigInsertionIndex(hash, signingKey);
+    public int getSigInsertionIndex(Sha256Hash hashForSignature, BtcECKey signingKey) {
+        // Iterate over existing signatures, skipping the initial OP_0, the final redeem script
+        // and any placeholder OP_0 sigs.
+
+        final int redeemScriptChunkIndex = chunks.size() - 1;
+        ScriptChunk redeemScriptChunk = chunks.get(redeemScriptChunkIndex);
+        checkNotNull(redeemScriptChunk.data);
+        List<ScriptChunk> chunksWithoutRedeemScript = chunks.subList(1, redeemScriptChunkIndex);
+
+        Script redeemScript = new Script(redeemScriptChunk.data);
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+
+        int sigInsertionIndex = 0;
+        int keyIndexInRedeem = redeemScriptParser.findKeyInRedeem(signingKey);
+
+        for (ScriptChunk chunk : chunksWithoutRedeemScript) {
+            if (chunk.opcode != OP_0) {
+                Preconditions.checkNotNull(chunk.data);
+                if (keyIndexInRedeem < redeemScriptParser.findSigInRedeem(chunk.data, hashForSignature)) {
+                    return sigInsertionIndex;
+                }
+
+                sigInsertionIndex++;
+            }
+        }
+
+        return sigInsertionIndex;
     }
 
     public int findKeyInRedeem(BtcECKey key) {
-        return this.redeemScriptParser.findKeyInRedeem(key);
+        return this.getRedeemScriptParser().findKeyInRedeem(key);
     }
 
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
-        return this.redeemScriptParser.findSigInRedeem(signatureBytes, hash);
+        return this.getRedeemScriptParser().findSigInRedeem(signatureBytes, hash);
     }
 
     public List<BtcECKey> getPubKeys() throws ScriptException {
-        return this.redeemScriptParser.getPubKeys();
+        return this.getRedeemScriptParser().getPubKeys();
     }
 
     ////////////////////// Interface used during verification of transactions/blocks ////////////////////////////////
@@ -591,7 +610,7 @@ public class Script {
     public int getNumberOfSignaturesRequiredToSpend() {
         if (this.isSentToMultiSig()) {
             // for M of N CHECKMULTISIG script we will need M signatures to spend
-            return redeemScriptParser.getM();
+            return this.getRedeemScriptParser().getM();
         } else if (isSentToAddress() || isSentToRawPubKey()) {
             // pay-to-address and pay-to-pubkey require single sig
             return 1;
@@ -654,7 +673,19 @@ public class Script {
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
     public boolean isSentToMultiSig() {
-        return !redeemScriptParser.getMultiSigType().equals(MultiSigType.NO_MULTISIG_TYPE);
+        try {
+            /*
+             * Since NonStandardErpRedeemScriptParserHardcoded shouldn't
+             * be considered a multisig, we cannot rely only on being able to parse the script.
+             * This is why we also check if M is greater than 0, so in case this script is a NonStandardErpRedeemScriptParserHardcoded
+             * it will return -1. Therefore, the condition will be false.
+             *
+             * Any no parseable script will fail when parsing and return false.
+            */
+            return this.getRedeemScriptParser().getM() > 0;
+        } catch (ScriptException e) {
+            return false;
+        }
     }
 
     public boolean isSentToCLTVPaymentChannel() {
