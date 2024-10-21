@@ -310,5 +310,9 @@ public class StoredBlockTest {
 
         assertEquals(deserializedV1, deserializedV1FromV2);
         assertEquals(deserialized128V1, deserialized128V1FromV2);
+
+        StoredBlock v1 = StoredBlock.deserializeCompactV1(mainnet, ByteBuffer.wrap(baV1));
+        StoredBlock v2 = StoredBlock.deserializeCompactV2(mainnet, ByteBuffer.wrap(baV2));
+        assertEquals(v1, v2);
     }
 }

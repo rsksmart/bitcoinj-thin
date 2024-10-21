@@ -175,7 +175,7 @@ public class StoredBlock {
      * @param buffer data to deserialize
      * @return deserialized stored block
      */
-    private static StoredBlock deserializeCompactV1(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+    public static StoredBlock deserializeCompactV1(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V1];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
@@ -191,7 +191,7 @@ public class StoredBlock {
      * @param buffer data to deserialize
      * @return deserialized stored block
      */
-    private static StoredBlock deserializeCompactV2(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+    public static StoredBlock deserializeCompactV2(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V2];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
