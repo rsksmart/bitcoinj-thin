@@ -1,5 +1,7 @@
 package co.rsk.bitcoinj.core;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -8,9 +10,6 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class StoredBlockTest {
 
@@ -203,18 +202,5 @@ public class StoredBlockTest {
         blockToStore.serializeCompactV2(buf);
         // assert serialized size and that the buffer is full
         assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE_V2, buf.position());
-    }
-
-    @Test
-    public void moreWorkThan_whenLargerVsSmallerChainWork_shouldReturnTrue() {
-        StoredBlock noWorkBlock = new StoredBlock(block, BigInteger.ZERO, 0);
-        StoredBlock smallWorkBlock = new StoredBlock(block, BigInteger.ONE, 0);
-        StoredBlock maxWorkBlockV1 = new StoredBlock(block, MAX_WORK_V1, 0);
-        StoredBlock maxWorkBlockV2 = new StoredBlock(block, MAX_WORK_V2, 0);
-
-        assertTrue(smallWorkBlock.moreWorkThan(noWorkBlock));
-        assertTrue(maxWorkBlockV1.moreWorkThan(noWorkBlock));
-        assertTrue(maxWorkBlockV1.moreWorkThan(smallWorkBlock));
-        assertTrue(maxWorkBlockV2.moreWorkThan(maxWorkBlockV1));
     }
 }

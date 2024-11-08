@@ -35,8 +35,8 @@ import java.util.Locale;
  */
 public class StoredBlock {
 
-    // A BigInteger representing the total amount of work done so far on this chain. As of June 22, 2024, it takes 12
-    // unsigned bytes to store this value, so developers should use the V2 format.
+    /* A BigInteger representing the total amount of work done so far on this chain. As of June 22, 2024, it takes 12
+     unsigned bytes to store this value, so developers should use the V2 format. */
     private static final int CHAIN_WORK_BYTES_V1 = 12;
     // A BigInteger representing the total amount of work done so far on this chain.
     private static final int CHAIN_WORK_BYTES_V2 = 32;
@@ -44,9 +44,9 @@ public class StoredBlock {
     private static final int HEIGHT_BYTES = 4;
     // Used for padding.
     private static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES_V2]; // fit larger format
-    /** Number of bytes serialized by {@link #serializeCompact(ByteBuffer)} */
+    // Number of bytes serialized by {@link #serializeCompact(ByteBuffer)} 
     public static final int COMPACT_SERIALIZED_SIZE = BtcBlock.HEADER_SIZE + CHAIN_WORK_BYTES_V1 + HEIGHT_BYTES;
-    /** Number of bytes serialized by {@link #serializeCompactV2(ByteBuffer)} */
+    // Number of bytes serialized by {@link #serializeCompactV2(ByteBuffer)}
     public static final int COMPACT_SERIALIZED_SIZE_V2 = BtcBlock.HEADER_SIZE + CHAIN_WORK_BYTES_V2 + HEIGHT_BYTES;
 
     private BtcBlock header;
