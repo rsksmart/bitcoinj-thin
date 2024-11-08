@@ -156,9 +156,32 @@ public class StoredBlock {
         buffer.put(bytes, 0, BtcBlock.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
     }
 
-    /** De-serializes the stored block from a custom packed format. Used by {@link CheckpointManager}. */
+    /**
+     * Deserializes the stored block from a custom packed format. Used internally.
+     * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
+     * so developers should use the V2 format.
+     *
+     * @param buffer data to deserialize
+     * @return deserialized stored block
+     */
     public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_LEGACY];
+        buffer.get(chainWorkBytes);
+        BigInteger chainWork = new BigInteger(1, chainWorkBytes);
+        int height = buffer.getInt();  // +4 bytes
+        byte[] header = new byte[BtcBlock.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
+        buffer.get(header, 0, BtcBlock.HEADER_SIZE);
+        return new StoredBlock(params.getDefaultSerializer().makeBlock(header), chainWork, height);
+    }
+
+    /**
+     * Deserializes the stored block from a custom packed format. Used internally.
+     *
+     * @param buffer data to deserialize
+     * @return deserialized stored block
+     */
+    public static StoredBlock deserializeCompactV2(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V2];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
