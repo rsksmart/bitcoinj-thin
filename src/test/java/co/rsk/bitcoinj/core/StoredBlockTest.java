@@ -166,40 +166,44 @@ public class StoredBlockTest {
     }
 
     @Test
-    public void serializeCompactV2_forZeroChainWork_works() {
-        testSerializeCompactV2(ZERO_CHAIN_WORK);
+    public void serializeAndDeserializeCompactV2_forZeroChainWork_works() {
+        testSerializeAndDeserializeCompactV2(ZERO_CHAIN_WORK);
     }
 
     @Test
-    public void serializeCompactV2_forSmallChainWork_works() {
-        testSerializeCompactV2(SMALL_CHAIN_WORK);
+    public void serializeAndDeserializeCompactV2forSmallChainWork_works() {
+        testSerializeAndDeserializeCompactV2(SMALL_CHAIN_WORK);
     }
 
     @Test
-    public void serializeCompactV2_for8BytesChainWork_works() {
-        testSerializeCompactV2(EIGHT_BYTES_WORK_V1);
+    public void serializeAndDeserializeCompactV2for8BytesChainWork_works() {
+        testSerializeAndDeserializeCompactV2(EIGHT_BYTES_WORK_V1);
     }
 
     @Test
-    public void serializeCompactV2_for12ByteChainWork_works() {
-        testSerializeCompactV2(MAX_WORK_V1);
+    public void serializeAndDeserializeCompactV2for12ByteChainWork_works() {
+        testSerializeAndDeserializeCompactV2(MAX_WORK_V1);
     }
 
     @Test
-    public void serializeCompactV2_forTooLargeWorkV1_works() {
-        testSerializeCompactV2(TOO_LARGE_WORK_V1);
+    public void serializeAndDeserializeCompactV2forTooLargeWorkV1_works() {
+        testSerializeAndDeserializeCompactV2(TOO_LARGE_WORK_V1);
     }
 
     @Test
-    public void serializeCompactV2_for32BytesChainWork_works() {
-        testSerializeCompactV2(MAX_WORK_V2);
+    public void serializeAndDeserializeCompactV2for32BytesChainWork_works() {
+        testSerializeAndDeserializeCompactV2(MAX_WORK_V2);
     }
 
-    private void testSerializeCompactV2(BigInteger chainWork) {
+    private void testSerializeAndDeserializeCompactV2(BigInteger chainWork) {
         StoredBlock blockToStore = new StoredBlock(block, chainWork, 0);
         ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
         blockToStore.serializeCompactV2(buf);
         // assert serialized size and that the buffer is full
         assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE_V2, buf.position());
+
+        buf.rewind();
+        StoredBlock deserializedBlock = StoredBlock.deserializeCompactV2(mainnet, buf);
+        assertEquals(deserializedBlock, blockToStore);
     }
 }
