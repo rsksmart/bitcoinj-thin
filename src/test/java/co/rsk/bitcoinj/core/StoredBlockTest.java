@@ -70,7 +70,7 @@ public class StoredBlockTest {
 
         // deserialize block
         blockBuffer.rewind();
-        StoredBlock blockDeserialized = StoredBlock.deserializeCompact(mainnet, blockBuffer);
+        StoredBlock blockDeserialized = StoredBlock.deserializeCompactLegacy(mainnet, blockBuffer);
         assertEquals(blockDeserialized, blockToStore);
     }
 
@@ -85,7 +85,7 @@ public class StoredBlockTest {
 
         // deserialize block
         blockBuffer.rewind();
-        StoredBlock blockDeserialized = StoredBlock.deserializeCompact(mainnet, blockBuffer);
+        StoredBlock blockDeserialized = StoredBlock.deserializeCompactLegacy(mainnet, blockBuffer);
         assertEquals(blockDeserialized, blockToStore);
     }
 
@@ -100,7 +100,7 @@ public class StoredBlockTest {
 
         // deserialize block
         blockBuffer.rewind();
-        StoredBlock blockDeserialized = StoredBlock.deserializeCompact(mainnet, blockBuffer);
+        StoredBlock blockDeserialized = StoredBlock.deserializeCompactLegacy(mainnet, blockBuffer);
         assertEquals(blockDeserialized, blockToStore);
     }
 
@@ -115,7 +115,7 @@ public class StoredBlockTest {
 
         // deserialize block
         blockBuffer.rewind();
-        StoredBlock blockDeserialized = StoredBlock.deserializeCompact(mainnet, blockBuffer);
+        StoredBlock blockDeserialized = StoredBlock.deserializeCompactLegacy(mainnet, blockBuffer);
         assertEquals(blockDeserialized, blockToStore);
     }
 
