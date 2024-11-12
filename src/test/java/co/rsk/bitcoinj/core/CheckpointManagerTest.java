@@ -162,4 +162,40 @@ public class CheckpointManagerTest {
             Assert.assertNotEquals(checkpointsV2Format, actualCheckpoints);
         }
     }
+
+    @Test(expected = NullPointerException.class)
+    public void shouldThrowNullPointerExceptionWhenCheckpointsNotFound() throws IOException {
+        InputStream checkpointStream = getClass().getResourceAsStream("/co/rsk/bitcoinj/core/checkpointmanagertest/notFound.checkpoints.txt");
+        new CheckpointManager(MAINNET, checkpointStream);
+    }
+
+    @Test(expected = IOException.class)
+    public void shouldThrowNullPointerExceptionWhenCheckpointsInUnknownFormat() throws IOException {
+        InputStream checkpointStream = getClass().getResourceAsStream("/co/rsk/bitcoinj/core/checkpointmanagertest/unsupportedFormat.checkpoints.txt");
+        new CheckpointManager(MAINNET, checkpointStream);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldThrowIllegalStateExceptionWithNoCheckpoints() throws IOException {
+        InputStream checkpointStream = getClass().getResourceAsStream("/co/rsk/bitcoinj/core/checkpointmanagertest/noCheckpoints.checkpoints.txt");
+        new CheckpointManager(MAINNET, checkpointStream);
+    }
+
+    @Test
+    public void canReadTextualFormat() throws IOException {
+        InputStream checkpointStream = getClass().getResourceAsStream("/co/rsk/bitcoinj/core/checkpointmanagertest/validTextualFormat.checkpoints.txt");
+        CheckpointManager checkpointManager = new CheckpointManager(MAINNET, checkpointStream);
+
+        List<StoredBlock> actualCheckpoints = new ArrayList<>(checkpointManager.checkpoints.values());
+        Assert.assertEquals(6, actualCheckpoints.size());
+    }
+
+    @Test
+    public void canReadTextualMixFormats() throws IOException {
+        InputStream checkpointStream = getClass().getResourceAsStream("/co/rsk/bitcoinj/core/checkpointmanagertest/mixFormats.checkpoints.txt");
+        CheckpointManager checkpointManager = new CheckpointManager(MAINNET, checkpointStream);
+
+        List<StoredBlock> actualCheckpoints = new ArrayList<>(checkpointManager.checkpoints.values());
+        Assert.assertEquals(6, actualCheckpoints.size());
+    }
 }
