@@ -157,6 +157,8 @@ public class StoredBlock {
     }
 
     /**
+     * @deprecated Use {@link #deserializeCompactV2(NetworkParameters, ByteBuffer)} instead.
+     *
      * Deserializes the stored block from a custom packed format. Used internally.
      * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
      * so developers should use the V2 format.
@@ -164,7 +166,8 @@ public class StoredBlock {
      * @param buffer data to deserialize
      * @return deserialized stored block
      */
-    public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+    @Deprecated
+    public static StoredBlock deserializeCompactLegacy(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_LEGACY];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
