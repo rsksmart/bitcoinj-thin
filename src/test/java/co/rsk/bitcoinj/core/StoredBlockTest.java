@@ -60,20 +60,20 @@ public class StoredBlockTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void serializeCompact_forNegativeChainWork_throwsException() {
+    public void serializeCompactLegacy_forNegativeChainWork_throwsException() {
 
         StoredBlock blockToStore = new StoredBlock(block, NEGATIVE_CHAIN_WORK, blockHeight);
 
         // serialize block should throw illegal argument exception
-        blockToStore.serializeCompact(blockBuffer);
+        blockToStore.serializeCompactLegacy(blockBuffer);
     }
 
     @Test
-    public void serializeAndDeserializeCompact_forZeroChainWork_works() {
+    public void serializeAndDeserializeCompactLegacy_forZeroChainWork_works() {
         StoredBlock blockToStore = new StoredBlock(block, ZERO_CHAIN_WORK, blockHeight);
 
         // serialize block
-        blockToStore.serializeCompact(blockBuffer);
+        blockToStore.serializeCompactLegacy(blockBuffer);
         assertEquals(blockCapacity, blockBuffer.position());
 
         // deserialize block
@@ -83,12 +83,12 @@ public class StoredBlockTest {
     }
 
     @Test
-    public void serializeAndDeserializeCompact_forSmallChainWork_works() {
+    public void serializeAndDeserializeCompactLegacy_forSmallChainWork_works() {
 
         StoredBlock blockToStore = new StoredBlock(block, SMALL_CHAIN_WORK, blockHeight);
 
         // serialize block
-        blockToStore.serializeCompact(blockBuffer);
+        blockToStore.serializeCompactLegacy(blockBuffer);
         assertEquals(blockCapacity, blockBuffer.position());
 
         // deserialize block
@@ -98,11 +98,11 @@ public class StoredBlockTest {
     }
 
     @Test
-    public void serializeAndDeserializeCompact_for8bytesChainWork_works() {
+    public void serializeAndDeserializeCompactLegacy_for8BytesChainWork_works() {
         StoredBlock blockToStore = new StoredBlock(block, EIGHT_BYTES_WORK_V1, blockHeight);
 
         // serialize block
-        blockToStore.serializeCompact(blockBuffer);
+        blockToStore.serializeCompactLegacy(blockBuffer);
         assertEquals(blockCapacity, blockBuffer.position());
 
         // deserialize block
@@ -112,11 +112,11 @@ public class StoredBlockTest {
     }
 
     @Test
-    public void serializeAndDeserializeCompact_forMax12bytesChainWork_works() {
+    public void serializeAndDeserializeCompactLegacy_forMax12BytesChainWork_works() {
         StoredBlock blockToStore = new StoredBlock(block, MAX_WORK_V1, blockHeight);
 
         // serialize block
-        blockToStore.serializeCompact(blockBuffer);
+        blockToStore.serializeCompactLegacy(blockBuffer);
         assertEquals(blockCapacity, blockBuffer.position());
 
         // deserialize block
@@ -126,27 +126,27 @@ public class StoredBlockTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void serializeCompact_for13bytesChainWork_throwsException() {
+    public void serializeCompactLegacy_for13BytesChainWork_throwsException() {
         StoredBlock blockToStore = new StoredBlock(block, TOO_LARGE_WORK_V1, blockHeight);
 
         // serialize block should throw illegal argument exception
-        blockToStore.serializeCompact(blockBuffer);
+        blockToStore.serializeCompactLegacy(blockBuffer);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void serializeCompact_for32bytesChainWork_throwsException() {
+    public void serializeCompactLegacy_for32BytesChainWork_throwsException() {
         StoredBlock blockToStore = new StoredBlock(block, MAX_WORK_V2, blockHeight);
 
         // serialize block should throw illegal argument exception
-        blockToStore.serializeCompact(blockBuffer);
+        blockToStore.serializeCompactLegacy(blockBuffer);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void serializeCompact_forMoreThan32bytesChainWork_throwsException() {
+    public void serializeCompactLegacy_forMoreThan32BytesChainWork_throwsException() {
         StoredBlock blockToStore = new StoredBlock(block, TOO_LARGE_WORK_V2, blockHeight);
 
         // serialize block should throw illegal argument exception
-        blockToStore.serializeCompact(blockBuffer);
+        blockToStore.serializeCompactLegacy(blockBuffer);
     }
 
 
