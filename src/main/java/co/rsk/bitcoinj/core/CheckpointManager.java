@@ -114,6 +114,7 @@ public class CheckpointManager {
      * The binary format does not support mixed stored block sizes.
      * After implementing support to 32-byte chain work to StoredBlock class,
       this method cannot read blocks which chain work surpassed 12 byte. */
+    @Deprecated
     private Sha256Hash readBinary(InputStream inputStream) throws IOException {
         DataInputStream dis = null;
         try {

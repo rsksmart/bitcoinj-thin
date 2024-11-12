@@ -1,6 +1,8 @@
 package co.rsk.bitcoinj.core;
 
 import static co.rsk.bitcoinj.core.CheckpointManager.BASE64;
+import static co.rsk.bitcoinj.core.StoredBlock.COMPACT_SERIALIZED_SIZE_LEGACY;
+import static co.rsk.bitcoinj.core.StoredBlock.COMPACT_SERIALIZED_SIZE_V2;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,7 +49,7 @@ public class CheckpointManagerTest {
     @Test
     public void readBinaryCheckpoint_whenTestnet_ok() throws IOException {
         readBinaryCheckpoint(TESTNET,
-            "co/rsk/bitcoinj/core/checkpointmanagertest/org.bitcoin.test.checkpoints");
+            "/co/rsk/bitcoinj/core/checkpointmanagertest/org.bitcoin.test.checkpoints");
     }
 
     private void readBinaryCheckpoint(NetworkParameters networkParameters,
@@ -59,13 +61,13 @@ public class CheckpointManagerTest {
     @Test
     public void readBinaryCheckpoint_whenMainnet_ok() throws IOException {
         readBinaryCheckpoint(MAINNET,
-            "co/rsk/bitcoinj/core/checkpointmanagertest/org.bitcoin.production.checkpoints");
+            "/co/rsk/bitcoinj/core/checkpointmanagertest/org.bitcoin.production.checkpoints");
     }
 
     @Test
     public void readBinaryCheckpoints_whenCheckpointChainWorkIs12Bytes() throws IOException {
         List<StoredBlock> checkpoints = getCheckpoints(CHECKPOINTS_12_BYTES_CHAINWORK_ENCODED,
-            StoredBlock.COMPACT_SERIALIZED_SIZE);
+            COMPACT_SERIALIZED_SIZE_LEGACY);
         try (InputStream binaryCheckpoint = generateBinaryCheckpoints(checkpoints)) {
             CheckpointManager checkpointManager = new CheckpointManager(MAINNET, binaryCheckpoint);
 
@@ -83,8 +85,8 @@ public class CheckpointManagerTest {
                 buffer.put(bytes);
                 buffer.flip();
 
-                return blockFormatSize == StoredBlock.COMPACT_SERIALIZED_SIZE
-                    ? StoredBlock.deserializeCompact(MAINNET, buffer)
+                return blockFormatSize == COMPACT_SERIALIZED_SIZE_LEGACY
+                    ? StoredBlock.deserializeCompactLegacy(MAINNET, buffer)
                     : StoredBlock.deserializeCompactV2(MAINNET, buffer);
             }).collect(Collectors.toList());
     }
@@ -93,7 +95,7 @@ public class CheckpointManagerTest {
         throws IOException {
         buffer.rewind();
         if (isV1) {
-            block.serializeCompact(buffer);
+            block.serializeCompactLegacy(buffer);
         } else {
             block.serializeCompactV2(buffer);
         }
@@ -111,15 +113,15 @@ public class CheckpointManagerTest {
             digestStream.on(true);
             dataStream.writeInt(checkpoints.size());
 
-            ByteBuffer bufferV1 = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
-            ByteBuffer bufferV2 = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
+            ByteBuffer bufferV1 = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
+            ByteBuffer bufferV2 = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_V2);
 
             for (StoredBlock block : checkpoints) {
                 boolean isV1 = block.getChainWork().compareTo(MAX_WORK_V1) <= 0;
                 ByteBuffer buffer = isV1 ? bufferV1 : bufferV2;
                 serializeBlock(buffer, block, isV1);
-                int limit = isV1 ? StoredBlock.COMPACT_SERIALIZED_SIZE
-                    : StoredBlock.COMPACT_SERIALIZED_SIZE_V2;
+                int limit = isV1 ? COMPACT_SERIALIZED_SIZE_LEGACY
+                    : COMPACT_SERIALIZED_SIZE_V2;
                 dataStream.write(buffer.array(), 0, limit);
             }
             return new ByteArrayInputStream(outputStream.toByteArray());
@@ -131,7 +133,7 @@ public class CheckpointManagerTest {
     @Test(expected = IOException.class)
     public void readBinaryCheckpoints_whenV2Format_shouldFail() throws IOException {
         List<StoredBlock> checkpointsV2Format = getCheckpoints(CHECKPOINTS_32_BYTES_CHAINWORK_ENCODED,
-            StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
+            COMPACT_SERIALIZED_SIZE_V2);
         try (InputStream binaryCheckpoint = generateBinaryCheckpoints(checkpointsV2Format)) {
             CheckpointManager checkpointManager = new CheckpointManager(MAINNET, binaryCheckpoint);
 
@@ -145,9 +147,9 @@ public class CheckpointManagerTest {
     public void readBinaryCheckpoints_whenMixFormats_shouldFail()
         throws IOException {
         List<StoredBlock> checkpointsV1Format = getCheckpoints(CHECKPOINTS_12_BYTES_CHAINWORK_ENCODED,
-            StoredBlock.COMPACT_SERIALIZED_SIZE);
+            StoredBlock.COMPACT_SERIALIZED_SIZE_LEGACY);
         List<StoredBlock> checkpointsV2Format = getCheckpoints(CHECKPOINTS_32_BYTES_CHAINWORK_ENCODED,
-            StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
+            COMPACT_SERIALIZED_SIZE_V2);
 
         List<StoredBlock> checkpoints = new ArrayList<>();
         checkpoints.addAll(checkpointsV1Format);
