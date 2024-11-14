@@ -130,7 +130,7 @@ public class CheckpointManager {
             digestInputStream.on(true);
             int numCheckpoints = dis.readInt();
             checkState(numCheckpoints > 0);
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
+            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE_LEGACY;
             ByteBuffer buffer = ByteBuffer.allocate(size);
             for (int i = 0; i < numCheckpoints; i++) {
                 if (dis.read(buffer.array(), 0, size) < size)
@@ -165,7 +165,7 @@ public class CheckpointManager {
             checkState(numCheckpoints > 0);
             // Hash numCheckpoints in a way compatible to the binary format.
             hasher.putBytes(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
+            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE_LEGACY;
             ByteBuffer buffer = ByteBuffer.allocate(size);
             for (int i = 0; i < numCheckpoints; i++) {
                 byte[] bytes = BASE64.decode(reader.readLine());
