@@ -168,13 +168,7 @@ public class StoredBlock {
      */
     @Deprecated
     public static StoredBlock deserializeCompactLegacy(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
-        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_LEGACY];
-        buffer.get(chainWorkBytes);
-        BigInteger chainWork = new BigInteger(1, chainWorkBytes);
-        int height = buffer.getInt();  // +4 bytes
-        byte[] header = new byte[BtcBlock.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
-        buffer.get(header, 0, BtcBlock.HEADER_SIZE);
-        return new StoredBlock(params.getDefaultSerializer().makeBlock(header), chainWork, height);
+        return deserializeCompact(params, buffer, StoredBlock.CHAIN_WORK_BYTES_LEGACY);
     }
 
     /**
@@ -184,7 +178,12 @@ public class StoredBlock {
      * @return deserialized stored block
      */
     public static StoredBlock deserializeCompactV2(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
-        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V2];
+        return deserializeCompact(params, buffer, StoredBlock.CHAIN_WORK_BYTES_V2);
+    }
+
+    private static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer,
+        int chainWorkSize) {
+        byte[] chainWorkBytes = new byte[chainWorkSize];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
