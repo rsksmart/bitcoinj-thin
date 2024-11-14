@@ -1,8 +1,8 @@
 package co.rsk.bitcoinj.core;
 
+import static co.rsk.bitcoinj.core.StoredBlock.COMPACT_SERIALIZED_SIZE_LEGACY;
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -37,17 +37,8 @@ public class StoredBlockTest {
     private static final String blockHeader = "00e00820925b77c9ff4d0036aa29f3238cde12e9af9d55c34ed30200000000000000000032a9fa3e12ef87a2327b55db6a16a1227bb381db8b269d90aa3a6e38cf39665f91b47766255d0317c1b1575f";
     private static final int blockHeight = 849137;
     private static final BtcBlock block = bitcoinSerializer.makeBlock(Hex.decode(blockHeader));
-
-    private static final int blockCapacity = StoredBlock.COMPACT_SERIALIZED_SIZE;
-    private ByteBuffer blockBuffer;
-
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
-
-    @Before
-    public void setUp() {
-        blockBuffer = ByteBuffer.allocate(blockCapacity);
-    }
 
     @Test
     public void newStoredBlock_createsExpectedBlock() {
@@ -61,7 +52,7 @@ public class StoredBlockTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void serializeCompactLegacy_forNegativeChainWork_throwsException() {
-
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         StoredBlock blockToStore = new StoredBlock(block, NEGATIVE_CHAIN_WORK, blockHeight);
 
         // serialize block should throw illegal argument exception
@@ -73,8 +64,9 @@ public class StoredBlockTest {
         StoredBlock blockToStore = new StoredBlock(block, ZERO_CHAIN_WORK, blockHeight);
 
         // serialize block
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactLegacy(blockBuffer);
-        assertEquals(blockCapacity, blockBuffer.position());
+        assertEquals(COMPACT_SERIALIZED_SIZE_LEGACY, blockBuffer.position());
 
         // deserialize block
         blockBuffer.rewind();
@@ -84,12 +76,12 @@ public class StoredBlockTest {
 
     @Test
     public void serializeAndDeserializeCompactLegacy_forSmallChainWork_works() {
-
         StoredBlock blockToStore = new StoredBlock(block, SMALL_CHAIN_WORK, blockHeight);
 
         // serialize block
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactLegacy(blockBuffer);
-        assertEquals(blockCapacity, blockBuffer.position());
+        assertEquals(COMPACT_SERIALIZED_SIZE_LEGACY, blockBuffer.position());
 
         // deserialize block
         blockBuffer.rewind();
@@ -102,8 +94,9 @@ public class StoredBlockTest {
         StoredBlock blockToStore = new StoredBlock(block, EIGHT_BYTES_WORK_V1, blockHeight);
 
         // serialize block
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactLegacy(blockBuffer);
-        assertEquals(blockCapacity, blockBuffer.position());
+        assertEquals(COMPACT_SERIALIZED_SIZE_LEGACY, blockBuffer.position());
 
         // deserialize block
         blockBuffer.rewind();
@@ -116,8 +109,9 @@ public class StoredBlockTest {
         StoredBlock blockToStore = new StoredBlock(block, MAX_WORK_V1, blockHeight);
 
         // serialize block
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactLegacy(blockBuffer);
-        assertEquals(blockCapacity, blockBuffer.position());
+        assertEquals(COMPACT_SERIALIZED_SIZE_LEGACY, blockBuffer.position());
 
         // deserialize block
         blockBuffer.rewind();
@@ -130,6 +124,7 @@ public class StoredBlockTest {
         StoredBlock blockToStore = new StoredBlock(block, TOO_LARGE_WORK_V1, blockHeight);
 
         // serialize block should throw illegal argument exception
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactLegacy(blockBuffer);
     }
 
@@ -138,6 +133,7 @@ public class StoredBlockTest {
         StoredBlock blockToStore = new StoredBlock(block, MAX_WORK_V2, blockHeight);
 
         // serialize block should throw illegal argument exception
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactLegacy(blockBuffer);
     }
 
@@ -146,6 +142,7 @@ public class StoredBlockTest {
         StoredBlock blockToStore = new StoredBlock(block, TOO_LARGE_WORK_V2, blockHeight);
 
         // serialize block should throw illegal argument exception
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactLegacy(blockBuffer);
     }
 
@@ -155,6 +152,7 @@ public class StoredBlockTest {
         StoredBlock blockToStore = new StoredBlock(block, NEGATIVE_CHAIN_WORK, blockHeight);
 
         // serialize block should throw illegal argument exception
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactV2(blockBuffer);
     }
 
@@ -163,6 +161,7 @@ public class StoredBlockTest {
         StoredBlock blockToStore = new StoredBlock(block, TOO_LARGE_WORK_V2, blockHeight);
 
         // serialize block should throw illegal argument exception
+        ByteBuffer blockBuffer = ByteBuffer.allocate(COMPACT_SERIALIZED_SIZE_LEGACY);
         blockToStore.serializeCompactV2(blockBuffer);
     }
 

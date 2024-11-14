@@ -34,17 +34,19 @@ import java.util.Locale;
  * StoredBlocks are put inside a {@link BtcBlockStore} which saves them to memory or disk.
  */
 public class StoredBlock {
-
-    /* Size in bytes to represent the total amount of work done so far on this chain. As of June 22, 2024, it takes 12
-     unsigned bytes to store this value, so developers should use the V2 format. */
-    private static final int CHAIN_WORK_BYTES_V1 = 12;
+    /* @deprecated Use {@link #CHAIN_WORK_BYTES_V2} instead.
+        Size in bytes to represent the total amount of work done so far on this chain. As of June 22, 2024, it takes 12
+        unsigned bytes to store this value, so developers should use the V2 format.
+     */
+    private static final int CHAIN_WORK_BYTES_LEGACY = 12;
     // Size in bytes to represent the total amount of work done so far on this chain.
     private static final int CHAIN_WORK_BYTES_V2 = 32;
     // Size in bytes(int) to represent btc block height
     private static final int HEIGHT_BYTES = 4;
 
     // Size in bytes of serialized block in legacy format by {@link #serializeCompactLegacy(ByteBuffer)}
-    public static final int COMPACT_SERIALIZED_SIZE = BtcBlock.HEADER_SIZE + CHAIN_WORK_BYTES_V1 + HEIGHT_BYTES;
+    public static final int COMPACT_SERIALIZED_SIZE_LEGACY = BtcBlock.HEADER_SIZE + CHAIN_WORK_BYTES_LEGACY
+        + HEIGHT_BYTES;
     // Size in bytes of serialized block in V2 format by {@link #serializeCompactV2(ByteBuffer)}
     public static final int COMPACT_SERIALIZED_SIZE_V2 = BtcBlock.HEADER_SIZE + CHAIN_WORK_BYTES_V2 + HEIGHT_BYTES;
 
@@ -131,13 +133,8 @@ public class StoredBlock {
      */
     @Deprecated
     public void serializeCompactLegacy(ByteBuffer buffer) {
-        byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES_V1);
-        buffer.put(chainWorkBytes);
-        buffer.putInt(getHeight());
-        // Using unsafeBitcoinSerialize here can give us direct access to the same bytes we read off the wire,
-        // avoiding serialization round-trips.
-        byte[] bytes = getHeader().unsafeBitcoinSerialize();
-        buffer.put(bytes, 0, BtcBlock.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
+        serializeCompact(buffer, CHAIN_WORK_BYTES_LEGACY);
+
     }
 
     /**
@@ -146,7 +143,11 @@ public class StoredBlock {
      * @param buffer buffer to write to
      */
     public void serializeCompactV2(ByteBuffer buffer) {
-        byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES_V2);
+        serializeCompact(buffer, CHAIN_WORK_BYTES_V2);
+    }
+
+    private void serializeCompact(ByteBuffer buffer, int chainWorkSize) {
+        byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), chainWorkSize);
         buffer.put(chainWorkBytes);
         buffer.putInt(getHeight());
         // Using unsafeBitcoinSerialize here can give us direct access to the same bytes we read off the wire,
@@ -157,7 +158,7 @@ public class StoredBlock {
 
     /** De-serializes the stored block from a custom packed format. Used by {@link CheckpointManager}. */
     public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
-        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V1];
+        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_LEGACY];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
