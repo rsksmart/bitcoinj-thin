@@ -53,7 +53,7 @@ import static com.google.common.base.Preconditions.*;
  *    headers from the genesis block.</li>
  * </ol>
  *
- * <p>Checkpoints are used by the SPV {@link BlockChain} to initialize fresh
+ * <p>Checkpoints are used by the SPV {@link BtcBlockChain} to initialize fresh
  * {@link SPVBlockStore}s. They are not used by fully validating mode, which instead has a
  * different concept of checkpoints that are used to hard-code the validity of blocks that violate BIP30 (duplicate
  * coinbase transactions). Those "checkpoints" can be found in NetworkParameters.</p>
@@ -148,7 +148,7 @@ public class CheckpointManager {
             int actualCheckpointsSize = dis.available();
             int expectedCheckpointsSize = numCheckpoints * size;
             // Check if there are any bytes left in the stream. If it does, it means that checkpoints are malformed
-            if (dis.available() > 0) {
+            if (actualCheckpointsSize > 0) {
                 String message = String.format(
                     "Checkpoints size did not match size for version 1 format. Expected checkpoints %d with size of %d bytes, but actual size was %d.",
                     numCheckpoints, expectedCheckpointsSize, actualCheckpointsSize);
