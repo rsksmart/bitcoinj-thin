@@ -157,6 +157,8 @@ public class StoredBlock {
     }
 
     /**
+     * @deprecated Use {@link #deserializeCompactV2(NetworkParameters, ByteBuffer)} instead.
+     *
      * Deserializes the stored block from a custom packed format. Used internally.
      * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
      * so developers should use the V2 format.
