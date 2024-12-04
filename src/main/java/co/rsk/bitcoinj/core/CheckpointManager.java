@@ -54,18 +54,18 @@ import static com.google.common.base.Preconditions.*;
  * </ol>
  *
  * <p>Checkpoints are used by the SPV {@link BtcBlockChain} to initialize fresh
- * {@link org.bitcoinj.store.SPVBlockStore}s. They are not used by fully validating mode, which instead has a
+ * {@link SPVBlockStore}s. They are not used by fully validating mode, which instead has a
  * different concept of checkpoints that are used to hard-code the validity of blocks that violate BIP30 (duplicate
  * coinbase transactions). Those "checkpoints" can be found in NetworkParameters.</p>
  *
- * <p>The file format consists of the string "CHECKPOINTS 1", followed by a uint32 containing the number of signatures
- * to read. The value may not be larger than 256 (so it could have been a byte but isn't for historical reasons).
+ * <p>Checkpoints are read from a text file, one value per line.
+ * It consists of the magic string "TXT CHECKPOINTS 1", followed by the number of signatures
+ * to read. The value may not be larger than 256.
  * If the number of signatures is larger than zero, each 65 byte ECDSA secp256k1 signature then follows. The signatures
  * sign the hash of all bytes that follow the last signature.</p>
  *
- * <p>After the signatures come an int32 containing the number of checkpoints in the file. Then each checkpoint follows
- * one after the other. A checkpoint is 12 bytes for the total work done field, 4 bytes for the height, 80 bytes
- * for the block header and then 1 zero byte at the end (i.e. number of transactions in the block: always zero).</p>
+ * <p>After the signatures come the number of checkpoints in the file. Then each checkpoint follows one per line in
+ * compact format (as written by {@link StoredBlock#serializeCompactV2(ByteBuffer)}) as a base64-encoded blob.</p>
  */
 public class CheckpointManager {
     private static final Logger log = LoggerFactory.getLogger(CheckpointManager.class);
@@ -110,6 +110,11 @@ public class CheckpointManager {
         return CheckpointManager.class.getResourceAsStream("/" + params.getId() + ".checkpoints.txt");
     }
 
+    /** @deprecated Use {@link #readTextual(InputStream)}
+     * The binary format does not support mixed stored block sizes.
+     * After implementing support to 32-byte chain work to StoredBlock class,
+      this method cannot read blocks which chain work surpassed 12 byte. */
+    @Deprecated
     private Sha256Hash readBinary(InputStream inputStream) throws IOException {
         DataInputStream dis = null;
         try {
@@ -130,15 +135,26 @@ public class CheckpointManager {
             digestInputStream.on(true);
             int numCheckpoints = dis.readInt();
             checkState(numCheckpoints > 0);
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
+            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE_LEGACY;
             ByteBuffer buffer = ByteBuffer.allocate(size);
             for (int i = 0; i < numCheckpoints; i++) {
                 if (dis.read(buffer.array(), 0, size) < size)
                     throw new IOException("Incomplete read whilst loading checkpoints.");
-                StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
+                StoredBlock block = StoredBlock.deserializeCompactLegacy(params, buffer);
                 buffer.position(0);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
+
+            int actualCheckpointsSize = dis.available();
+            int expectedCheckpointsSize = numCheckpoints * size;
+            // Check if there are any bytes left in the stream. If it does, it means that checkpoints are malformed
+            if (actualCheckpointsSize > 0) {
+                String message = String.format(
+                    "Checkpoints size did not match size for version 1 format. Expected checkpoints %d with size of %d bytes, but actual size was %d.",
+                    numCheckpoints, expectedCheckpointsSize, actualCheckpointsSize);
+                throw new IOException(message);
+            }
+
             Sha256Hash dataHash = Sha256Hash.wrap(digest.digest());
             log.debug("Read {} checkpoints, hash is {}", checkpoints.size(), dataHash);
             return dataHash;
@@ -165,15 +181,19 @@ public class CheckpointManager {
             checkState(numCheckpoints > 0);
             // Hash numCheckpoints in a way compatible to the binary format.
             hasher.putBytes(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
-            ByteBuffer buffer = ByteBuffer.allocate(size);
             for (int i = 0; i < numCheckpoints; i++) {
                 byte[] bytes = BASE64.decode(reader.readLine());
                 hasher.putBytes(bytes);
-                buffer.position(0);
-                buffer.put(bytes);
-                buffer.position(0);
-                StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                StoredBlock block;
+                if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE_LEGACY){
+                    block = StoredBlock.deserializeCompactLegacy(params, buffer);
+                } else if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE_V2) {
+                    block = StoredBlock.deserializeCompactV2(params, buffer);
+                } else {
+                    throw new IllegalStateException("unexpected length of checkpoint: " + bytes.length);
+                }
+
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
             HashCode hash = hasher.hash();

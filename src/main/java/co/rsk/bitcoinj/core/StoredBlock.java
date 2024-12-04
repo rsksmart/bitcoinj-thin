@@ -34,12 +34,21 @@ import java.util.Locale;
  * StoredBlocks are put inside a {@link BtcBlockStore} which saves them to memory or disk.
  */
 public class StoredBlock {
+    /* @deprecated Use {@link #CHAIN_WORK_BYTES_V2} instead.
+        Size in bytes to represent the total amount of work done so far on this chain. As of June 22, 2024, it takes 12
+        unsigned bytes to store this value, so developers should use the V2 format.
+     */
+    private static final int CHAIN_WORK_BYTES_LEGACY = 12;
+    // Size in bytes to represent the total amount of work done so far on this chain.
+    private static final int CHAIN_WORK_BYTES_V2 = 32;
+    // Size in bytes(int) to represent btc block height
+    private static final int HEIGHT_BYTES = 4;
 
-    // A BigInteger representing the total amount of work done so far on this chain. As of May 2011 it takes 8
-    // bytes to represent this field, so 12 bytes should be plenty for now.
-    public static final int CHAIN_WORK_BYTES = 12;
-    public static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
-    public static final int COMPACT_SERIALIZED_SIZE = BtcBlock.HEADER_SIZE + CHAIN_WORK_BYTES + 4;  // for height
+    // Size in bytes of serialized block in legacy format by {@link #serializeCompactLegacy(ByteBuffer)}
+    public static final int COMPACT_SERIALIZED_SIZE_LEGACY = BtcBlock.HEADER_SIZE + CHAIN_WORK_BYTES_LEGACY
+        + HEIGHT_BYTES;
+    // Size in bytes of serialized block in V2 format by {@link #serializeCompactV2(ByteBuffer)}
+    public static final int COMPACT_SERIALIZED_SIZE_V2 = BtcBlock.HEADER_SIZE + CHAIN_WORK_BYTES_V2 + HEIGHT_BYTES;
 
     private BtcBlock header;
     private BigInteger chainWork;
@@ -113,13 +122,32 @@ public class StoredBlock {
         return store.get(getHeader().getPrevBlockHash());
     }
 
-    /** Serializes the stored block to a custom packed format. Used by {@link CheckpointManager}. */
-    public void serializeCompact(ByteBuffer buffer) {
-        byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES);
-        if (chainWorkBytes.length < CHAIN_WORK_BYTES) {
-            // Pad to the right size.
-            buffer.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES - chainWorkBytes.length);
-        }
+    /**
+     * @deprecated Use {@link #serializeCompactV2(ByteBuffer)} instead.
+     *
+     * Serializes the stored block to a custom packed format. Used internally.
+     * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
+     * so developers should use the V2 format.
+     *
+     * @param buffer buffer to write to
+     */
+    @Deprecated
+    public void serializeCompactLegacy(ByteBuffer buffer) {
+        serializeCompact(buffer, CHAIN_WORK_BYTES_LEGACY);
+
+    }
+
+    /**
+     * Serializes the stored block to a custom packed format. Used internally.
+     *
+     * @param buffer buffer to write to
+     */
+    public void serializeCompactV2(ByteBuffer buffer) {
+        serializeCompact(buffer, CHAIN_WORK_BYTES_V2);
+    }
+
+    private void serializeCompact(ByteBuffer buffer, int chainWorkSize) {
+        byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), chainWorkSize);
         buffer.put(chainWorkBytes);
         buffer.putInt(getHeight());
         // Using unsafeBitcoinSerialize here can give us direct access to the same bytes we read off the wire,
@@ -128,9 +156,34 @@ public class StoredBlock {
         buffer.put(bytes, 0, BtcBlock.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
     }
 
-    /** De-serializes the stored block from a custom packed format. Used by {@link CheckpointManager}. */
-    public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
-        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES];
+    /**
+     * @deprecated Use {@link #deserializeCompactV2(NetworkParameters, ByteBuffer)} instead.
+     *
+     * Deserializes the stored block from a custom packed format. Used internally.
+     * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
+     * so developers should use the V2 format.
+     *
+     * @param buffer data to deserialize
+     * @return deserialized stored block
+     */
+    @Deprecated
+    public static StoredBlock deserializeCompactLegacy(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+        return deserializeCompact(params, buffer, StoredBlock.CHAIN_WORK_BYTES_LEGACY);
+    }
+
+    /**
+     * Deserializes the stored block from a custom packed format. Used internally.
+     *
+     * @param buffer data to deserialize
+     * @return deserialized stored block
+     */
+    public static StoredBlock deserializeCompactV2(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+        return deserializeCompact(params, buffer, StoredBlock.CHAIN_WORK_BYTES_V2);
+    }
+
+    private static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer,
+        int chainWorkSize) {
+        byte[] chainWorkBytes = new byte[chainWorkSize];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
