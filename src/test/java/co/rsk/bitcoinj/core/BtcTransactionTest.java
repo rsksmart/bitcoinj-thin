@@ -17,20 +17,22 @@
 
 package co.rsk.bitcoinj.core;
 
-import co.rsk.bitcoinj.crypto.TransactionSignature;
-import co.rsk.bitcoinj.params.*;
-import co.rsk.bitcoinj.script.*;
-import co.rsk.bitcoinj.testing.*;
-import org.easymock.*;
-import org.junit.*;
-import org.spongycastle.util.encoders.Hex;
+import static co.rsk.bitcoinj.core.Utils.HEX;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.*;
 
+import co.rsk.bitcoinj.crypto.TransactionSignature;
+import co.rsk.bitcoinj.params.UnitTestParams;
+import co.rsk.bitcoinj.script.Script;
+import co.rsk.bitcoinj.script.ScriptBuilder;
+import co.rsk.bitcoinj.testing.FakeTxBuilder;
 import java.math.BigInteger;
 import java.util.*;
-import static co.rsk.bitcoinj.core.Utils.HEX;
-
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 
 /**
  * Just check the Transaction.verify() method. Most methods that have complicated logic in Transaction are tested
@@ -250,8 +252,8 @@ public class BtcTransactionTest {
 
         String str = tx.toString(mockBlockChain);
 
-        assertEquals(str.contains("block " + TEST_LOCK_TIME), true);
-        assertEquals(str.contains("estimated to be reached at"), true);
+        assertTrue(str.contains("block " + TEST_LOCK_TIME));
+        assertTrue(str.contains("estimated to be reached at"));
     }
 
     @Test
@@ -265,13 +267,13 @@ public class BtcTransactionTest {
         };
 
         tx.addInput(ti);
-        assertEquals(tx.toString().contains("[exception: "), true);
+        assertTrue(tx.toString().contains("[exception: "));
     }
 
     @Test
     public void testToStringWhenThereAreZeroInputs() {
         BtcTransaction tx = new BtcTransaction(PARAMS);
-        assertEquals(tx.toString().contains("No inputs!"), true);
+        assertTrue(tx.toString().contains("No inputs!"));
     }
 
     @Test(expected = ScriptException.class)
@@ -365,56 +367,26 @@ public class BtcTransactionTest {
 
     @Test
     public void testParseTxtWithWitness()  {
-
         // The hash in this test case was created using an address p2sh-segwit.
         byte[] rawTx = Hex.decode("02000000000101447711046c3c1f4db72f8b3157c49680ee760aa61b75659d9be8747d73ddb6710000000017160014b360da23a791dea490161fbb944b728a21d036c2ffffffff02b8d3f505000000001976a914193a62891c7a8061f12082d469ea137859fa951b88ac00e1f505000000001976a9147d8928e43014111434c5d985736de102721019cc88ac024730440220078458be99e3e262ea60883c16c7bc8fcdb40eda6420f33e7b03c4ecca8fe3180220734a09a4afa9874e1bc4050995e16ba71397e807a19cfce156a184e764a594cd0121038f505a331ea2cc00fbf4793975ef440904ba795356e839c07583f8bec4c07ace00000000");//02000000000101447711046c3c1f4db72f8b3157c49680ee760aa61b75659d9be8747d73ddb6710000000017160014b360da23a791dea490161fbb944b728a21d036c2ffffffff02b8d3f505000000001976a914193a62891c7a8061f12082d469ea137859fa951b88ac00e1f505000000001976a9147d8928e43014111434c5d985736de102721019cc88ac024730440220078458be99e3e262ea60883c16c7bc8fcdb40eda6420f33e7b03c4ecca8fe3180220734a09a4afa9874e1bc4050995e16ba71397e807a19cfce156a184e764a594cd0121038f505a331ea2cc00fbf4793975ef440904ba795356e839c07583f8bec4c07ace00000000
         BtcTransaction tx = new BtcTransaction(PARAMS, rawTx);
 
         assertTrue(tx.hasWitness());
-        assertEquals(tx.countWitnesses(),1);
+        assertEquals(1, tx.countWitnesses());
 
         //signers
         assertArrayEquals(tx.getWitness(0).getPush(0), Hex.decode("30440220078458be99e3e262ea60883c16c7bc8fcdb40eda6420f33e7b03c4ecca8fe3180220734a09a4afa9874e1bc4050995e16ba71397e807a19cfce156a184e764a594cd01"));
         //pubkey
         assertArrayEquals(tx.getWitness(0).getPush(1), Hex.decode("038f505a331ea2cc00fbf4793975ef440904ba795356e839c07583f8bec4c07ace"));
-
     }
 
     @Test
     public void testSerializerTxtWithWitness() {
-
         // The hash in this test case was created using an address p2sh-segwit.
         byte[] rawTx = Hex.decode("02000000000101447711046c3c1f4db72f8b3157c49680ee760aa61b75659d9be8747d73ddb6710000000017160014b360da23a791dea490161fbb944b728a21d036c2ffffffff02b8d3f505000000001976a914193a62891c7a8061f12082d469ea137859fa951b88ac00e1f505000000001976a9147d8928e43014111434c5d985736de102721019cc88ac024730440220078458be99e3e262ea60883c16c7bc8fcdb40eda6420f33e7b03c4ecca8fe3180220734a09a4afa9874e1bc4050995e16ba71397e807a19cfce156a184e764a594cd0121038f505a331ea2cc00fbf4793975ef440904ba795356e839c07583f8bec4c07ace00000000");//02000000000101447711046c3c1f4db72f8b3157c49680ee760aa61b75659d9be8747d73ddb6710000000017160014b360da23a791dea490161fbb944b728a21d036c2ffffffff02b8d3f505000000001976a914193a62891c7a8061f12082d469ea137859fa951b88ac00e1f505000000001976a9147d8928e43014111434c5d985736de102721019cc88ac024730440220078458be99e3e262ea60883c16c7bc8fcdb40eda6420f33e7b03c4ecca8fe3180220734a09a4afa9874e1bc4050995e16ba71397e807a19cfce156a184e764a594cd0121038f505a331ea2cc00fbf4793975ef440904ba795356e839c07583f8bec4c07ace00000000
         BtcTransaction tx = new BtcTransaction(PARAMS, rawTx);
 
         assertTrue(tx.hasWitness());
-
-        assertTrue(Arrays.equals(rawTx, tx.bitcoinSerialize()));
-
-    }
-
-    @Test
-    public void testFindWitnessCommitment() {
-        // Coinbase tx for a block that has no witnesses.
-        // Nevertheless, there is a witness commitment (but no witness reserved).
-        byte[] rawTx = Hex.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2e03175a070004d31c9e5904d700bf0f08c2e1c3c90001017a152f426974436c7562204e6574776f726b2f4e59412fffffffff024167305e000000001976a9142cc2b87a28c8a097f48fcc1d468ced6e7d39958d88ac0000000000000000266a24aa21a9ed3d03076733467c45b08ec503a0c5d406647b073e1914d35b5111960ed625f3b700000000");
-        BtcTransaction coinbase = new BtcTransaction(PARAMS, rawTx);
-        assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90", coinbase.getHash(false).toString());
-        assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90", coinbase.getHash(true).toString());
-        Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
-        assertEquals("3d03076733467c45b08ec503a0c5d406647b073e1914d35b5111960ed625f3b7", witnessCommitment.toString());
-    }
-
-    @Test
-    public void testFindWitnessCommitment2() throws Exception {
-        // Coinbase tx for a block that has witnesses.
-        byte[] rawTx = Hex.decode("010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff5e03255a070459489e592f426978696e2f426974636f696e456e74657270726973652f4e59412ffabe6d6d0e2fee583706b08b63225903bb6b6d9accbc75fb61a14d3c075285aefa4031c0010000000000000018f0148762b9db6c00000000ffffffff02a8994968000000001976a914cef3550ff9e637ddd120717d43fc21f8a563caf888ac0000000000000000266a24aa21a9edc3c1145d8070a57e433238e42e4c022c1e51ca2a958094af243ae1ee252ca1060120000000000000000000000000000000000000000000000000000000000000000000000000");
-        BtcTransaction coinbase = new BtcTransaction(PARAMS, rawTx);
-        assertEquals("9c1ab453283035800c43eb6461eb46682b81be110a0cb89ee923882a5fd9daa4", coinbase.getHash(false).toString());
-        assertEquals("2bbda73aa4e561e7f849703994cc5e563e4bcf103fb0f6fef5ae44c95c7b83a6", coinbase.getHash(true).toString());
-        Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
-        assertEquals("c3c1145d8070a57e433238e42e4c022c1e51ca2a958094af243ae1ee252ca106", witnessCommitment.toString());
-        byte[] witnessReserved = coinbase.getWitness(0).getPush(0);
-        assertEquals("0000000000000000000000000000000000000000000000000000000000000000", HEX.encode(witnessReserved));
+        assertArrayEquals(rawTx, tx.bitcoinSerialize());
     }
 }

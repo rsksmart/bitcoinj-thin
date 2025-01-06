@@ -17,28 +17,22 @@
 
 package co.rsk.bitcoinj.core;
 
-import co.rsk.bitcoinj.crypto.TransactionSignature;
-import co.rsk.bitcoinj.script.Script;
-import co.rsk.bitcoinj.script.ScriptBuilder;
-import co.rsk.bitcoinj.script.ScriptOpCodes;
-import co.rsk.bitcoinj.script.ScriptPattern;
-import co.rsk.bitcoinj.signers.TransactionSigner;
-import co.rsk.bitcoinj.wallet.Wallet;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Longs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import java.io.*;
-import java.util.*;
-
-import static co.rsk.bitcoinj.core.Utils.*;
+import static co.rsk.bitcoinj.core.Utils.uint32ToByteStreamLE;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+
+import co.rsk.bitcoinj.crypto.TransactionSignature;
+import co.rsk.bitcoinj.script.*;
+import co.rsk.bitcoinj.signers.TransactionSigner;
+import co.rsk.bitcoinj.wallet.Wallet;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Longs;
+import java.io.*;
 import java.math.BigInteger;
+import java.util.*;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -182,9 +176,9 @@ public class BtcTransaction extends ChildMessage {
     public BtcTransaction(NetworkParameters params) {
         super(params);
         version = 1;
-        inputs = new ArrayList<TransactionInput>();
-        outputs = new ArrayList<TransactionOutput>();
-        witnesses = new ArrayList<TransactionWitness>();
+        inputs = new ArrayList<>();
+        outputs = new ArrayList<>();
+        witnesses = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         length = 8; // 8 for std fields
     }
@@ -209,7 +203,6 @@ public class BtcTransaction extends ChildMessage {
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
-     * @param parseRetain Whether to retain the backing byte array for quick reserialization.
      * If true and the backing byte array is invalidated due to modification of a field then
      * the cached bytes may be repopulated and retained if the message is serialized again in the future.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
@@ -609,14 +602,14 @@ public class BtcTransaction extends ChildMessage {
 
         readInputs();
         byte flags = 0;
-        if (inputs.size() == 0) {
+        if (inputs.isEmpty()) {
             flags = readBytes(1)[0];
             optimalEncodingMessageSize += 1;
             if (flags != 0) {
                 readInputs();
                 readOutputs();
             } else {
-                outputs = new ArrayList<TransactionOutput>(0);
+                outputs = new ArrayList<>(0);
             }
         } else {
             readOutputs();
@@ -869,8 +862,8 @@ public class BtcTransaction extends ChildMessage {
 
     /**
      * Adds an input to this transaction that imports value from the given output. Note that this input is <i>not</i>
-     * complete and after every input is added with {@link #addInput()} and every output is added with
-     * {@link #addOutput()}, a {@link TransactionSigner} must be used to finalize the transaction and finish the inputs
+     * complete and after every input is added with {@link #addInput(TransactionInput)} and every output is added with
+     * {@link #addOutput(TransactionOutput)}, a {@link TransactionSigner} must be used to finalize the transaction and finish the inputs
      * off. Otherwise it won't be accepted by the network.
      * @return the newly created input.
      */
@@ -1332,17 +1325,6 @@ public class BtcTransaction extends ChildMessage {
         }
     }
 
-    /** Loops the outputs of a coinbase transaction to locate the witness commitment. */
-    public Sha256Hash findWitnessCommitment() {
-        checkState(isCoinBase());
-        for (TransactionOutput out : Lists.reverse(outputs)) {
-            Script scriptPubKey = out.getScriptPubKey();
-            if (ScriptPattern.isWitnessCommitment(scriptPubKey))
-                return ScriptPattern.extractWitnessCommitmentHash(scriptPubKey);
-        }
-        return null;
-    }
-
     /**
      * <p>Checks the transaction contents for sanity, in ways that can be done in a standalone manner.
      * Does <b>not</b> perform all checks on a transaction such as whether the inputs are already spent.
@@ -1360,13 +1342,13 @@ public class BtcTransaction extends ChildMessage {
      * @throws VerificationException
      */
     public void verify() throws VerificationException {
-        if (inputs.size() == 0 || outputs.size() == 0)
+        if (inputs.isEmpty() || outputs.isEmpty())
             throw new VerificationException.EmptyInputsOrOutputs();
         if (this.getMessageSize() > BtcBlock.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
         Coin valueOut = Coin.ZERO;
-        HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
+        HashSet<TransactionOutPoint> outpoints = new HashSet<>();
         for (TransactionInput input : inputs) {
             if (outpoints.contains(input.getOutpoint()))
                 throw new VerificationException.DuplicatedOutPoint();
