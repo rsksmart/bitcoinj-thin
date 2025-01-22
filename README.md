@@ -1,4 +1,4 @@
-[![Visit our IRC channel](https://kiwiirc.com/buttons/irc.freenode.net/bitcoinj.png)](https://kiwiirc.com/client/irc.freenode.net/bitcoinj)
+[![CodeQL](https://github.com/rsksmart/bitcoinj-thin/workflows/CodeQL/badge.svg)](https://github.com/rsksmart/bitcoinj-thin/actions?query=workflow%3ACodeQL)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rsksmart/bitcoinj-thin/badge)](https://scorecard.dev/viewer/?uri=github.com/rsksmart/bitcoinj-thin)
 
 
