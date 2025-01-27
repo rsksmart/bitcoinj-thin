@@ -5,6 +5,7 @@ import co.rsk.bitcoinj.crypto.TransactionSignature;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TransactionWitness {
     static TransactionWitness empty = new TransactionWitness(0);
@@ -13,10 +14,20 @@ public class TransactionWitness {
         return empty;
     }
 
-    private List<byte[]> pushes;
+    private final List<byte[]> pushes;
 
     public TransactionWitness(int pushCount) {
         pushes = new ArrayList<byte[]>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
+    }
+
+    public static TransactionWitness of(List<byte[]> pushes) {
+        return new TransactionWitness(pushes);
+    }
+
+    private TransactionWitness(List<byte[]> pushes) {
+        for (byte[] push : pushes)
+            Objects.requireNonNull(push);
+        this.pushes = pushes;
     }
 
     public byte[] getPush(int i) {
