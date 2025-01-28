@@ -28,6 +28,7 @@ import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
 import co.rsk.bitcoinj.testing.FakeTxBuilder;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.*;
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -388,5 +389,37 @@ public class BtcTransactionTest {
 
         assertTrue(tx.hasWitness());
         assertArrayEquals(rawTx, tx.bitcoinSerialize());
+    }
+
+    @Test
+    public void testWitnessSignatureP2SH_P2WSHSingleAnyoneCanPay() {
+        // test vector P2SH-P2WSH from the final example at:
+        // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wsh
+        String txHex = "01000000" // version
+            + "01" // num txIn
+            + "36641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e" + "01000000" + "00" + "ffffffff" // txIn
+            + "02" // num txOut
+            + "00e9a43500000000" + "1976a914" + "389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26" + "88ac" // txOut
+            + "c0832f0500000000" + "1976a914" + "7480a33f950689af511e6e84c138dbbd3c3ee415" + "88ac" // txOut
+            + "00000000"; // nLockTime
+        byte[] rawTx = Hex.decode(txHex);
+
+        NetworkParameters mainnet = NetworkParameters.fromID(NetworkParameters.ID_MAINNET);
+        BtcTransaction tx = new BtcTransaction(mainnet, rawTx);
+
+        BtcECKey pubKey = BtcECKey.fromPublicOnly(
+            Hex.decode("02d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b")
+        );
+        Script script = new Script(
+            Hex.decode("56210307b8ae49ac90a048e9b53357a2354b3334e9c8bee813ecb98e99a7e07e8c3ba32103b28f0c28bfab54554ae8c658ac5c3e0ce6e79ad336331f78c428dd43eea8449b21034b8113d703413d57761b8b9781957b8c0ac1dfe69f492580ca4195f50376ba4a21033400f6afecb833092a9a21cfdf1ed1376e58c5d1f47de74683123987e967a8f42103a6d48b1131e94ba04d9737d61acdaa1322008af9602b3b14862c07a1789aac162102d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b56ae")
+        );
+        Sha256Hash hash = tx.hashForWitnessSignature(0, script, Coin.valueOf(987654321L),
+            BtcTransaction.SigHash.SINGLE, true);
+        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(
+            Hex.decode("30440220525406a1482936d5a21888260dc165497a90a15669636d8edca6b9fe490d309c022032af0c646a34a44d1f4576bf6a4a74b67940f8faa84c7df9abe12a01a11e2b4783"),
+            true,
+            true
+        );
+        assertTrue(pubKey.verify(hash, signature));
     }
 }
