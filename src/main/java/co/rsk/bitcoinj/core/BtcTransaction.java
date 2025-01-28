@@ -1159,6 +1159,7 @@ public class BtcTransaction extends ChildMessage {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }
+
     public synchronized Sha256Hash hashForWitnessSignature(
         int inputIndex,
         byte[] scriptCode,
@@ -1168,6 +1169,7 @@ public class BtcTransaction extends ChildMessage {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
         return hashForWitnessSignature(inputIndex, scriptCode, prevValue, (byte) sigHash);
     }
+
     /**
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
