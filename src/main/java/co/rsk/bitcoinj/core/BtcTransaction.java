@@ -1160,16 +1160,6 @@ public class BtcTransaction extends ChildMessage {
         }
     }
 
-    public Sha256Hash hashForWitnessSignature(
-        int inputIndex,
-        byte[] scriptCode,
-        Coin prevValue,
-        SigHash type,
-        boolean anyoneCanPay) {
-        int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForWitnessSignature(inputIndex, scriptCode, prevValue, (byte) sigHash);
-    }
-
     /**
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
@@ -1194,7 +1184,17 @@ public class BtcTransaction extends ChildMessage {
         return hashForWitnessSignature(inputIndex, scriptCode.getProgram(), prevValue, type, anyoneCanPay);
     }
 
-    public Sha256Hash hashForWitnessSignature(
+    private Sha256Hash hashForWitnessSignature(
+        int inputIndex,
+        byte[] scriptCode,
+        Coin prevValue,
+        SigHash type,
+        boolean anyoneCanPay) {
+        int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
+        return hashForWitnessSignature(inputIndex, scriptCode, prevValue, (byte) sigHash);
+    }
+
+    private Sha256Hash hashForWitnessSignature(
         int inputIndex,
         byte[] scriptCode,
         Coin prevValue,
