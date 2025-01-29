@@ -1160,7 +1160,7 @@ public class BtcTransaction extends ChildMessage {
         }
     }
 
-    public synchronized Sha256Hash hashForWitnessSignature(
+    public Sha256Hash hashForWitnessSignature(
         int inputIndex,
         byte[] scriptCode,
         Coin prevValue,
@@ -1185,7 +1185,7 @@ public class BtcTransaction extends ChildMessage {
      * @param type         Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashForWitnessSignature(
+    public Sha256Hash hashForWitnessSignature(
         int inputIndex,
         Script scriptCode,
         Coin prevValue,
@@ -1194,7 +1194,7 @@ public class BtcTransaction extends ChildMessage {
         return hashForWitnessSignature(inputIndex, scriptCode.getProgram(), prevValue, type, anyoneCanPay);
     }
 
-    public synchronized Sha256Hash hashForWitnessSignature(
+    public Sha256Hash hashForWitnessSignature(
         int inputIndex,
         byte[] scriptCode,
         Coin prevValue,
