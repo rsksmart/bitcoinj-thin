@@ -421,17 +421,9 @@ public class ScriptTest {
     @Test
     public void createP2shP2wshOutputScript_createsExpectedOutputScript() {
         // data from tx https://mempool.space/testnet/tx/1744459aeaf7369aadc9fc40de9ab2bf575b14e35029b35a7ee4bbd3de65af7f
-
-        List<BtcECKey> multiSigPubKeys = Arrays.stream(new String[]{
-            "027de2af71862e0c64bf0ec5a66e3abc3b01fc57877802e6a6a81f6ea1d3561007",
-            "02d9c67fef9f8d0707cbcca195eb5f26c6a65da6ca2d6130645c434bb924063856",
-            "0346f033b8652a17d319d3ecbbbf20fd2cd663a6548173b9419d8228eef095012e"
-        }).map(k -> BtcECKey.fromPublicOnly(Hex.decode(k)))
-        .sorted(BtcECKey.PUBKEY_COMPARATOR).collect(Collectors.toList());
-
-        // build redeem script
-        int threshold = 2;
-        Script redeemScript = ScriptBuilder.createRedeemScript(threshold, multiSigPubKeys);
+        Script redeemScript = new Script(
+            Hex.decode("5221027de2af71862e0c64bf0ec5a66e3abc3b01fc57877802e6a6a81f6ea1d35610072102d9c67fef9f8d0707cbcca195eb5f26c6a65da6ca2d6130645c434bb924063856210346f033b8652a17d319d3ecbbbf20fd2cd663a6548173b9419d8228eef095012e53ae")
+        );
 
         // act
         Script outputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
@@ -444,13 +436,24 @@ public class ScriptTest {
         int hash160opcode = outputScript.getChunks().get(0).opcode;
         assertEquals(OP_HASH160, hash160opcode);
 
-        byte[] redeemScriptHash = outputScript.getChunks().get(1).data;
-        assertNotNull(redeemScriptHash);
-        String expectedRedeemScriptHash = "d220e5b2484931d0fad089dedd87e17022683a51";
-        assertEquals(expectedRedeemScriptHash, Hex.toHexString(redeemScriptHash));
-
         int equalOpcode = outputScript.getChunks().get(2).opcode;
         assertEquals(OP_EQUAL, equalOpcode);
+
+        byte[] redeemScriptData = outputScript.getChunks().get(1).data;
+        assertNotNull(redeemScriptData);
+
+        // check expected p2sh-p2wsh redeem script hash matches with our redeem script data
+        byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
+        Script p2shP2wshRedeemScript = new ScriptBuilder()
+            .number(ScriptOpCodes.OP_0)
+            .data(redeemScriptHash)
+            .build();
+        byte[] p2shP2wshRedeemScriptHash = Utils.sha256hash160(p2shP2wshRedeemScript.getProgram());
+        assertArrayEquals(p2shP2wshRedeemScriptHash, redeemScriptData);
+
+        // check redeem script hash from tx matches with our redeem script data
+        String redeemScriptHashFromTx = "d220e5b2484931d0fad089dedd87e17022683a51";
+        assertEquals(redeemScriptHashFromTx, Hex.toHexString(redeemScriptData));
     }
 
     @Test(expected = ScriptException.class)
