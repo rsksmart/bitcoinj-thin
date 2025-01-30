@@ -431,25 +431,18 @@ public class ScriptTest {
 
         // build redeem script
         int threshold = 2;
-        int totalPubKeys = multiSigPubKeys.size();
-        ScriptBuilder scriptBuilder = new ScriptBuilder();
-        scriptBuilder.smallNum(threshold);
-        for (BtcECKey pubKey : multiSigPubKeys) {
-            scriptBuilder.data(pubKey.getPubKey());
-        }
-        scriptBuilder.smallNum(totalPubKeys);
-        scriptBuilder.op(OP_CHECKMULTISIG);
-        Script redeemScript = scriptBuilder.build();
+        Script redeemScript = ScriptBuilder.createRedeemScript(threshold, multiSigPubKeys);
 
         // act
         Script outputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
 
         // assert
-        ScriptChunk redeemScriptChunk = outputScript.getChunks().get(1); // hash160, redeemScript, equal opcode
-        byte[] redeemScriptData = redeemScriptChunk.data;
-        assertNotNull(redeemScriptData);
-        String expectedRedeemScript = "d220e5b2484931d0fad089dedd87e17022683a51";
-        assertEquals(expectedRedeemScript, Hex.toHexString(redeemScriptData));
+        // output script structure is hash160, hashed redeem script, equal opcode
+        byte[] redeemScriptHash = outputScript.getChunks().get(1).data;
+        assertNotNull(redeemScriptHash);
+
+        String expectedRedeemScriptHash = "d220e5b2484931d0fad089dedd87e17022683a51";
+        assertEquals(expectedRedeemScriptHash, Hex.toHexString(redeemScriptHash));
     }
 
     @Test(expected = ScriptException.class)
