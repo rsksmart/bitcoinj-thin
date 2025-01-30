@@ -19,15 +19,9 @@ package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.RedeemScriptUtils.createNonStandardErpRedeemScript;
 import static co.rsk.bitcoinj.script.RedeemScriptUtils.createP2shErpRedeemScript;
-import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_0;
-import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
+import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -57,16 +51,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.hamcrest.core.IsNot;
 import org.junit.Assert;
 import org.junit.Test;
@@ -429,6 +416,44 @@ public class ScriptTest {
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
         Address scriptAddress = Address.fromP2SHScript(MAINNET_PARAMS, p2shScript);
         assertEquals(scriptAddress, p2shScript.getToAddress(MAINNET_PARAMS, true));
+    }
+
+    @Test
+    public void createP2shP2wshOutputScript_createsExpectedOutputScript() {
+        // data from tx https://mempool.space/testnet/tx/1744459aeaf7369aadc9fc40de9ab2bf575b14e35029b35a7ee4bbd3de65af7f
+        Script redeemScript = new Script(
+            Hex.decode("5221027de2af71862e0c64bf0ec5a66e3abc3b01fc57877802e6a6a81f6ea1d35610072102d9c67fef9f8d0707cbcca195eb5f26c6a65da6ca2d6130645c434bb924063856210346f033b8652a17d319d3ecbbbf20fd2cd663a6548173b9419d8228eef095012e53ae")
+        );
+
+        // act
+        Script outputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
+
+        // assert
+        // output script structure is hash160, hashed redeem script, equal opcode
+        int expectedOutputScriptSize = 3;
+        assertEquals(expectedOutputScriptSize, outputScript.getChunks().size());
+
+        int hash160opcode = outputScript.getChunks().get(0).opcode;
+        assertEquals(OP_HASH160, hash160opcode);
+
+        int equalOpcode = outputScript.getChunks().get(2).opcode;
+        assertEquals(OP_EQUAL, equalOpcode);
+
+        byte[] redeemScriptData = outputScript.getChunks().get(1).data;
+        assertNotNull(redeemScriptData);
+
+        // check expected p2sh-p2wsh redeem script hash matches with our redeem script data
+        byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
+        Script p2shP2wshRedeemScript = new ScriptBuilder()
+            .number(ScriptOpCodes.OP_0)
+            .data(redeemScriptHash)
+            .build();
+        byte[] p2shP2wshRedeemScriptHash = Utils.sha256hash160(p2shP2wshRedeemScript.getProgram());
+        assertArrayEquals(p2shP2wshRedeemScriptHash, redeemScriptData);
+
+        // check redeem script hash from tx matches with our redeem script data
+        String redeemScriptHashFromTx = "d220e5b2484931d0fad089dedd87e17022683a51";
+        assertEquals(redeemScriptHashFromTx, Hex.toHexString(redeemScriptData));
     }
 
     @Test(expected = ScriptException.class)
