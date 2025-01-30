@@ -25,8 +25,9 @@ public class TransactionWitness {
     }
 
     private TransactionWitness(List<byte[]> pushes) {
-        for (byte[] push : pushes)
+        for (byte[] push : pushes) {
             Objects.requireNonNull(push);
+        }
         this.pushes = pushes;
     }
 
