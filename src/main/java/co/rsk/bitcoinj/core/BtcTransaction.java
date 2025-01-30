@@ -1170,42 +1170,30 @@ public class BtcTransaction extends ChildMessage {
      * scriptPubKey of the output you're signing for. (See BIP143: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)</p>
      *
      * @param inputIndex   input the signature is being calculated for. Tx signatures are always relative to an input.
-     * @param scriptCode   the script that should be in the given input during signing.
+     * @param script   the script that should be in the given input during signing.
      * @param prevValue    the value of the coin being spent
      * @param type         Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
     public Sha256Hash hashForWitnessSignature(
         int inputIndex,
-        Script scriptCode,
+        Script script,
         Coin prevValue,
         SigHash type,
-        boolean anyoneCanPay) {
-        return hashForWitnessSignature(inputIndex, scriptCode.getProgram(), prevValue, type, anyoneCanPay);
-    }
-
-    private Sha256Hash hashForWitnessSignature(
-        int inputIndex,
-        byte[] scriptCode,
-        Coin prevValue,
-        SigHash type,
-        boolean anyoneCanPay) {
+        boolean anyoneCanPay
+    ) {
+        byte[] scriptCode = script.getProgram();
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForWitnessSignature(inputIndex, scriptCode, prevValue, (byte) sigHash);
-    }
+        byte sigHashType = (byte) sigHash;
 
-    private Sha256Hash hashForWitnessSignature(
-        int inputIndex,
-        byte[] scriptCode,
-        Coin prevValue,
-        byte sigHashType){
         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
         try {
             byte[] hashPrevouts = new byte[32];
             byte[] hashSequence = new byte[32];
             byte[] hashOutputs = new byte[32];
             int basicSigHashType = sigHashType & 0x1f;
-            boolean anyoneCanPay = (sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value;
+
+            anyoneCanPay = (sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value;
             boolean signAll = (basicSigHashType != SigHash.SINGLE.value) && (basicSigHashType != SigHash.NONE.value);
             if (!anyoneCanPay) {
                 ByteArrayOutputStream bosHashPrevouts = new UnsafeByteArrayOutputStream(256);
