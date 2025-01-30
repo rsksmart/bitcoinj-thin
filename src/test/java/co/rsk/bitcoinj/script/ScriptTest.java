@@ -426,8 +426,8 @@ public class ScriptTest {
             "027de2af71862e0c64bf0ec5a66e3abc3b01fc57877802e6a6a81f6ea1d3561007",
             "02d9c67fef9f8d0707cbcca195eb5f26c6a65da6ca2d6130645c434bb924063856",
             "0346f033b8652a17d319d3ecbbbf20fd2cd663a6548173b9419d8228eef095012e"
-        }).map(k -> BtcECKey.fromPublicOnly(Hex.decode(k))).collect(Collectors.toList());
-        multiSigPubKeys.sort(BtcECKey.PUBKEY_COMPARATOR);
+        }).map(k -> BtcECKey.fromPublicOnly(Hex.decode(k)))
+        .sorted(BtcECKey.PUBKEY_COMPARATOR).collect(Collectors.toList());
 
         // build redeem script
         int threshold = 2;
@@ -438,11 +438,19 @@ public class ScriptTest {
 
         // assert
         // output script structure is hash160, hashed redeem script, equal opcode
+        int expectedOutputScriptSize = 3;
+        assertEquals(expectedOutputScriptSize, outputScript.getChunks().size());
+
+        int hash160opcode = outputScript.getChunks().get(0).opcode;
+        assertEquals(OP_HASH160, hash160opcode);
+
         byte[] redeemScriptHash = outputScript.getChunks().get(1).data;
         assertNotNull(redeemScriptHash);
-
         String expectedRedeemScriptHash = "d220e5b2484931d0fad089dedd87e17022683a51";
         assertEquals(expectedRedeemScriptHash, Hex.toHexString(redeemScriptHash));
+
+        int equalOpcode = outputScript.getChunks().get(2).opcode;
+        assertEquals(OP_EQUAL, equalOpcode);
     }
 
     @Test(expected = ScriptException.class)
