@@ -18,6 +18,7 @@
 package co.rsk.bitcoinj.wallet;
 
 import com.google.common.collect.*;
+import com.google.protobuf.ByteString;
 import net.jcip.annotations.*;
 import co.rsk.bitcoinj.core.BtcAbstractBlockChain;
 import co.rsk.bitcoinj.core.Address;
@@ -593,10 +594,12 @@ public class Wallet
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
                 int opReturnCount = 0;
                 for (TransactionOutput output : req.tx.getOutputs()) {
-                    if (output.isDust())
+                    if (output.isDust()) {
                         throw new DustySendRequested();
-                    if (output.getScriptPubKey().isOpReturn())
+                    }
+                    if (output.getScriptPubKey().isOpReturn()) {
                         ++opReturnCount;
+                    }
                 }
                 if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
                     throw new MultipleOpReturnRequested();
@@ -1027,8 +1030,6 @@ public class Wallet
     private int calculateTxSize(BtcTransaction tx, boolean isSegwit, CoinSelection selection) {
         int baseSize = calculateTxBaseSize(tx, isSegwit);
         int totalSize = baseSize + estimateBytesForSigning(selection);
-        totalSize += 1; // 1 byte before inputs
-        totalSize += 1; // 1 byte before outputs
 
         if (!isSegwit) {
             return totalSize;
@@ -1040,34 +1041,16 @@ public class Wallet
     }
 
     private static int calculateTxBaseSize(BtcTransaction tx, boolean isSegwit) {
-        int baseSize = 0;
-
-        int inputsSize = tx.getInputs().size();
-        for (int i = 0; i < inputsSize; i++) {
-            byte[] input = tx.getInput(i).bitcoinSerialize();
-            baseSize += input.length;
-        }
-
-        int outputsSize = tx.getOutputs().size();
-        for (int i = 0; i < outputsSize; i++) {
-            byte[] output = tx.getOutput(i).bitcoinSerialize();
-            baseSize += output.length;
-        }
-
-        baseSize += 4; // version
-        baseSize += 4; // locktime
+        int baseSize = tx.unsafeBitcoinSerialize().length;
         if (!isSegwit) {
             return baseSize;
         }
-
-        baseSize += 1; // marker size
-        baseSize += 1; // flag size
 
         // at this time the script sig for every input is empty.
         // in segwit, this is a 36-bytes-fixed-size hash,
         // so we should count its bytes manually.
         int segwitScriptSigSize = 36;
-        baseSize += inputsSize * segwitScriptSigSize;
+        baseSize += tx.getInputs().size() * segwitScriptSigSize;
 
         return baseSize;
     }
