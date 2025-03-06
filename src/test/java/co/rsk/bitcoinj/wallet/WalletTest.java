@@ -9,6 +9,7 @@ import org.spongycastle.util.encoders.Hex;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class WalletTest {
@@ -27,6 +28,10 @@ public class WalletTest {
     private static final Sha256Hash UTXO_HASH = Sha256Hash.of("hash".getBytes(StandardCharsets.UTF_8));
     private static final Coin AVAILABLE_AMOUNT = Coin.FIFTY_COINS;
 
+    // CoinSelector and UTXOProvider are just interfaces,
+    // so rskj has its own implementations for them.
+    // It also has a custom impl for a BridgeBtcWallet.
+    // So them have to be overridden (copying rskj behavior) for proper testing.
     private static final CoinSelector COIN_SELECTOR = (target, candidates) -> {
         ArrayList<TransactionOutput> selected = new ArrayList<>();
         ArrayList<TransactionOutput> outputs = new ArrayList<>(candidates);
@@ -92,29 +97,13 @@ public class WalletTest {
     }
 
     @Test
-    public void completeTx_segwit() throws InsufficientMoneyException {
-        // arrange
-        Script scriptPubKey = ScriptBuilder.createP2SHP2WSHOutputScript(REDEEM_SCRIPT);
-        setUp(scriptPubKey);
-
-        // act
-        sr.isSegwit = true;
-        wallet.completeTx(sr);
-
-        // assert
-        double expectedSize = 183.75;
-        // for segwit, the calculation seems to be pretty accurate
-        double allowedPercentageError = 1.0;
-        assertCalculatedSizeIsCloseToExpectedSize(expectedSize, allowedPercentageError);
-    }
-
-    @Test
     public void completeTx_legacy() throws InsufficientMoneyException {
         // arrange
         Script legacyScriptPubKey = ScriptBuilder.createP2SHOutputScript(REDEEM_SCRIPT);
         setUp(legacyScriptPubKey);
 
         // act
+        assertFalse(sr.isSegwitCompatible);
         wallet.completeTx(sr);
 
         // assert
@@ -122,6 +111,23 @@ public class WalletTest {
         // for legacy tx, the calculation has a 10% diff approx,
         // but we have to keep the same implementation for backwards compatibility
         double allowedPercentageError = 10.0;
+        assertCalculatedSizeIsCloseToExpectedSize(expectedSize, allowedPercentageError);
+    }
+
+    @Test
+    public void completeTx_segwit() throws InsufficientMoneyException {
+        // arrange
+        Script scriptPubKey = ScriptBuilder.createP2SHP2WSHOutputScript(REDEEM_SCRIPT);
+        setUp(scriptPubKey);
+
+        // act
+        sr.isSegwitCompatible = true;
+        wallet.completeTx(sr);
+
+        // assert
+        double expectedSize = 183.75;
+        // for segwit, the calculation seems to be pretty accurate
+        double allowedPercentageError = 1.0;
         assertCalculatedSizeIsCloseToExpectedSize(expectedSize, allowedPercentageError);
     }
 

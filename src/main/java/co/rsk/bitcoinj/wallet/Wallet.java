@@ -18,7 +18,6 @@
 package co.rsk.bitcoinj.wallet;
 
 import com.google.common.collect.*;
-import com.google.protobuf.ByteString;
 import net.jcip.annotations.*;
 import co.rsk.bitcoinj.core.BtcAbstractBlockChain;
 import co.rsk.bitcoinj.core.Address;
@@ -636,7 +635,7 @@ public class Wallet
 
             if (req.emptyWallet) {
                 final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
-                if (!adjustOutputDownwardsForFee(req.tx, req.isSegwit, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
+                if (!adjustOutputDownwardsForFee(req.tx, req.isSegwitCompatible, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
                     throw new CouldNotAdjustDownwards();
             }
 
@@ -1008,7 +1007,7 @@ public class Wallet
                 checkState(input.getScriptBytes().length == 0);
             }
 
-            int size = calculateTxSize(tx, req.isSegwit, selection);
+            int size = calculateTxSize(tx, req.isSegwitCompatible, selection);
 
             Coin feePerKb = req.feePerKb;
             if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
@@ -1027,11 +1026,11 @@ public class Wallet
         return result;
     }
 
-    private int calculateTxSize(BtcTransaction tx, boolean isSegwit, CoinSelection selection) {
-        int baseSize = calculateTxBaseSize(tx, isSegwit);
+    private int calculateTxSize(BtcTransaction tx, boolean isSegwitCompatible, CoinSelection selection) {
+        int baseSize = calculateTxBaseSize(tx, isSegwitCompatible);
         int totalSize = baseSize + estimateBytesForSigning(selection);
 
-        if (!isSegwit) {
+        if (!isSegwitCompatible) {
             return totalSize;
         }
 
@@ -1047,10 +1046,10 @@ public class Wallet
         }
 
         // at this time the script sig for every input is empty.
-        // in segwit, this is a 36-bytes-fixed-size hash,
+        // in segwit-compatible, this is a 36-bytes-fixed-size hash,
         // so we should count its bytes manually.
-        int segwitScriptSigSize = 36;
-        baseSize += tx.getInputs().size() * segwitScriptSigSize;
+        int segwitCompatibleScriptSigSize = 36;
+        baseSize += tx.getInputs().size() * segwitCompatibleScriptSigSize;
 
         return baseSize;
     }
