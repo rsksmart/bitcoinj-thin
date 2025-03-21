@@ -4,6 +4,7 @@ import co.rsk.bitcoinj.crypto.TransactionSignature;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,7 +18,7 @@ public class TransactionWitness {
     private final List<byte[]> pushes;
 
     public TransactionWitness(int pushCount) {
-        pushes = new ArrayList<byte[]>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
+        pushes = new ArrayList<>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
     }
 
     public static TransactionWitness of(List<byte[]> pushes) {
@@ -63,6 +64,38 @@ public class TransactionWitness {
             return new byte[0];
         else
             return pushes.get(pushes.size() - 1);
+    }
+
+
+    @Override
+    public boolean equals(Object otherWitness) {
+        if (this == otherWitness) {
+            return true;
+        }
+
+        if (otherWitness == null || getClass() != otherWitness.getClass()) {
+            return false;
+        }
+
+        TransactionWitness other = (TransactionWitness) otherWitness;
+        if (pushes.size() != other.pushes.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < pushes.size(); i++) {
+            if (!Arrays.equals(pushes.get(i), other.pushes.get(i))) return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hashCode = 1;
+        for (byte[] push : pushes) {
+            hashCode = 31 * hashCode + Arrays.hashCode(push);
+        }
+        return hashCode;
     }
 }
 

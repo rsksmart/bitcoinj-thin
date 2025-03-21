@@ -3,15 +3,13 @@ package co.rsk.bitcoinj.core;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
 import co.rsk.bitcoinj.script.ScriptOpCodes;
-import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.*;
 
 public class TransactionWitnessTest {
     private static final Script redeemScript = new Script(
@@ -58,5 +56,101 @@ public class TransactionWitnessTest {
 
         // act & assert
         assertThrows(NullPointerException.class, () -> TransactionWitness.of(pushes));
+    }
+
+    @Test
+    public void equals_withAnyObject_shouldBeFalse() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(0);
+
+        // assert
+        assertNotEquals(new Object(), transactionWitness1);
+    }
+
+    @Test
+    public void equals_withADifferentClass_shouldBeFalse() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(0);
+
+        // assert
+        assertNotEquals("test", transactionWitness1);
+    }
+
+    @Test
+    public void equals_withTwoTransactionWitness_withZeroPushCount_shouldBeTrue() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(0);
+        TransactionWitness transactionWitness2 = new TransactionWitness(0);
+
+        // assert
+        assertEquals(transactionWitness1, transactionWitness2);
+    }
+
+    @Test
+    public void equals_withTwoTransactionWitness_withOnePushCount_shouldBeTrue() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(1);
+        TransactionWitness transactionWitness2 = new TransactionWitness(1);
+
+        // assert
+        assertEquals(transactionWitness1, transactionWitness2);
+    }
+
+    @Test
+    public void equals_withTwoTransactionWitness_withDifferentPushCount2_shouldBeTrue() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(1);
+        TransactionWitness transactionWitness2 = new TransactionWitness(2);
+
+        // assert
+        assertEquals(transactionWitness1, transactionWitness2);
+    }
+
+    @Test
+    public void equals_betweenNullAndAnEmptyTransactionWitness_shouldBeFalse() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(0);
+
+        // assert
+        assertNotEquals(transactionWitness1, null);
+    }
+
+    @Test
+    public void equals_withTwoTransactionWitness_withDifferentPushCountAndPushes_shouldBeFalse() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(0);
+        TransactionWitness transactionWitness2 = new TransactionWitness(1);
+        transactionWitness2.setPush(0, new byte[]{0x1});
+
+        // assert
+        assertNotEquals(transactionWitness1, transactionWitness2);
+    }
+
+    @Test
+    public void equals_withTwoTransactionWitnessesWithTheSameElementsPushed_shouldBeTrue() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(1);
+        transactionWitness1.setPush(0, new byte[]{0x1});
+
+        TransactionWitness transactionWitness2 = new TransactionWitness(1);
+        transactionWitness2.setPush(0, new byte[]{0x1});
+
+        // assert
+        assertEquals(transactionWitness1, transactionWitness2);
+    }
+
+    @Test
+    public void equals_withTwoTransactionWitnessesWithTheSecondElementDifferent_shouldBeFalse() {
+        // arrange
+        TransactionWitness transactionWitness1 = new TransactionWitness(2);
+        transactionWitness1.setPush(0, new byte[]{0x1});
+        transactionWitness1.setPush(1, new byte[]{0x2});
+
+        TransactionWitness transactionWitness2 = new TransactionWitness(2);
+        transactionWitness1.setPush(0, new byte[]{0x1});
+        transactionWitness2.setPush(0, new byte[]{0x3});
+
+        // assert
+        assertNotEquals(transactionWitness1, transactionWitness2);
     }
 }
