@@ -98,4 +98,3 @@ public class TransactionWitness {
         return hashCode;
     }
 }
-
