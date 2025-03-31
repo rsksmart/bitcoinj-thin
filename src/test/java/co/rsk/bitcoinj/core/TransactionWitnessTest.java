@@ -97,7 +97,7 @@ public class TransactionWitnessTest {
     }
 
     @Test
-    public void equals_withTwoTransactionWitness_withDifferentPushCount_shouldBeTrue() {
+    public void equals_withTwoTransactionWitness_withDifferentEmptyPushCount_shouldBeTrue() {
         // arrange
         TransactionWitness transactionWitness1 = new TransactionWitness(1);
         TransactionWitness transactionWitness2 = new TransactionWitness(2);
@@ -107,7 +107,7 @@ public class TransactionWitnessTest {
     }
 
     @Test
-    public void equals_betweenNullAndAnEmptyTransactionWitness_shouldBeFalse() {
+    public void equals_withNullAndAnEmptyTransactionWitness_shouldBeFalse() {
         // arrange
         TransactionWitness transactionWitness1 = new TransactionWitness(0);
 
