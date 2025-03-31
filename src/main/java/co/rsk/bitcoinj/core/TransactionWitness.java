@@ -68,22 +68,22 @@ public class TransactionWitness {
 
 
     @Override
-    public boolean equals(Object otherWitness) {
-        if (this == otherWitness) {
+    public boolean equals(Object otherObject) {
+        if (this == otherObject) {
             return true;
         }
 
-        if (otherWitness == null || getClass() != otherWitness.getClass()) {
+        if (otherObject == null || getClass() != otherObject.getClass()) {
             return false;
         }
 
-        TransactionWitness other = (TransactionWitness) otherWitness;
-        if (pushes.size() != other.pushes.size()) {
+        TransactionWitness otherTxWitness = (TransactionWitness) otherObject;
+        if (pushes.size() != otherTxWitness.pushes.size()) {
             return false;
         }
 
         for (int i = 0; i < pushes.size(); i++) {
-            if (!Arrays.equals(pushes.get(i), other.pushes.get(i))) return false;
+            if (!Arrays.equals(pushes.get(i), otherTxWitness.pushes.get(i))) return false;
         }
 
         return true;
