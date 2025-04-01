@@ -103,7 +103,7 @@ public class TransactionWitnessTest {
     }
 
     @Test
-    public void equals_withTwoTransactionWitness_withOnePushCount_shouldBeTrue() {
+    public void equals_withTwoTransactionWitness_withSamePushes_shouldBeTrue() {
         // arrange
         TransactionWitness transactionWitness1 = new TransactionWitness(1);
         TransactionWitness transactionWitness2 = new TransactionWitness(1);
