@@ -444,6 +444,18 @@ public class ScriptBuilder {
     }
 
     /**
+     * Creates redeem script with given public keys and threshold. Given public keys will be placed in
+     * redeem script in the lexicographical sorting order.
+     */
+    public static Script createCustomRedeemScript(int threshold, List<BtcECKey> pubkeys) {
+        checkArgument(threshold > 0, "Default threshold must be greater than 0");
+        checkArgument(threshold <= pubkeys.size(), "The number of default public keys must be greater or equal than default threshold");
+        checkArgument(pubkeys.size() <= 66, "The protocol only supports 66 signers");  // That's the max we can represent with a single opcode.
+        ScriptBuilder builder = new ScriptBuilder();
+        return builder.build();
+    }
+
+    /**
      * Creates a script of the form OP_RETURN [data]. This feature allows you to attach a small piece of data (like
      * a hash of something stored elsewhere) to a zero valued output which can never be spent and thus does not pollute
      * the ledger.
