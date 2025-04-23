@@ -452,7 +452,14 @@ public class ScriptBuilder {
         checkArgument(threshold <= pubkeys.size(), "The number of default public keys must be greater or equal than default threshold");
         checkArgument(pubkeys.size() <= 66, "The protocol only supports 66 signers");  // That's the max we can represent with a single opcode.
         ScriptBuilder builder = new ScriptBuilder();
-        return builder.build();
+        return builder
+            .data(pubkeys.get(0).getPubKey())
+            .op(OP_CHECKSIG)
+            .op(OP_SWAP)
+            .op(OP_ADD)
+            .number(threshold)
+            .op(OP_NUMEQUAL)
+            .build();
     }
 
     /**
