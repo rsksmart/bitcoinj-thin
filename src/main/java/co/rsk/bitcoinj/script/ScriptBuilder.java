@@ -438,8 +438,12 @@ public class ScriptBuilder {
      * redeem script in the lexicographical sorting order.
      */
     public static Script createRedeemScript(int threshold, List<BtcECKey> pubkeys) {
-        pubkeys = new ArrayList<BtcECKey>(pubkeys);
-        Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
+        if (pubkeys == null) {
+            throw new NullPointerException("PubKeys is null");
+        }
+
+        pubkeys = new ArrayList<>(pubkeys);
+        pubkeys.sort(BtcECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
     }
 
@@ -448,6 +452,10 @@ public class ScriptBuilder {
      * redeem script in the lexicographical sorting order.
      */
     public static Script createCustomRedeemScript(int threshold, List<BtcECKey> pubkeys) {
+        if (pubkeys == null) {
+            throw new NullPointerException("PubKeys is null");
+        }
+
         pubkeys = new ArrayList<>(pubkeys);
         pubkeys.sort(BtcECKey.PUBKEY_COMPARATOR);
         return createCustomMultiSigOutputScript(threshold, pubkeys);
