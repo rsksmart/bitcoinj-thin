@@ -448,11 +448,15 @@ public class ScriptBuilder {
      * redeem script in the lexicographical sorting order.
      */
     public static Script createCustomRedeemScript(int threshold, List<BtcECKey> pubkeys) {
+        pubkeys = new ArrayList<>(pubkeys);
+        pubkeys.sort(BtcECKey.PUBKEY_COMPARATOR);
+        return createCustomMultiSigOutputScript(threshold, pubkeys);
+    }
+
+    private static Script createCustomMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0, "Default threshold must be greater than 0");
         checkArgument(threshold <= pubkeys.size(), "The number of default public keys must be greater or equal than default threshold");
         checkArgument(pubkeys.size() <= 66, "The protocol only supports 66 signers");  // That's the max we can represent with a single opcode.
-        pubkeys = new ArrayList<>(pubkeys);
-        pubkeys.sort(BtcECKey.PUBKEY_COMPARATOR);
 
         ScriptBuilder builder = new ScriptBuilder();
         BtcECKey lastKey = pubkeys.get(pubkeys.size() - 1);
