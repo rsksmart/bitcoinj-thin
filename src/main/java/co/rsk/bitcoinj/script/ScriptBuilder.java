@@ -38,6 +38,7 @@ import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
  * protocol at a lower level.</p>
  */
 public class ScriptBuilder {
+    public static final int MAX_KEYS_FOR_CUSTOM_REDEEM_SCRIPT = 66;
     private List<ScriptChunk> chunks;
 
     /** Creates a fresh ScriptBuilder with an empty program. */
@@ -464,7 +465,7 @@ public class ScriptBuilder {
     private static Script createCustomMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0, "Default threshold must be greater than 0");
         checkArgument(threshold <= pubkeys.size(), "The number of default public keys must be greater or equal than default threshold");
-        checkArgument(pubkeys.size() <= 66, "The protocol only supports 66 signers");
+        checkArgument(pubkeys.size() <= MAX_KEYS_FOR_CUSTOM_REDEEM_SCRIPT, "The protocol only supports 66 signers");
 
         ScriptBuilder builder = new ScriptBuilder();
         BtcECKey lastKey = pubkeys.get(pubkeys.size() - 1);
