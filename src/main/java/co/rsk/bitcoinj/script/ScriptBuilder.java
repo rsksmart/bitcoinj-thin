@@ -16,11 +16,8 @@
 
 package co.rsk.bitcoinj.script;
 
-import co.rsk.bitcoinj.core.BtcTransaction;
+import co.rsk.bitcoinj.core.*;
 import com.google.common.collect.Lists;
-import co.rsk.bitcoinj.core.Address;
-import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 
 import javax.annotation.Nullable;
@@ -422,6 +419,18 @@ public class ScriptBuilder {
     public static Script createP2SHOutputScript(int threshold, List<BtcECKey> pubkeys) {
         Script redeemScript = createRedeemScript(threshold, pubkeys);
         return createP2SHOutputScript(redeemScript);
+    }
+
+    /**
+     * Creates a P2SH-P2WSH scriptPubKey for the given redeem script.
+     */
+    public static Script createP2SHP2WSHOutputScript(Script redeemScript) {
+        byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
+        Script witnessScript = new ScriptBuilder()
+            .number(ScriptOpCodes.OP_0)
+            .data(redeemScriptHash)
+            .build();
+        return ScriptBuilder.createP2SHOutputScript(witnessScript);
     }
 
     /**

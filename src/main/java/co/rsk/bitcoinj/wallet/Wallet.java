@@ -593,10 +593,12 @@ public class Wallet
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
                 int opReturnCount = 0;
                 for (TransactionOutput output : req.tx.getOutputs()) {
-                    if (output.isDust())
+                    if (output.isDust()) {
                         throw new DustySendRequested();
-                    if (output.getScriptPubKey().isOpReturn())
+                    }
+                    if (output.getScriptPubKey().isOpReturn()) {
                         ++opReturnCount;
+                    }
                 }
                 if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
                     throw new MultipleOpReturnRequested();
@@ -613,7 +615,7 @@ public class Wallet
             List<Coin> updatedOutputValues = null;
             if (!req.emptyWallet) {
                 // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates);
+                FeeCalculation feeCalculation = calculateFee(req, value, req.ensureMinRequiredFee, candidates);
                 bestCoinSelection = feeCalculation.bestCoinSelection;
                 bestChangeOutput = feeCalculation.bestChangeOutput;
                 updatedOutputValues = feeCalculation.updatedOutputValues;
@@ -633,7 +635,7 @@ public class Wallet
 
             if (req.emptyWallet) {
                 final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
-                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
+                if (!adjustOutputDownwardsForFee(req.tx, req.isSegwitCompatible, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
                     throw new CouldNotAdjustDownwards();
             }
 
@@ -722,9 +724,14 @@ public class Wallet
     }
 
     /** Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size. */
-    private boolean adjustOutputDownwardsForFee(BtcTransaction tx, CoinSelection coinSelection, Coin feePerKb,
-                                                boolean ensureMinRequiredFee) {
-        final int size = tx.unsafeBitcoinSerialize().length + estimateBytesForSigning(coinSelection);
+    private boolean adjustOutputDownwardsForFee(
+        BtcTransaction tx,
+        boolean isSegwit,
+        CoinSelection coinSelection,
+        Coin feePerKb,
+        boolean ensureMinRequiredFee
+    ) {
+        final int size = calculateTxSize(tx, isSegwit, coinSelection);
         Coin fee = feePerKb.multiply(size).divide(1000);
         if (ensureMinRequiredFee && fee.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
             fee = BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE;
@@ -913,8 +920,12 @@ public class Wallet
 
     //region Fee calculation code
 
-    public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
-                                       boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
+    private FeeCalculation calculateFee(
+        SendRequest req,
+        Coin value,
+        boolean needAtLeastReferenceFee,
+        List<TransactionOutput> candidates
+    ) throws InsufficientMoneyException {
         FeeCalculation result;
         Coin fee = Coin.ZERO;
         while (true) {
@@ -996,8 +1007,7 @@ public class Wallet
                 checkState(input.getScriptBytes().length == 0);
             }
 
-            int size = tx.unsafeBitcoinSerialize().length;
-            size += estimateBytesForSigning(selection);
+            int size = calculateTxSize(tx, req.isSegwitCompatible, selection);
 
             Coin feePerKb = req.feePerKb;
             if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
@@ -1014,7 +1024,34 @@ public class Wallet
             fee = feeNeeded;
         }
         return result;
+    }
 
+    private int calculateTxSize(BtcTransaction tx, boolean isSegwitCompatible, CoinSelection selection) {
+        int baseSize = calculateTxBaseSize(tx, isSegwitCompatible);
+        int totalSize = baseSize + estimateBytesForSigning(selection);
+
+        if (!isSegwitCompatible) {
+            return totalSize;
+        }
+
+        // As described in BIP141
+        int txWeight = totalSize + (3 * baseSize);
+        return txWeight / 4;
+    }
+
+    private static int calculateTxBaseSize(BtcTransaction tx, boolean isSegwit) {
+        int baseSize = tx.unsafeBitcoinSerialize().length;
+        if (!isSegwit) {
+            return baseSize;
+        }
+
+        // at this time the script sig for every input is empty.
+        // in segwit-compatible, this is a 36-bytes-fixed-size hash,
+        // so we should count its bytes manually.
+        int segwitCompatibleScriptSigSize = 36;
+        baseSize += tx.getInputs().size() * segwitCompatibleScriptSigSize;
+
+        return baseSize;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
