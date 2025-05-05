@@ -129,4 +129,32 @@ public final class RedeemScriptUtils {
 
         return keys;
     }
+
+    public static Script createP2shP2wshErpCustomRedeemScript(List<BtcECKey> defaultRedeemScriptKeys, List<BtcECKey> emergencyRedeemScriptKeys, long csvValue) {
+        Script defaultCustomRedeemScript = ScriptBuilder.createCustomRedeemScript(
+            defaultRedeemScriptKeys.size() / 2 + 1,
+            defaultRedeemScriptKeys
+        );
+
+        Script erpFedRedeemScript = ScriptBuilder.createRedeemScript(
+            emergencyRedeemScriptKeys.size() / 2 + 1,
+            emergencyRedeemScriptKeys
+        );
+
+        byte[] serializedCsvValue = Utils.reverseBytes(BigInteger.valueOf(csvValue).toByteArray());
+
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        return scriptBuilder
+            .op(ScriptOpCodes.OP_NOTIF)
+            .addChunks(defaultCustomRedeemScript.getChunks())
+            .op(ScriptOpCodes.OP_ELSE)
+            .data(serializedCsvValue)
+            .op(ScriptOpCodes.OP_CHECKSEQUENCEVERIFY)
+            .op(ScriptOpCodes.OP_DROP)
+            .addChunks(erpFedRedeemScript.getChunks())
+            .op(ScriptOpCodes.OP_ENDIF)
+            .build();
+
+
+    }
 }

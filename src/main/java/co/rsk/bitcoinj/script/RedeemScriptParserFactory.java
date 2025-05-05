@@ -57,6 +57,11 @@ public class RedeemScriptParserFactory {
             );
         }
 
+        if (RedeemScriptValidator.hasP2shP2wshErpCustomRedeemScriptStructure(redeemScriptChunks)) {
+            logger.debug("[get] Return NonStandardErpRedeemScriptParser");
+            return new P2shP2wshErpCustomRedeemScriptParser();
+        }
+
         logger.debug("[get] Cannot parse provided redeem script");
         throw new ScriptException("The provided redeem script is unknown");
     }
