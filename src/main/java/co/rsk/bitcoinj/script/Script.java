@@ -459,17 +459,23 @@ public class Script {
      * Returns a copy of the given scriptSig with the signature inserted in the given position.
      */
     public Script getScriptSigWithSignature(Script scriptSig, byte[] sigBytes, int index) {
-        int sigsPrefixCount = 0;
-        int sigsSuffixCount = 0;
-        if (isPayToScriptHash()) {
-            sigsPrefixCount = 1; // OP_0 <sig>* <redeemScript>
-            sigsSuffixCount = 1;
-        } else if (isSentToMultiSig()) {
-            sigsPrefixCount = 1; // OP_0 <sig>*
-        } else if (isSentToAddress()) {
-            sigsSuffixCount = 1; // <sig> <pubkey>
-        }
+        int sigsPrefixCount = getSigsPrefixCount();
+        int sigsSuffixCount = getSigsSuffixCount();
         return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, sigsPrefixCount, sigsSuffixCount);
+    }
+
+    public int getSigsPrefixCount() {
+        if (isPayToScriptHash() || isSentToMultiSig()) { // OP_0 <sig>* || OP_0 <sig>*
+            return 1;
+        }
+        return 0;
+    }
+
+    public int getSigsSuffixCount() {
+        if (isPayToScriptHash() || isSentToAddress()) {  // <sig>* <redeemScript> || <sig> <pubkey>
+            return 1;
+        }
+        return 0;
     }
 
     private RedeemScriptParser getRedeemScriptParser() {
