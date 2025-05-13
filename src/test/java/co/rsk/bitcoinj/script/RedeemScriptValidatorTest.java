@@ -557,14 +557,25 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void isOpN_valid_opcode() {
-        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_2, null);
-        Assert.assertTrue(RedeemScriptValidator.isOpN(chunk));
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_16, null);
+        Assert.assertTrue(RedeemScriptValidator.isN(chunk));
+    }
+
+    @Test
+    public void isN_valid_opcode() {
+        for (int num = 1; num <= 40; num++) {
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.number(num);
+            Script script = builder.build();
+            ScriptChunk chunk = script.getChunks().get(0);
+            Assert.assertTrue(RedeemScriptValidator.isN(chunk));
+        }
     }
 
     @Test
     public void isOpnN_invalid_opcode() {
         ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_DROP, null);
-        Assert.assertFalse(RedeemScriptValidator.isOpN(chunk));
+        Assert.assertFalse(RedeemScriptValidator.isN(chunk));
     }
 
     @Test

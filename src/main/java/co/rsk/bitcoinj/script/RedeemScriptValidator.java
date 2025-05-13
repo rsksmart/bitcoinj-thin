@@ -2,6 +2,7 @@ package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.VerificationException;
 import java.util.List;
+import static java.util.Objects.isNull;
 
 public class RedeemScriptValidator {
 
@@ -34,24 +35,32 @@ public class RedeemScriptValidator {
                 return false;
             }
 
-            // First chunk must be an OP_N
-            if (!isOpN(chunks.get(0))) {
+            // First chunk must be a number for the threshold
+            ScriptChunk firstChunk = chunks.get(0);
+            if (!isN(firstChunk)) {
                 return false;
             }
 
-            // Second to last chunk must be an OP_N opcode too, and there should be
-            // that many data chunks (keys).
-            ScriptChunk secondToLastChunk = chunks.get(chunks.size() - 2);
-            if (!isOpN(secondToLastChunk)) {
+            int chunksSize = chunks.size();
+            ScriptChunk lastChunk = chunks.get(chunksSize - 1);
+            if (!isOpCheckMultiSig(lastChunk)) {
                 return false;
             }
 
-            int numKeys = Script.decodeFromOpN(secondToLastChunk.opcode);
-            if (numKeys < 1 || chunks.size() != numKeys + 3) { // numKeys + M + N + OP_CHECKMULTISIG
+            // Second to last chunk must be a number too,
+            // and there should be that many data chunks (keys).
+            int secondToLastChunkIndex = chunksSize - 2;
+            ScriptChunk secondToLastChunk = chunks.get(secondToLastChunkIndex);
+            if (!isN(secondToLastChunk)) {
                 return false;
             }
 
-            for (int i = 1; i < chunks.size() - 2; i++) {
+            int numKeys = decodeN(secondToLastChunk);
+            if (numKeys < 1 || chunksSize != numKeys + 3) { // numKeys + M + N + OP_CHECKMULTISIG
+                return false;
+            }
+
+            for (int i = 1; i < secondToLastChunkIndex; i++) {
                 if (chunks.get(i).isOpCode()) { // Should be the public keys, not op_codes
                     return false;
                 }
@@ -59,7 +68,7 @@ public class RedeemScriptValidator {
 
             return true;
         } catch (IllegalStateException e) {
-            return false;   // Not an OP_N opcode.
+            return false;   // Not a number
         }
     }
 
@@ -68,10 +77,11 @@ public class RedeemScriptValidator {
             return false;
         }
 
-        ScriptChunk firstChunk = chunks.get(0);
+        int opNotifIndex = 0;
+        boolean hasErpPrefix = chunks.get(opNotifIndex).equalsOpCode(ScriptOpCodes.OP_NOTIF);
 
-        boolean hasErpPrefix = firstChunk.opcode == ScriptOpCodes.OP_NOTIF;
-        boolean hasEndIfOpcode = chunks.get(chunks.size() - 1).equalsOpCode(ScriptOpCodes.OP_ENDIF);
+        int lastChunkIndex = chunks.size() - 1;
+        boolean hasEndIfOpcode = chunks.get(lastChunkIndex).equalsOpCode(ScriptOpCodes.OP_ENDIF);
 
         if (!hasErpPrefix || !hasEndIfOpcode) {
             return false;
@@ -219,8 +229,35 @@ public class RedeemScriptValidator {
         return redeemScript.getChunks().subList(0, redeemScript.getChunks().size() - 1);
     }
 
-    protected static boolean isOpN(ScriptChunk chunk) {
-        return chunk.isOpCode() &&
-            chunk.opcode >= ScriptOpCodes.OP_1 && chunk.opcode <= ScriptOpCodes.OP_16;
+    public static int decodeN(ScriptChunk chunk) {
+        if (chunk.isOpCode()) {
+            return Script.decodeFromOpN(chunk.opcode);
+        }
+
+        if (chunk.isPushData() && !isNull(chunk.data) && chunk.data[0] >= 1) {
+            return chunk.data[0];
+        }
+
+        throw new IllegalArgumentException("Cannot decode number from chunk.");
+    }
+
+    private static boolean isOpcodeSmallNumber(ScriptChunk chunk) {
+        return chunk.isOpCode()
+            && chunk.opcode >= ScriptOpCodes.OP_1
+            && chunk.opcode <= ScriptOpCodes.OP_16;
+    }
+
+    private static boolean isPushDataNumber(ScriptChunk chunk) {
+        return chunk.isPushData()
+            && !isNull(chunk.data)
+            && chunk.data[0] >= 1;
+    }
+
+    protected static boolean isN(ScriptChunk chunk) {
+        return isOpcodeSmallNumber(chunk) || isPushDataNumber(chunk);
+    }
+
+    private static boolean isOpCheckMultiSig(ScriptChunk chunk) {
+        return chunk.isOpCode() && chunk.opcode == ScriptOpCodes.OP_CHECKMULTISIG;
     }
 }

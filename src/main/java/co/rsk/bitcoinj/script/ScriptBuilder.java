@@ -267,13 +267,12 @@ public class ScriptBuilder {
     public static Script createMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0);
         checkArgument(threshold <= pubkeys.size());
-        checkArgument(pubkeys.size() <= 16);  // That's the max we can represent with a single opcode.
         ScriptBuilder builder = new ScriptBuilder();
-        builder.smallNum(threshold);
+        builder.number(threshold);
         for (BtcECKey key : pubkeys) {
             builder.data(key.getPubKey());
         }
-        builder.smallNum(pubkeys.size());
+        builder.number(pubkeys.size());
         builder.op(OP_CHECKMULTISIG);
         return builder.build();
     }
@@ -430,7 +429,7 @@ public class ScriptBuilder {
             .number(ScriptOpCodes.OP_0)
             .data(redeemScriptHash)
             .build();
-        return ScriptBuilder.createP2SHOutputScript(witnessScript);
+        return createP2SHOutputScript(witnessScript);
     }
 
     /**

@@ -97,6 +97,9 @@ public class Script {
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
+
+    /** The maximum size in bytes of a standard witnessScript */
+    public static final long MAX_STANDARD_P2WSH_SCRIPT_SIZE = 3600;
     public static final int SIG_SIZE = 75;
     /** Max number of sigops allowed in a standard p2sh redeem script */
     public static final int MAX_P2SH_SIGOPS = 15;
