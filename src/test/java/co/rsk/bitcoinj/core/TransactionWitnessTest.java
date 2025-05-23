@@ -8,7 +8,6 @@ import co.rsk.bitcoinj.script.ScriptBuilder;
 import co.rsk.bitcoinj.script.ScriptOpCodes;
 import org.junit.Assert;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -17,24 +16,24 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class TransactionWitnessTest {
-    private static final Script redeemScript = new Script(
-        Hex.decode("5221027de2af71862e0c64bf0ec5a66e3abc3b01fc57877802e6a6a81f6ea1d35610072102d9c67fef9f8d0707cbcca195eb5f26c6a65da6ca2d6130645c434bb924063856210346f033b8652a17d319d3ecbbbf20fd2cd663a6548173b9419d8228eef095012e53ae")
-    ); // data from tx https://mempool.space/testnet/tx/1744459aeaf7369aadc9fc40de9ab2bf575b14e35029b35a7ee4bbd3de65af7f
-    private static final byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
     private static final NetworkParameters MAINNET_PARAMS = MainNetParams.get();
+    private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+    private static final List<BtcECKey> ERP_FEDERATION_KEYS = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+    private static final long CSV_VALUE = 52_560L;
+    private static final Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+        FEDERATION_KEYS,
+        ERP_FEDERATION_KEYS,
+        CSV_VALUE
+    );
+    private static final byte[] redeemScriptHash = redeemScript.getProgram();
     private static final Script witnessScript = new ScriptBuilder()
         .number(ScriptOpCodes.OP_0)
         .data(redeemScriptHash)
         .build();
     private static final byte[] witnessScriptHash = Utils.sha256hash160(witnessScript.getProgram());
-
     private static final byte[] op0 = new byte[] {};
 
     private List<byte[]> pushes;
-
-    private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
-    private static final List<BtcECKey> ERP_FEDERATION_KEYS = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
-    private static final long CSV_VALUE = 52_560L;
 
     @Test
     public void of_withValidPushes_createsTransactionWitnessWithPushes() {
@@ -228,12 +227,11 @@ public class TransactionWitnessTest {
 
     @Test
     public void getSigInsertionIndex_whenScriptWithOnlyEmptyArrayAndRedeemScript_shouldReturnZero() {
-        Script standardErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(FEDERATION_KEYS, ERP_FEDERATION_KEYS, CSV_VALUE);
         pushes = new ArrayList<>();
         byte[] emptyByte = {};
         pushes.add(emptyByte); // OP_0
         pushes.add(emptyByte); // OP_NOTIF
-        pushes.add(standardErpRedeemScript.getProgram());
+        pushes.add(redeemScriptHash);
         TransactionWitness transactionWitness = TransactionWitness.of(pushes);
 
         Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
@@ -244,7 +242,7 @@ public class TransactionWitnessTest {
     }
 
     @Test
-    public void getSigInsertionIndex_whenSegwitWithP2shRedeemScript_withOneSignature_shouldReturnIndex() {
+    public void getSigInsertionIndex_whenSegwitWithP2shRedeemScript_withOneSignature_shouldReturnIndexZero() {
         final BtcECKey fedKey1 = FEDERATION_KEYS.get(0);
 
         BtcTransaction prevTx = new BtcTransaction(MAINNET_PARAMS);
@@ -256,11 +254,6 @@ public class TransactionWitnessTest {
         BtcTransaction btcTx = new BtcTransaction(MAINNET_PARAMS);
         btcTx.addInput(prevTx.getOutput(0));
         int inputIndex = 0;
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            FEDERATION_KEYS,
-            ERP_FEDERATION_KEYS,
-            CSV_VALUE
-        );
         TransactionWitness witnessScript = createBaseWitnessThatSpendsFromErpRedeemScript(redeemScript);
         btcTx.setWitness(inputIndex, witnessScript);
 
@@ -286,11 +279,6 @@ public class TransactionWitnessTest {
         BtcTransaction btcTx = new BtcTransaction(MAINNET_PARAMS);
         btcTx.addInput(prevTx.getOutput(0));
         int inputIndex = 0;
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            FEDERATION_KEYS,
-            ERP_FEDERATION_KEYS,
-            CSV_VALUE
-        );
         TransactionWitness witnessScript = createBaseWitnessThatSpendsFromErpRedeemScript(redeemScript);
         btcTx.setWitness(inputIndex, witnessScript);
 
