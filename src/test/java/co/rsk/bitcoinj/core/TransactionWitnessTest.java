@@ -276,23 +276,23 @@ public class TransactionWitnessTest {
         TransactionWitness transactionWitness = btcTx.getWitness(inputIndex);
 
         // fedKey1 signature should go to sigIndex 0
-        int sigIndex = transactionWitness.getSigInsertionIndex(sigHash, fedKey1);
-        Assert.assertEquals(0, sigIndex);
+        int sigIndexForFedKey1 = transactionWitness.getSigInsertionIndex(sigHash, fedKey1);
+        Assert.assertEquals(0, sigIndexForFedKey1);
 
-        // fedKey1 signature should go to sigIndex 0 because the signatures are empty yet
-        int sigIndex1 = transactionWitness.getSigInsertionIndex(sigHash, fedKey2);
-        Assert.assertEquals(0, sigIndex1);
+        // fedKey2 signature should go to sigIndex 0 because the signatures are empty yet
+        int sigIndexForFedKey2 = transactionWitness.getSigInsertionIndex(sigHash, fedKey2);
+        Assert.assertEquals(0, sigIndexForFedKey2);
 
         // sign with fedKey1
         byte[] federatorSig = fedKey1.sign(sigHash).encodeToDER();
         TransactionSignature txSig = new TransactionSignature(BtcECKey.ECDSASignature.decodeFromDER(federatorSig), BtcTransaction.SigHash.ALL, false);
         Script p2SHOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
-        TransactionWitness inputWitnessWithSignature = transactionWitness.updateWitnessWithSignature(p2SHOutputScript, txSig.encodeToBitcoin(), sigIndex);
+        TransactionWitness inputWitnessWithSignature = transactionWitness.updateWitnessWithSignature(p2SHOutputScript, txSig.encodeToBitcoin(), sigIndexForFedKey1);
         btcTx.setWitness(inputIndex, inputWitnessWithSignature);
 
         TransactionWitness transactionWitnessWithSignature = btcTx.getWitness(inputIndex);
-        int sigIndex2 = transactionWitnessWithSignature.getSigInsertionIndex(sigHash, fedKey2);
-        Assert.assertEquals(1, sigIndex2);
+        sigIndexForFedKey2 = transactionWitnessWithSignature.getSigInsertionIndex(sigHash, fedKey2);
+        Assert.assertEquals(1, sigIndexForFedKey2);
 
     }
 
