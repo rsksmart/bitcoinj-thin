@@ -248,7 +248,7 @@ public class TransactionWitnessTest {
         TransactionWitness witnessScript = createBaseWitnessThatSpendsFromErpRedeemScript(redeemScript);
         btcTx.setWitness(inputIndex, witnessScript);
 
-        Sha256Hash sigHash = btcTx.hashForSignature(inputIndex, redeemScript,
+        Sha256Hash sigHash = btcTx.hashForWitnessSignature(inputIndex, redeemScript, prevValue,
             BtcTransaction.SigHash.ALL, false);
 
         TransactionWitness transactionWitness = btcTx.getWitness(inputIndex);
@@ -270,7 +270,7 @@ public class TransactionWitnessTest {
         TransactionWitness witnessScript = createBaseWitnessThatSpendsFromErpRedeemScript(redeemScript);
         btcTx.setWitness(inputIndex, witnessScript);
 
-        Sha256Hash sigHash = btcTx.hashForSignature(inputIndex, redeemScript,
+        Sha256Hash sigHash = btcTx.hashForWitnessSignature(inputIndex, redeemScript, prevValue,
             BtcTransaction.SigHash.ALL, false);
 
         TransactionWitness transactionWitness = btcTx.getWitness(inputIndex);
