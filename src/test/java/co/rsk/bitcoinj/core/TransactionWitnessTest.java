@@ -292,8 +292,8 @@ public class TransactionWitnessTest {
         TransactionWitness inputWitnessWithSignature = transactionWitness.updateWitnessWithSignature(p2SHOutputScript, txSig.encodeToBitcoin(), sigIndex);
         btcTx.setWitness(inputIndex, inputWitnessWithSignature);
 
-        TransactionWitness transactionWitnesWithSignature = btcTx.getWitness(inputIndex);
-        int sigIndex2 = transactionWitnesWithSignature.getSigInsertionIndex(sigHash, fedKey2);
+        TransactionWitness transactionWitnessWithSignature = btcTx.getWitness(inputIndex);
+        int sigIndex2 = transactionWitnessWithSignature.getSigInsertionIndex(sigHash, fedKey2);
         Assert.assertEquals(1, sigIndex2);
 
     }
