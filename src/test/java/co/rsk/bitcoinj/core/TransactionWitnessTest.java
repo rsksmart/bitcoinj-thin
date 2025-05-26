@@ -203,15 +203,14 @@ public class TransactionWitnessTest {
         assertNotEquals(hashCode1, hashCode2);
     }
 
-    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    @Test
     public void getSigInsertionIndex_whenEmptyWitness_shouldThrownArrayIndexOutOfBoundsException() {
         pushes = new ArrayList<>();
         TransactionWitness transactionWitness = TransactionWitness.of(pushes);
-
-        transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1);
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1));
     }
 
-    @Test(expected = ScriptException.class)
+    @Test
     public void getSigInsertionIndex_whenMalformedRedeemScript_shouldThrowException() {
         Script customRedeemScript = new Script(new byte[2]);
         byte[] emptyByte = {};
@@ -219,8 +218,7 @@ public class TransactionWitnessTest {
         pushes.add(emptyByte);
         pushes.add(customRedeemScript.getProgram());
         TransactionWitness transactionWitness = TransactionWitness.of(pushes);
-
-        transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1);
+        assertThrows(ScriptException.class, () -> transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1));
     }
 
     @Test
