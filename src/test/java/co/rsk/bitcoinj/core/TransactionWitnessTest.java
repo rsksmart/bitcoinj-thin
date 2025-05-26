@@ -27,10 +27,10 @@ public class TransactionWitnessTest {
         ERP_FEDERATION_KEYS,
         CSV_VALUE
     );
-    private static final byte[] redeemScriptHash = redeemScript.getProgram();
+    private static final byte[] redeemScriptSerialized = redeemScript.getProgram();
     private static final Script witnessScript = new ScriptBuilder()
         .number(ScriptOpCodes.OP_0)
-        .data(redeemScriptHash)
+        .data(redeemScriptSerialized)
         .build();
     private static final byte[] witnessScriptHash = Utils.sha256hash160(witnessScript.getProgram());
     private static final byte[] op0 = new byte[] {};
@@ -229,7 +229,7 @@ public class TransactionWitnessTest {
         byte[] emptyByte = {};
         pushes.add(emptyByte); // OP_0
         pushes.add(emptyByte); // OP_NOTIF
-        pushes.add(redeemScriptHash);
+        pushes.add(redeemScriptSerialized);
         TransactionWitness transactionWitness = TransactionWitness.of(pushes);
 
         int sigInsertionIndex = transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1);
