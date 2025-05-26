@@ -244,28 +244,12 @@ public class TransactionWitnessTest {
         TransactionWitness transactionWitness = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act
-        int sigInsertionIndex = transactionWitness.getSigInsertionIndex(btcTxSigHash, fedKey1);
+        for (BtcECKey key: FEDERATION_KEYS) {
+            int sigInsertionIndex = transactionWitness.getSigInsertionIndex(btcTxSigHash, key);
 
-        // assert
-        Assert.assertEquals(0, sigInsertionIndex);
-    }
-
-    @Test
-    public void getSigInsertionIndex_withTwoDifferentKeys_withNoSignaturesInTheWitness_shouldReturnInBothZero() {
-        // arrange
-        BtcTransaction btcTx = getBtcTransactionWithBaseWitnessInInput();
-        Sha256Hash btcTxSigHash = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
-            BtcTransaction.SigHash.ALL, false);
-        TransactionWitness transactionWitness = btcTx.getWitness(FIRST_INPUT_INDEX);
-
-        // act & assert
-        // fedKey1 signature should go to sigIndex 0
-        int sigIndexForFedKey1 = transactionWitness.getSigInsertionIndex(btcTxSigHash, fedKey1);
-        Assert.assertEquals(0, sigIndexForFedKey1);
-
-        // fedKey2 signature should go to sigIndex 0 because the signatures are empty yet
-        int sigIndexForFedKey2 = transactionWitness.getSigInsertionIndex(btcTxSigHash, fedKey2);
-        Assert.assertEquals(0, sigIndexForFedKey2);
+            // assert
+            Assert.assertEquals(0, sigInsertionIndex);
+        }
     }
 
     @Test
