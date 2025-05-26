@@ -286,7 +286,7 @@ public class TransactionWitnessTest {
         // sign with fedKey1
         byte[] federatorSig = fedKey1.sign(sigHash).encodeToDER();
         TransactionSignature txSig = new TransactionSignature(BtcECKey.ECDSASignature.decodeFromDER(federatorSig), BtcTransaction.SigHash.ALL, false);
-        Script p2SHOutputScript = ScriptBuilder.createP2SHOutputScript(redeemScript);
+        Script p2SHOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
         TransactionWitness inputWitnessWithSignature = transactionWitness.updateWitnessWithSignature(p2SHOutputScript, txSig.encodeToBitcoin(), sigIndex);
         btcTx.setWitness(inputIndex, inputWitnessWithSignature);
 
