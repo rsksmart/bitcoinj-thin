@@ -18,6 +18,8 @@ import static org.junit.Assert.*;
 public class TransactionWitnessTest {
     private static final NetworkParameters MAINNET_PARAMS = MainNetParams.get();
     private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+    private static final BtcECKey fedKey1 = FEDERATION_KEYS.get(0);
+    private static final BtcECKey fedKey2 = FEDERATION_KEYS.get(1);
     private static final List<BtcECKey> ERP_FEDERATION_KEYS = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
     private static final long CSV_VALUE = 52_560L;
     private static final Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
@@ -32,8 +34,9 @@ public class TransactionWitnessTest {
         .build();
     private static final byte[] witnessScriptHash = Utils.sha256hash160(witnessScript.getProgram());
     private static final byte[] op0 = new byte[] {};
-
+    private static final Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
     private List<byte[]> pushes;
+
 
     @Test
     public void of_withValidPushes_createsTransactionWitnessWithPushes() {
@@ -205,9 +208,7 @@ public class TransactionWitnessTest {
         pushes = new ArrayList<>();
         TransactionWitness transactionWitness = TransactionWitness.of(pushes);
 
-        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
-        BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
-        transactionWitness.getSigInsertionIndex(hashForSignature, signingKey);
+        transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1);
     }
 
     @Test(expected = ScriptException.class)
@@ -219,10 +220,7 @@ public class TransactionWitnessTest {
         pushes.add(customRedeemScript.getProgram());
         TransactionWitness transactionWitness = TransactionWitness.of(pushes);
 
-        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
-        BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
-
-        transactionWitness.getSigInsertionIndex(hashForSignature, signingKey);
+        transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1);
     }
 
     @Test
@@ -234,17 +232,12 @@ public class TransactionWitnessTest {
         pushes.add(redeemScriptHash);
         TransactionWitness transactionWitness = TransactionWitness.of(pushes);
 
-        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
-        BtcECKey signingKey = BtcECKey.fromPrivate(BigInteger.valueOf(800));
-
-        int sigInsertionIndex = transactionWitness.getSigInsertionIndex(hashForSignature, signingKey);
+        int sigInsertionIndex = transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1);
         Assert.assertEquals(0, sigInsertionIndex);
     }
 
     @Test
     public void getSigInsertionIndex_whenSegwitWithP2shRedeemScript_withOneSignature_shouldReturnIndexZero() {
-        final BtcECKey fedKey1 = FEDERATION_KEYS.get(0);
-
         BtcTransaction prevTx = new BtcTransaction(MAINNET_PARAMS);
         final Address userAddress = BtcECKey.fromPrivate(BigInteger.valueOf(900)).toAddress(
             MAINNET_PARAMS);
@@ -267,9 +260,6 @@ public class TransactionWitnessTest {
 
     @Test
     public void getSigInsertionIndex_whenSegwitWithP2shRedeemScript_withTwoSignatures_shouldReturnIndexCorrectly() {
-        BtcECKey fedKey1 = FEDERATION_KEYS.get(0);
-        BtcECKey fedKey2 = FEDERATION_KEYS.get(0);
-
         BtcTransaction prevTx = new BtcTransaction(MAINNET_PARAMS);
         final Address userAddress = BtcECKey.fromPrivate(BigInteger.valueOf(900)).toAddress(
             MAINNET_PARAMS);
