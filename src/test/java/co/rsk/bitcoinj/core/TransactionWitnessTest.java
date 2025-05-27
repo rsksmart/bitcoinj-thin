@@ -38,8 +38,8 @@ public class TransactionWitnessTest {
         .build();
     private static final byte[] witnessScriptHash = Utils.sha256hash160(witnessScript.getProgram());
     private static final byte[] op0 = new byte[] {};
-    private static final Coin prevValue = Coin.FIFTY_COINS;
-    private static final BtcTransaction prevTx = getPreviousBtcTransaction();
+    private static final Coin fundingValue = Coin.FIFTY_COINS;
+    private static final BtcTransaction fundingTx = getFundingBtcTransaction();
     private List<byte[]> pushes;
     private BtcTransaction btcTx;
     private Sha256Hash btcTxSigHashForWitness;
@@ -48,8 +48,12 @@ public class TransactionWitnessTest {
     @Before
     public void setUp() {
         pushes = new ArrayList<>();
-        btcTx = getBtcTransactionWithBaseWitnessInInput();
-        btcTxSigHashForWitness = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
+        btcTx = new BtcTransaction(MAINNET_PARAMS);
+        btcTx.addInput(fundingTx.getOutput(0));
+        btcTx.addInput(fundingTx.getOutput(1));
+        TransactionWitness witnessWithRedeemScript = createBaseWitnessThatSpendsFromErpRedeemScript(redeemScript);
+        btcTx.setWitness(FIRST_INPUT_INDEX, witnessWithRedeemScript);
+        btcTxSigHashForWitness = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, fundingValue,
             BtcTransaction.SigHash.ALL, false);
     }
 
@@ -362,20 +366,11 @@ public class TransactionWitnessTest {
         signInput(btcTx, key, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
     }
 
-    private static BtcTransaction getPreviousBtcTransaction() {
+    private static BtcTransaction getFundingBtcTransaction() {
         BtcTransaction btcTx = new BtcTransaction(MAINNET_PARAMS);
         final Address userAddress = BtcECKey.fromPrivate(BigInteger.valueOf(901)).toAddress(MAINNET_PARAMS);
-        btcTx.addOutput(prevValue, userAddress);
-        btcTx.addOutput(prevValue, userAddress);
-        return btcTx;
-    }
-
-    private static BtcTransaction getBtcTransactionWithBaseWitnessInInput() {
-        BtcTransaction btcTx = new BtcTransaction(MAINNET_PARAMS);
-        btcTx.addInput(prevTx.getOutput(0));
-        btcTx.addInput(prevTx.getOutput(1));
-        TransactionWitness witnessWithRedeemScript = createBaseWitnessThatSpendsFromErpRedeemScript(redeemScript);
-        btcTx.setWitness(FIRST_INPUT_INDEX, witnessWithRedeemScript);
+        btcTx.addOutput(fundingValue, userAddress);
+        btcTx.addOutput(fundingValue, userAddress);
         return btcTx;
     }
 
