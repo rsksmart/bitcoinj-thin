@@ -121,7 +121,7 @@ public class TransactionWitness {
         // if there's space for new signatures
         byte[] secondToLastPush = getPush(totalPushes - sigsSuffixCount - 1);
         boolean hasMissingSigs = Arrays.equals(secondToLastPush, emptyByte);
-        Preconditions.checkArgument(hasMissingSigs, "ScriptSig is already filled with signatures");
+        Preconditions.checkArgument(hasMissingSigs, "Witness script is already filled with signatures");
 
         List<byte[]> updatedPushes = new ArrayList<>();
         // the signatures appear after the prefix
