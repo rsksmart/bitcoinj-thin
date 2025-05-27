@@ -16,7 +16,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class TransactionWitnessTest {
-    public static final int FIRST_INPUT_INDEX = 0;
+    private static final int FIRST_INPUT_INDEX = 0;
     private static final NetworkParameters MAINNET_PARAMS = MainNetParams.get();
     private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
     private static final BtcECKey fedKey1 = FEDERATION_KEYS.get(0);
