@@ -7,6 +7,7 @@ import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
 import co.rsk.bitcoinj.script.ScriptOpCodes;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -40,12 +41,21 @@ public class TransactionWitnessTest {
     private static final Coin prevValue = Coin.FIFTY_COINS;
     private static final BtcTransaction prevTx = getPreviousBtcTransaction();
     private List<byte[]> pushes;
+    private BtcTransaction btcTx;
+    private Sha256Hash btcTxSigHashForWitness;
 
+
+    @Before
+    public void setUp() {
+        pushes = new ArrayList<>();
+        btcTx = getBtcTransactionWithBaseWitnessInInput();
+        btcTxSigHashForWitness = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
+            BtcTransaction.SigHash.ALL, false);
+    }
 
     @Test
     public void of_withValidPushes_createsTransactionWitnessWithPushes() {
         // arrange
-        pushes = new ArrayList<>();
         pushes.add(op0);
         pushes.add(witnessScriptHash);
 
@@ -61,7 +71,6 @@ public class TransactionWitnessTest {
     @Test
     public void of_withOneNullPush_throwsNPE() {
         // arrange
-        pushes = new ArrayList<>();
         pushes.add(op0);
         pushes.add(witnessScriptHash);
 
@@ -238,14 +247,11 @@ public class TransactionWitnessTest {
     @Test
     public void getSigInsertionIndex_withWitnessWithoutSignatures_shouldReturnZeroForAllKeys() {
         // arrange
-        BtcTransaction btcTx = getBtcTransactionWithBaseWitnessInInput();
-        Sha256Hash btcTxSigHash = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
-            BtcTransaction.SigHash.ALL, false);
         TransactionWitness transactionWitness = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act
         for (BtcECKey key: FEDERATION_KEYS) {
-            int sigInsertionIndex = transactionWitness.getSigInsertionIndex(btcTxSigHash, key);
+            int sigInsertionIndex = transactionWitness.getSigInsertionIndex(btcTxSigHashForWitness, key);
 
             // assert
             Assert.assertEquals(0, sigInsertionIndex);
@@ -255,22 +261,19 @@ public class TransactionWitnessTest {
     @Test
     public void getSigInsertionIndex_withAGreaterPubKeySignatureInTheWitness_shouldReturnIndexCorrectly() {
         // arrange
-        BtcTransaction btcTx = getBtcTransactionWithBaseWitnessInInput();
-        Sha256Hash btcTxSigHash = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
-            BtcTransaction.SigHash.ALL, false);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act & assert
-        int sigIndexForFedKey1BeforeSigning = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHash, fedKey1);
-        int sigIndexForFedKey2BeforeSigning = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHash, fedKey2);
+        int sigIndexForFedKey1BeforeSigning = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int sigIndexForFedKey2BeforeSigning = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
         Assert.assertEquals(0, sigIndexForFedKey1BeforeSigning);
         Assert.assertEquals(0, sigIndexForFedKey2BeforeSigning);
 
         // sign with fedKey1
-        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHash);
+        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
         TransactionWitness witnessWithSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
-        int sigIndexForFedKey1AfterSigning = witnessWithSignature.getSigInsertionIndex(btcTxSigHash, fedKey1);
-        int sigIndexForFedKey2AfterSigning = witnessWithSignature.getSigInsertionIndex(btcTxSigHash, fedKey2);
+        int sigIndexForFedKey1AfterSigning = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int sigIndexForFedKey2AfterSigning = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
 
         Assert.assertEquals(1, sigIndexForFedKey1AfterSigning);
         Assert.assertEquals(1, sigIndexForFedKey2AfterSigning);
@@ -279,16 +282,12 @@ public class TransactionWitnessTest {
     @Test
     public void getSigInsertionIndex_withALowerPubKeySignatureInTheWitness_shouldReturnIndexCorrectly() {
         // arrange
-        BtcTransaction btcTx = getBtcTransactionWithBaseWitnessInInput();
-        Sha256Hash btcTxSigHash = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
-            BtcTransaction.SigHash.ALL, false);
-
         // sign with fedKey2
-        signInput(btcTx, fedKey2, FIRST_INPUT_INDEX, btcTxSigHash);
+        signInput(btcTx, fedKey2, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
         TransactionWitness witnessWithSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act
-        int sigIndexForFedKey1 = witnessWithSignature.getSigInsertionIndex(btcTxSigHash, fedKey1);
+        int sigIndexForFedKey1 = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
 
         // assert
         Assert.assertEquals(0, sigIndexForFedKey1);
@@ -297,16 +296,12 @@ public class TransactionWitnessTest {
     @Test
     public void getSigInsertionIndex_withTheSamePubKeyWhichSignatureAlreadyInTheWitness_shouldReturnIndexCorrectly() {
         // arrange
-        BtcTransaction btcTx = getBtcTransactionWithBaseWitnessInInput();
-        Sha256Hash btcTxSigHash = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
-            BtcTransaction.SigHash.ALL, false);
-
         // sign with fedKey1
-        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHash);
+        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
         TransactionWitness witnessWithSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act
-        int sigIndexAfterInsertingSignature = witnessWithSignature.getSigInsertionIndex(btcTxSigHash, fedKey1);
+        int sigIndexAfterInsertingSignature = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
 
         // assert
         assertEquals(1, sigIndexAfterInsertingSignature);
@@ -315,44 +310,36 @@ public class TransactionWitnessTest {
     @Test
     public void getSigInsertionIndex_withDifferentSignaturesInTheWitness_shouldReturnIndexCorrectly() {
         // arrange
-        BtcTransaction btcTx = getBtcTransactionWithBaseWitnessInInput();
-        Sha256Hash btcTxSigHash = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
-            BtcTransaction.SigHash.ALL, false);
-
         // sign with fedKey2
-        signInput(btcTx, fedKey2, FIRST_INPUT_INDEX, btcTxSigHash);
+        signInput(btcTx, fedKey2, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
         TransactionWitness witnessWithSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act & assert
-        int sigIndexForFedKey1 = witnessWithSignature.getSigInsertionIndex(btcTxSigHash, fedKey1);
-        int sigIndexForFedKey3 = witnessWithSignature.getSigInsertionIndex(btcTxSigHash, fedKey3);
+        int sigIndexForFedKey1 = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int sigIndexForFedKey3 = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
 
         Assert.assertEquals(0, sigIndexForFedKey1);
         // fedKey3 should be inserted after fedKey2
         Assert.assertEquals(1, sigIndexForFedKey3);
 
         // now fedKey1 signs the input and pushes fedKey2's signature one position
-        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHash);
+        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
         TransactionWitness witnessWithFedKey1Signature = btcTx.getWitness(FIRST_INPUT_INDEX);
 
-        sigIndexForFedKey3 = witnessWithFedKey1Signature.getSigInsertionIndex(btcTxSigHash, fedKey3);
+        sigIndexForFedKey3 = witnessWithFedKey1Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
         Assert.assertEquals(2, sigIndexForFedKey3);
     }
 
     @Test
     public void getSigInsertionIndex_withFedKey3SignatureInTheWitness_shouldReturnIndexCorrectly() {
         // arrange
-        BtcTransaction btcTx = getBtcTransactionWithBaseWitnessInInput();
-        Sha256Hash btcTxSigHash = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
-            BtcTransaction.SigHash.ALL, false);
-
         // sign with fedKey3
-        signInput(btcTx, fedKey3, FIRST_INPUT_INDEX, btcTxSigHash);
+        signInput(btcTx, fedKey3, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
         TransactionWitness witnessWithFedKey3Signature = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act
-        int sigIndexForFedKey1 = witnessWithFedKey3Signature.getSigInsertionIndex(btcTxSigHash, fedKey1);
-        int sigIndexForFedKey2 = witnessWithFedKey3Signature.getSigInsertionIndex(btcTxSigHash, fedKey2);
+        int sigIndexForFedKey1 = witnessWithFedKey3Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int sigIndexForFedKey2 = witnessWithFedKey3Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
 
         // assert
         Assert.assertEquals(0, sigIndexForFedKey1);
@@ -361,22 +348,18 @@ public class TransactionWitnessTest {
 
     @Test
     public void getSigInsertionIndex_withWitnessFilledWithSignatures_shouldReturnTheProperIndex() {
-        BtcTransaction btcTx = getBtcTransactionWithBaseWitnessInInput();
-        Sha256Hash btcTxSigHash = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, prevValue,
-            BtcTransaction.SigHash.ALL, false);
-
         int i = 0;
         while(i < redeemScript.getNumberOfSignaturesRequiredToSpend()) {
             BtcECKey key = FEDERATION_KEYS.get(i);
-            signInput(btcTx, key, FIRST_INPUT_INDEX, btcTxSigHash);
+            signInput(btcTx, key, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
             i++;
         }
 
         TransactionWitness signedTransactionWitness = btcTx.getWitness(FIRST_INPUT_INDEX);
         BtcECKey key = FEDERATION_KEYS.get(i);
-        int sigInsertionIndex = signedTransactionWitness.getSigInsertionIndex(btcTxSigHash, key);
+        int sigInsertionIndex = signedTransactionWitness.getSigInsertionIndex(btcTxSigHashForWitness, key);
         assertEquals(i, sigInsertionIndex);
-        signInput(btcTx, key, FIRST_INPUT_INDEX, btcTxSigHash);
+        signInput(btcTx, key, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
     }
 
     private static BtcTransaction getPreviousBtcTransaction() {
