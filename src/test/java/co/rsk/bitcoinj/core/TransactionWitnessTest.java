@@ -363,7 +363,6 @@ public class TransactionWitnessTest {
         BtcECKey key = FEDERATION_KEYS.get(i);
         int sigInsertionIndex = signedTransactionWitness.getSigInsertionIndex(btcTxSigHashForWitness, key);
         assertEquals(i, sigInsertionIndex);
-        signInput(btcTx, key, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
     }
 
     private static BtcTransaction getFundingBtcTransaction() {
