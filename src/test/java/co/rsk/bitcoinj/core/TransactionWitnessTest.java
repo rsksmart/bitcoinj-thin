@@ -1,37 +1,65 @@
 package co.rsk.bitcoinj.core;
 
+import co.rsk.bitcoinj.crypto.TransactionSignature;
+import co.rsk.bitcoinj.params.MainNetParams;
+import co.rsk.bitcoinj.script.RedeemScriptUtils;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
 import co.rsk.bitcoinj.script.ScriptOpCodes;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
 public class TransactionWitnessTest {
-    private static final Script redeemScript = new Script(
-        Hex.decode("5221027de2af71862e0c64bf0ec5a66e3abc3b01fc57877802e6a6a81f6ea1d35610072102d9c67fef9f8d0707cbcca195eb5f26c6a65da6ca2d6130645c434bb924063856210346f033b8652a17d319d3ecbbbf20fd2cd663a6548173b9419d8228eef095012e53ae")
-    ); // data from tx https://mempool.space/testnet/tx/1744459aeaf7369aadc9fc40de9ab2bf575b14e35029b35a7ee4bbd3de65af7f
-    private static final byte[] redeemScriptHash = Sha256Hash.hash(redeemScript.getProgram());
-
+    private static final int FIRST_INPUT_INDEX = 0;
+    private static final NetworkParameters MAINNET_PARAMS = MainNetParams.get();
+    private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+    private static final BtcECKey fedKey1 = FEDERATION_KEYS.get(0);
+    private static final BtcECKey fedKey2 = FEDERATION_KEYS.get(1);
+    private static final BtcECKey fedKey3 = FEDERATION_KEYS.get(2);
+    private static final List<BtcECKey> ERP_FEDERATION_KEYS = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
+    private static final long CSV_VALUE = 52_560L;
+    private static final Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+        FEDERATION_KEYS,
+        ERP_FEDERATION_KEYS,
+        CSV_VALUE
+    );
+    private static final Sha256Hash redeemScriptSerialized = Sha256Hash.of(redeemScript.getProgram());
+    private static final Script p2shP2wshOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(redeemScript);
     private static final Script witnessScript = new ScriptBuilder()
         .number(ScriptOpCodes.OP_0)
-        .data(redeemScriptHash)
+        .data(redeemScriptSerialized.getBytes())
         .build();
     private static final byte[] witnessScriptHash = Utils.sha256hash160(witnessScript.getProgram());
-
     private static final byte[] op0 = new byte[] {};
-
+    private static final Coin fundingValue = Coin.FIFTY_COINS;
+    private static final BtcTransaction fundingTx = getFundingBtcTransaction();
     private List<byte[]> pushes;
+    private BtcTransaction btcTx;
+    private Sha256Hash btcTxSigHashForWitness;
+
+
+    @Before
+    public void setUp() {
+        pushes = new ArrayList<>();
+        btcTx = new BtcTransaction(MAINNET_PARAMS);
+        btcTx.addInput(fundingTx.getOutput(0));
+        btcTx.addInput(fundingTx.getOutput(1));
+        TransactionWitness witnessWithRedeemScript = createBaseWitnessThatSpendsFromErpRedeemScript(redeemScript);
+        btcTx.setWitness(FIRST_INPUT_INDEX, witnessWithRedeemScript);
+        btcTxSigHashForWitness = btcTx.hashForWitnessSignature(FIRST_INPUT_INDEX, redeemScript, fundingValue,
+            BtcTransaction.SigHash.ALL, false);
+    }
 
     @Test
     public void of_withValidPushes_createsTransactionWitnessWithPushes() {
         // arrange
-        pushes = new ArrayList<>();
-
         pushes.add(op0);
         pushes.add(witnessScriptHash);
 
@@ -47,8 +75,6 @@ public class TransactionWitnessTest {
     @Test
     public void of_withOneNullPush_throwsNPE() {
         // arrange
-        pushes = new ArrayList<>();
-
         pushes.add(op0);
         pushes.add(witnessScriptHash);
 
@@ -163,6 +189,7 @@ public class TransactionWitnessTest {
         TransactionWitness transactionWitness2 = new TransactionWitness(1);
         transactionWitness2.setPush(0, samePush);
 
+        // act
         int hashCode1 = transactionWitness1.hashCode();
         int hashCode2 = transactionWitness2.hashCode();
 
@@ -186,11 +213,195 @@ public class TransactionWitnessTest {
         transactionWitness1.setPush(0, samePush);
         transactionWitness2.setPush(0, anotherDifferentPush);
 
+        // act
         int hashCode1 = transactionWitness1.hashCode();
         int hashCode2 = transactionWitness2.hashCode();
 
         // assert
         assertNotEquals(transactionWitness1, transactionWitness2);
         assertNotEquals(hashCode1, hashCode2);
+    }
+
+    @Test
+    public void getSigInsertionIndex_whenEmptyWitness_shouldThrownArrayIndexOutOfBoundsException() {
+        // arrange
+        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
+        pushes = new ArrayList<>();
+        TransactionWitness transactionWitness = TransactionWitness.of(pushes);
+
+        // act & assert
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1));
+    }
+
+    @Test
+    public void getSigInsertionIndex_whenMalformedRedeemScript_shouldThrowException() {
+        // arrange
+        Sha256Hash hashForSignature = Sha256Hash.of(new byte[]{1});
+        Script customRedeemScript = new Script(new byte[2]);
+        byte[] emptyByte = {};
+        pushes = new ArrayList<>();
+        pushes.add(emptyByte);
+        pushes.add(customRedeemScript.getProgram());
+        TransactionWitness transactionWitness = TransactionWitness.of(pushes);
+
+        // act & assert
+        assertThrows(ScriptException.class, () -> transactionWitness.getSigInsertionIndex(hashForSignature, fedKey1));
+    }
+
+    @Test
+    public void getSigInsertionIndex_withWitnessWithoutSignatures_shouldReturnZeroForAllKeys() {
+        // arrange
+        TransactionWitness transactionWitness = btcTx.getWitness(FIRST_INPUT_INDEX);
+
+        // act
+        for (BtcECKey key: FEDERATION_KEYS) {
+            int sigInsertionIndex = transactionWitness.getSigInsertionIndex(btcTxSigHashForWitness, key);
+
+            // assert
+            Assert.assertEquals(0, sigInsertionIndex);
+        }
+    }
+
+    @Test
+    public void getSigInsertionIndex_withAGreaterPubKeySignatureInTheWitness_shouldReturnIndexCorrectly() {
+        // arrange
+        TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
+
+        // act & assert
+        int sigIndexForFedKey1BeforeSigning = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int sigIndexForFedKey2BeforeSigning = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+        Assert.assertEquals(0, sigIndexForFedKey1BeforeSigning);
+        Assert.assertEquals(0, sigIndexForFedKey2BeforeSigning);
+
+        // sign with fedKey1
+        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
+        TransactionWitness witnessWithSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
+        int sigIndexForFedKey1AfterSigning = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int sigIndexForFedKey2AfterSigning = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+
+        Assert.assertEquals(1, sigIndexForFedKey1AfterSigning);
+        Assert.assertEquals(1, sigIndexForFedKey2AfterSigning);
+    }
+
+    @Test
+    public void getSigInsertionIndex_withALowerPubKeySignatureInTheWitness_shouldReturnIndexCorrectly() {
+        // arrange
+        // sign with fedKey2
+        signInput(btcTx, fedKey2, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
+        TransactionWitness witnessWithSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
+
+        // act
+        int sigIndexForFedKey1 = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+
+        // assert
+        Assert.assertEquals(0, sigIndexForFedKey1);
+    }
+
+    @Test
+    public void getSigInsertionIndex_withTheSamePubKeyWhichSignatureAlreadyInTheWitness_shouldReturnIndexCorrectly() {
+        // arrange
+        // sign with fedKey1
+        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
+        TransactionWitness witnessWithSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
+
+        // act
+        int sigIndexAfterInsertingSignature = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+
+        // assert
+        assertEquals(1, sigIndexAfterInsertingSignature);
+    }
+
+    @Test
+    public void getSigInsertionIndex_withDifferentSignaturesInTheWitness_shouldReturnIndexCorrectly() {
+        // arrange
+        // sign with fedKey2
+        signInput(btcTx, fedKey2, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
+        TransactionWitness witnessWithSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
+
+        // act & assert
+        int sigIndexForFedKey1 = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int sigIndexForFedKey3 = witnessWithSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
+
+        Assert.assertEquals(0, sigIndexForFedKey1);
+        // fedKey3 should be inserted after fedKey2
+        Assert.assertEquals(1, sigIndexForFedKey3);
+
+        // now fedKey1 signs the input and pushes fedKey2's signature one position
+        signInput(btcTx, fedKey1, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
+        TransactionWitness witnessWithFedKey1Signature = btcTx.getWitness(FIRST_INPUT_INDEX);
+
+        sigIndexForFedKey3 = witnessWithFedKey1Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
+        Assert.assertEquals(2, sigIndexForFedKey3);
+    }
+
+    @Test
+    public void getSigInsertionIndex_withFedKey3SignatureInTheWitness_shouldReturnIndexCorrectly() {
+        // arrange
+        // sign with fedKey3
+        signInput(btcTx, fedKey3, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
+        TransactionWitness witnessWithFedKey3Signature = btcTx.getWitness(FIRST_INPUT_INDEX);
+
+        // act
+        int sigIndexForFedKey1 = witnessWithFedKey3Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int sigIndexForFedKey2 = witnessWithFedKey3Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+
+        // assert
+        Assert.assertEquals(0, sigIndexForFedKey1);
+        Assert.assertEquals(0, sigIndexForFedKey2);
+    }
+
+    @Test
+    public void getSigInsertionIndex_withWitnessFilledWithSignatures_shouldReturnTheProperIndex() {
+        int i = 0;
+        while(i < redeemScript.getNumberOfSignaturesRequiredToSpend()) {
+            BtcECKey key = FEDERATION_KEYS.get(i);
+            signInput(btcTx, key, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
+            i++;
+        }
+
+        TransactionWitness signedTransactionWitness = btcTx.getWitness(FIRST_INPUT_INDEX);
+        BtcECKey key = FEDERATION_KEYS.get(i);
+        int sigInsertionIndex = signedTransactionWitness.getSigInsertionIndex(btcTxSigHashForWitness, key);
+        assertEquals(i, sigInsertionIndex);
+    }
+
+    private static BtcTransaction getFundingBtcTransaction() {
+        BtcTransaction btcTx = new BtcTransaction(MAINNET_PARAMS);
+        final Address userAddress = BtcECKey.fromPrivate(BigInteger.valueOf(901)).toAddress(MAINNET_PARAMS);
+        btcTx.addOutput(fundingValue, userAddress);
+        btcTx.addOutput(fundingValue, userAddress);
+        return btcTx;
+    }
+
+    private void signInput(BtcTransaction btcTx, BtcECKey key, int inputIndex, Sha256Hash sigHash) {
+        TransactionWitness transactionWitness = btcTx.getWitness(inputIndex);
+        int sigIndex = transactionWitness.getSigInsertionIndex(sigHash, key);
+        byte[] federatorSig = key.sign(sigHash).encodeToDER();
+        BtcECKey.ECDSASignature signature = BtcECKey.ECDSASignature.decodeFromDER(federatorSig);
+        TransactionSignature txSig = new TransactionSignature(signature, BtcTransaction.SigHash.ALL, false);
+        TransactionWitness witnessWithSignature = transactionWitness.updateWitnessWithSignature(p2shP2wshOutputScript,
+            txSig.encodeToBitcoin(), sigIndex);
+        btcTx.setWitness(inputIndex, witnessWithSignature);
+    }
+
+    private static TransactionWitness createBaseWitnessThatSpendsFromErpRedeemScript(Script redeemScript) {
+        int pushForEmptyByte = 1;
+        int pushForOpNotif = 1;
+        int pushForRedeemScript = 1;
+        int numberOfSignaturesRequiredToSpend = redeemScript.getNumberOfSignaturesRequiredToSpend();
+        int witnessSize = pushForRedeemScript + pushForOpNotif + numberOfSignaturesRequiredToSpend + pushForEmptyByte;
+
+        List<byte[]> pushes = new ArrayList<>(witnessSize);
+        byte[] emptyByte = {};
+        pushes.add(emptyByte); // OP_0
+
+        for (int i = 0; i < numberOfSignaturesRequiredToSpend; i++) {
+            pushes.add(emptyByte);
+        }
+
+        byte[] opNotIf = {};
+        pushes.add(opNotIf);
+        pushes.add(redeemScript.getProgram());
+        return TransactionWitness.of(pushes);
     }
 }
