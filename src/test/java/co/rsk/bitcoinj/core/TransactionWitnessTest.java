@@ -380,6 +380,7 @@ public class TransactionWitnessTest {
 
         TransactionWitness witnessWithoutSignature = btcTx.getWitness(FIRST_INPUT_INDEX);
         int sigIndex = witnessWithoutSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        assertEquals(0, sigIndex);
 
         // act
         TransactionWitness witnessWithOneSignature = witnessWithoutSignature.updateWitnessWithSignature(
@@ -392,34 +393,42 @@ public class TransactionWitnessTest {
     @Test
     public void updateWitnessWithSignature_twoTimesWithTheSameSignature_shouldInsertBoth() {
         // signing order: [fedKey1, fedKey1]
+        // expected signatures order: [signatureFed1, signatureFed1]
         // arrange
         byte[] fedKey1TxSignature = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act & assert
         int sigIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        assertEquals(0, sigIndex);
         TransactionWitness witnessWithOneSignature = witnessWithoutSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey1TxSignature, sigIndex);
         assertSignaturesAreInOrder(witnessWithOneSignature, Lists.newArrayList(fedKey1TxSignature));
 
         int sigIndexAfterSigning = witnessWithOneSignature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        assertNotEquals(sigIndex, sigIndexAfterSigning);
+        assertEquals(1, sigIndexAfterSigning);
+
         TransactionWitness witnessWithTwoSignatures = witnessWithOneSignature.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey1TxSignature, sigIndexAfterSigning);
+
         assertSignaturesAreInOrder(witnessWithTwoSignatures, Lists.newArrayList(fedKey1TxSignature, fedKey1TxSignature));
     }
 
     @Test
     public void updateWitnessWithSignature_withWitnessFilledWithSignatures_shouldThrowAnError() {
-        // signing order: [fedKey1, .., maxFedKey, fedKey1]
+        // signing order: [fedKey1, .., maxFedKey, fedKey1] signatures
+        // expected signatures order: [signatureFed1, .., signatureMaxFed]
         // arrange
         int i = 0;
-        while(i < redeemScript.getNumberOfSignaturesRequiredToSpend()) {
+        int numberOfSignaturesRequiredToSpend = redeemScript.getNumberOfSignaturesRequiredToSpend();
+        while(i < numberOfSignaturesRequiredToSpend) {
             BtcECKey key = FEDERATION_KEYS.get(i);
             signInput(btcTx, key, FIRST_INPUT_INDEX, btcTxSigHashForWitness);
             i++;
         }
 
-        // getSuffixCount doesn't consider OP_NOTIF, so the calculation for
+        // getSuffixCount doesn't consider OP_NOTIF param op code, so the calculation for
         // the number of signatures required in updateWitnessWithSignature is
         // wrong.
         BtcECKey key = FEDERATION_KEYS.get(i++);
@@ -431,6 +440,11 @@ public class TransactionWitnessTest {
         int sigInsertionIndex = signedTransactionWitness.getSigInsertionIndex(btcTxSigHashForWitness, key);
 
         // act & assert
+        assertTrue(numberOfSignaturesRequiredToSpend < sigInsertionIndex);
+        assertEquals(numberOfSignaturesRequiredToSpend + 1, sigInsertionIndex);
+
+        // It fails because the witness is already filled with signatures.
+        // Then, the sigIndex is higher than the amount of signatures required.
         assertThrows(IllegalArgumentException.class, () -> signedTransactionWitness.updateWitnessWithSignature(
             p2shP2wshOutputScript, txSig, sigInsertionIndex));
     }
@@ -438,9 +452,11 @@ public class TransactionWitnessTest {
     @Test
     public void updateWitnessWithSignature_withTheLowestSignatureInWitness_shouldInsertTheNewOneAsSecond() {
         // signing order: [fedKey1, fedKey2]
+        // expected signatures order: [signatureFed1, signatureFed2]
         byte[] fedKey1SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
         int fed1SigInsertionIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        assertEquals(0, fed1SigInsertionIndex);
 
         // act & assert
         TransactionWitness witnessWithFedKey1Signature = witnessWithoutSignatures.updateWitnessWithSignature(
@@ -450,27 +466,31 @@ public class TransactionWitnessTest {
 
         byte[] fedKey2TxSignature = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
         int fed2SigInsertionIndex = witnessWithFedKey1Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
-        TransactionWitness witnessWithTheSameSignatureTwice = witnessWithFedKey1Signature.updateWitnessWithSignature(
+        assertEquals(1, fed2SigInsertionIndex);
+        TransactionWitness witnessWithTwoSignatures = witnessWithFedKey1Signature.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey2TxSignature, fed2SigInsertionIndex);
 
-        assertSignaturesAreInOrder(witnessWithTheSameSignatureTwice, Lists.newArrayList(fedKey1SignatureEncoded, fedKey1SignatureEncoded));
+        assertSignaturesAreInOrder(witnessWithTwoSignatures, Lists.newArrayList(fedKey1SignatureEncoded, fedKey1SignatureEncoded));
     }
 
     @Test
     public void updateWitnessWithSignature_withALowerSignatureInWitness_shouldInsertTheNewOneAsFirst() {
         // signing order: [fedKey2, fedKey1]
+        // expected signatures order: [signatureFed1, signatureFed2]
         // arrange
         byte[] fedKey2SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey2, btcTxSigHashForWitness);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act & assert
         int fed2SigInsertionIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+        assertEquals(0, fed2SigInsertionIndex);
         TransactionWitness witnessWithFedKey2Signature = witnessWithoutSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey2SignatureEncoded, fed2SigInsertionIndex);
         assertSignaturesAreInOrder(witnessWithFedKey2Signature, Lists.newArrayList(fedKey2SignatureEncoded));
 
         byte[] fedKey1SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
         int fed1SigInsertionIndex = witnessWithFedKey2Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        assertEquals(0, fed1SigInsertionIndex);
         TransactionWitness witnessWithTwoSignatures = witnessWithFedKey2Signature.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey1SignatureEncoded, fed1SigInsertionIndex);
 
@@ -481,12 +501,14 @@ public class TransactionWitnessTest {
     @Test
     public void updateWitnessWithSignature_withThreeSignaturesInDescendingOrder_shouldBeInsertedRespectingTheOrder() {
         // signing order: [fedKey3, fedKey2, fedKey1]
+        // expected signatures order: [signatureFed1, signatureFed2, signatureFed3]
         // arrange
         byte[] fedKey3SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey3, btcTxSigHashForWitness);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act & assert
         int fed3SigInsertionIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
+        assertEquals(0, fed3SigInsertionIndex);
         TransactionWitness witnessWithFedKey3Signature = witnessWithoutSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey3SignatureEncoded, fed3SigInsertionIndex);
 
@@ -494,6 +516,7 @@ public class TransactionWitnessTest {
 
         byte[] fedKey2SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey2, btcTxSigHashForWitness);
         int fed2SigInsertionIndex = witnessWithFedKey3Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+        assertEquals(0, fed2SigInsertionIndex);
         TransactionWitness witnessWithTwoSignatures = witnessWithFedKey3Signature.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey2SignatureEncoded, fed2SigInsertionIndex);
 
@@ -501,6 +524,7 @@ public class TransactionWitnessTest {
 
         byte[] fedKey1SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
         int fed1SigInsertionIndex = witnessWithTwoSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        assertEquals(0, fed1SigInsertionIndex);
         TransactionWitness witnessWithThreeSignatures = witnessWithTwoSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey1SignatureEncoded, fed1SigInsertionIndex);
 
@@ -510,12 +534,14 @@ public class TransactionWitnessTest {
     @Test
     public void updateWitnessWithSignature_withThreeUnorderedSignatures_shouldBeInsertedRespectingTheOrder() {
         // signing order: [fedKey1, fedKey3, fedKey2]
+        // expected signatures order: [signatureFed1, signatureFed2, signatureFed3]
         // arrange
         byte[] fedKey1SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
 
         // act & assert
         int fed1SigInsertionIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        assertEquals(0, fed1SigInsertionIndex);
         TransactionWitness witnessWithFedKey1Signature = witnessWithoutSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey1SignatureEncoded, fed1SigInsertionIndex);
 
@@ -523,6 +549,7 @@ public class TransactionWitnessTest {
 
         byte[] fedKey3SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey3, btcTxSigHashForWitness);
         int fed3SigInsertionIndex = witnessWithFedKey1Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
+        assertEquals(1, fed3SigInsertionIndex);
         TransactionWitness witnessWithTwoSignatures = witnessWithFedKey1Signature.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey3SignatureEncoded, fed3SigInsertionIndex);
 
@@ -531,6 +558,7 @@ public class TransactionWitnessTest {
 
         byte[] fedKey2SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey2, btcTxSigHashForWitness);
         int fed2SigInsertionIndex = witnessWithTwoSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+        assertEquals(1, fed2SigInsertionIndex);
         TransactionWitness witnessWithThreeSignatures = witnessWithTwoSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey2SignatureEncoded, fed2SigInsertionIndex);
 
@@ -541,11 +569,12 @@ public class TransactionWitnessTest {
     @Test
     public void updateWitnessWithSignature_withThreeSignaturesInAscendingOrder_shouldBeInsertedRespectingTheOrder() {
         // signing order: [fedKey1, fedKey2, fedKey3]
+        // expected signatures order: [signatureFed1, signatureFed2, signatureFed3]
         // arrange
         byte[] fedKey1SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
         int fed1SigInsertionIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
-
+        assertEquals(0, fed1SigInsertionIndex);
         // act & assert
         TransactionWitness witnessWithFedKey1Signature = witnessWithoutSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey1SignatureEncoded, fed1SigInsertionIndex);
@@ -554,6 +583,7 @@ public class TransactionWitnessTest {
 
         byte[] fedKey2SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey2, btcTxSigHashForWitness);
         int fed2SigInsertionIndex = witnessWithFedKey1Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+        assertEquals(1, fed2SigInsertionIndex);
         TransactionWitness witnessWithTwoSignatures = witnessWithFedKey1Signature.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey2SignatureEncoded, fed2SigInsertionIndex);
 
@@ -562,6 +592,7 @@ public class TransactionWitnessTest {
 
         byte[] fedKey3SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey3, btcTxSigHashForWitness);
         int fed3SigInsertionIndex = witnessWithTwoSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
+        assertEquals(2, fed3SigInsertionIndex);
         TransactionWitness witnessWithThreeSignatures = witnessWithTwoSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey3SignatureEncoded, fed3SigInsertionIndex);
 
@@ -572,27 +603,30 @@ public class TransactionWitnessTest {
     @Test
     public void updateWitnessWithSignature_withThreeSignaturesInADifferentOrder_shouldBeInsertedRespectingTheOrder() {
         // signing order: [fedKey2, fedKey1, fedKey3]
+        // expected signatures order: [signatureFed1, signatureFed2, signatureFed3]
         // arrange
         byte[] fedKey2SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey2, btcTxSigHashForWitness);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
-        int fed1SigInsertionIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
-
+        int fed2SigInsertionIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+        assertEquals(0, fed2SigInsertionIndex);
         // act & assert
         TransactionWitness witnessWithFedKey2Signature = witnessWithoutSignatures.updateWitnessWithSignature(
-            p2shP2wshOutputScript, fedKey2SignatureEncoded, fed1SigInsertionIndex);
+            p2shP2wshOutputScript, fedKey2SignatureEncoded, fed2SigInsertionIndex);
 
         assertSignaturesAreInOrder(witnessWithFedKey2Signature, Lists.newArrayList(fedKey2SignatureEncoded));
 
         byte[] fedKey1SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
-        int fed2SigInsertionIndex = witnessWithFedKey2Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        int fed1SigInsertionIndex = witnessWithFedKey2Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
         TransactionWitness witnessWithTwoSignatures = witnessWithFedKey2Signature.updateWitnessWithSignature(
-            p2shP2wshOutputScript, fedKey1SignatureEncoded, fed2SigInsertionIndex);
+            p2shP2wshOutputScript, fedKey1SignatureEncoded, fed1SigInsertionIndex);
+        assertEquals(0, fed1SigInsertionIndex);
 
         assertSignaturesAreInOrder(witnessWithTwoSignatures, Lists.newArrayList(fedKey1SignatureEncoded,
             fedKey2SignatureEncoded));
 
         byte[] fedKey3SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey3, btcTxSigHashForWitness);
         int fed3SigInsertionIndex = witnessWithTwoSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
+        assertEquals(2, fed3SigInsertionIndex);
         TransactionWitness witnessWithThreeSignatures = witnessWithTwoSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey3SignatureEncoded, fed3SigInsertionIndex);
 
@@ -603,11 +637,12 @@ public class TransactionWitnessTest {
     @Test
     public void updateWitnessWithSignature_withThreeSignaturesInASecondDifferentOrder_shouldBeInsertedRespectingTheOrder() {
         // signing order: [fedKey3, fedKey1, fedKey2]
+        // expected signatures order: [signatureFed1, signatureFed2, signatureFed3]
         // arrange
         byte[] fedKey3SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey3, btcTxSigHashForWitness);
         TransactionWitness witnessWithoutSignatures = btcTx.getWitness(FIRST_INPUT_INDEX);
         int fed3SigInsertionIndex = witnessWithoutSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey3);
-
+        assertEquals(0, fed3SigInsertionIndex);
         // act & assert
         TransactionWitness witnessWithFedKey3Signature = witnessWithoutSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey3SignatureEncoded, fed3SigInsertionIndex);
@@ -616,6 +651,7 @@ public class TransactionWitnessTest {
 
         byte[] fedKey1SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey1, btcTxSigHashForWitness);
         int fed1SigInsertionIndex = witnessWithFedKey3Signature.getSigInsertionIndex(btcTxSigHashForWitness, fedKey1);
+        assertEquals(0, fed1SigInsertionIndex);
         TransactionWitness witnessWithTwoSignatures = witnessWithFedKey3Signature.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey1SignatureEncoded, fed1SigInsertionIndex);
 
@@ -624,6 +660,7 @@ public class TransactionWitnessTest {
 
         byte[] fedKey2SignatureEncoded = getTransactionSignatureEncodedToBtc(fedKey2, btcTxSigHashForWitness);
         int fed2SigInsertionIndex = witnessWithTwoSignatures.getSigInsertionIndex(btcTxSigHashForWitness, fedKey2);
+        assertEquals(1, fed2SigInsertionIndex);
         TransactionWitness witnessWithThreeSignatures = witnessWithTwoSignatures.updateWitnessWithSignature(
             p2shP2wshOutputScript, fedKey2SignatureEncoded, fed2SigInsertionIndex);
 
