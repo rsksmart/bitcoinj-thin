@@ -810,46 +810,46 @@ public class ScriptTest {
 
     @Test
     public void getSigsPrefixCount_whenP2PKOutputScript_shouldReturnZero() {
-        BtcECKey signer = new BtcECKey();
+        BtcECKey signer = FEDERATION_KEYS.get(0);
         Script p2pkScript = ScriptBuilder.createOutputScript(signer);
         assertEquals(0, p2pkScript.getSigsPrefixCount());
     }
 
     @Test
     public void getSigsSuffixCount_whenP2PKOutputScript_shouldReturnZero() {
-        BtcECKey signer = new BtcECKey();
+        BtcECKey signer = FEDERATION_KEYS.get(0);
         Script p2pkScript = ScriptBuilder.createOutputScript(signer);
         assertEquals(0, p2pkScript.getSigsSuffixCount());
     }
 
     @Test
     public void getSigsPrefixCount_whenMultiSigOutputScript_shouldReturnOne() {
-        BtcECKey signer = new BtcECKey();
-        BtcECKey signer2 = new BtcECKey();
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        BtcECKey signer2 = FEDERATION_KEYS.get(1);
         Script multisigOutputScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(signer, signer2));
         assertEquals(1, multisigOutputScript.getSigsPrefixCount());
     }
 
     @Test
     public void getSigsSuffixCount_whenMultiSigOutputScript_shouldReturnZero() {
-        BtcECKey signer = new BtcECKey();
-        BtcECKey signer2 = new BtcECKey();
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        BtcECKey signer2 = FEDERATION_KEYS.get(1);
         Script multisigOutputScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(signer, signer2));
         assertEquals(0, multisigOutputScript.getSigsSuffixCount());
     }
 
     @Test
     public void getSigsPrefixCount_whenP2shMultisigOutputScript_shouldReturnOne() {
-        BtcECKey signer = new BtcECKey();
-        BtcECKey signer2 = new BtcECKey();
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        BtcECKey signer2 = FEDERATION_KEYS.get(1);
         Script p2shMultisigOutputScript = ScriptBuilder.createP2SHOutputScript(2, Arrays.asList(signer, signer2));
         assertEquals(1, p2shMultisigOutputScript.getSigsPrefixCount());
     }
 
     @Test
     public void getSigsSuffixCount_whenP2shMultisigOutputScript_shouldReturnOne() {
-        BtcECKey signer = new BtcECKey();
-        BtcECKey signer2 = new BtcECKey();
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        BtcECKey signer2 = FEDERATION_KEYS.get(1);
         Script p2shMultisigOutputScript = ScriptBuilder.createP2SHOutputScript(2, Arrays.asList(signer, signer2));
         assertEquals(1, p2shMultisigOutputScript.getSigsSuffixCount());
     }
