@@ -28,8 +28,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     @Override
     public int findKeyInRedeem(BtcECKey key) {
-        ScriptChunk secondToLastChunk = redeemScriptChunks.get(redeemScriptChunks.size() - 2); // OP_N
-        int numKeys = secondToLastChunk.decodeN();
+        int numKeys = getN();
         for (int i = 0; i < numKeys; i++) {
             if (Arrays.equals(redeemScriptChunks.get(1 + i).data, key.getPubKey())) {
                 return i;
@@ -44,8 +43,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     @Override
     public List<BtcECKey> getPubKeys() {
         ArrayList<BtcECKey> result = Lists.newArrayList();
-        ScriptChunk secondToLastChunk = redeemScriptChunks.get(redeemScriptChunks.size() - 2); // OP_N
-        int numKeys = secondToLastChunk.decodeN();
+        int numKeys = getN();
         for (int i = 0; i < numKeys; i++) {
             result.add(BtcECKey.fromPublicOnly(redeemScriptChunks.get(1 + i).data));
         }
@@ -56,8 +54,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     @Override
     public int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
         checkArgument(redeemScriptChunks.get(0).isOpCode()); // P2SH scriptSig
-        ScriptChunk secondToLastChunk = redeemScriptChunks.get(redeemScriptChunks.size() - 2); // OP_N
-        int numKeys = secondToLastChunk.decodeN();
+        int numKeys = getN();
         TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true);
         for (int i = 0; i < numKeys; i++) {
             if (BtcECKey.fromPublicOnly(redeemScriptChunks.get(i + 1).data).verify(hash, signature)) {
@@ -77,5 +74,10 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     @Override
     public boolean hasErpFormat() {
         return false;
+    }
+
+    private int getN() {
+        ScriptChunk secondToLastChunk = redeemScriptChunks.get(redeemScriptChunks.size() - 2); // OP_N, last chunk is OP_CHECKMULTISIG
+        return secondToLastChunk.decodeN();
     }
 }
