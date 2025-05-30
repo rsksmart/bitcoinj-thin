@@ -56,7 +56,7 @@ public class RedeemScriptValidator {
                 return false;
             }
 
-            int numKeys = decodeN(secondToLastChunk);
+            int numKeys = secondToLastChunk.decodeN();
             if (numKeys < 1 || chunksSize != numKeys + 3) { // numKeys + M + N + OP_CHECKMULTISIG
                 return false;
             }
@@ -226,17 +226,5 @@ public class RedeemScriptValidator {
 
         // Remove the last chunk, which has CHECKMULTISIG op code
         return redeemScript.getChunks().subList(0, redeemScript.getChunks().size() - 1);
-    }
-
-    public static int decodeN(ScriptChunk chunk) {
-        if (chunk.isOpCode()) {
-            return Script.decodeFromOpN(chunk.opcode);
-        }
-
-        if (chunk.isPushData() && !isNull(chunk.data) && chunk.data[0] >= 1) {
-            return chunk.data[0];
-        }
-
-        throw new IllegalArgumentException("Cannot decode number from chunk.");
     }
 }
