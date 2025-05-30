@@ -1,10 +1,15 @@
 package co.rsk.bitcoinj.script;
 
-import co.rsk.bitcoinj.core.VerificationException;
-import java.util.List;
 import static java.util.Objects.isNull;
 
+import co.rsk.bitcoinj.core.VerificationException;
+import java.util.List;
+
 public class RedeemScriptValidator {
+
+    private RedeemScriptValidator() {
+        // Prevent instantiation
+    }
 
     protected static boolean isRedeemLikeScript(List<ScriptChunk> chunks) {
         if (chunks.size() < 4) {
@@ -13,9 +18,7 @@ public class RedeemScriptValidator {
 
         ScriptChunk lastChunk = chunks.get(chunks.size() - 1);
         // A standard multisig redeem script must end in OP_CHECKMULTISIG[VERIFY]
-        boolean isStandard = lastChunk.isOpCode() &&
-                (lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIG) ||
-                    lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIGVERIFY));
+        boolean isStandard = lastChunk.isOpCheckMultiSig();
         if (isStandard) {
             return true;
         }
@@ -24,9 +27,7 @@ public class RedeemScriptValidator {
         ScriptChunk penultimateChunk = chunks.get(chunks.size() - 2);
         return lastChunk.isOpCode() &&
             lastChunk.equalsOpCode(ScriptOpCodes.OP_ENDIF) &&
-            penultimateChunk.isOpCode() &&
-            (penultimateChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIG) ||
-                penultimateChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIGVERIFY));
+            penultimateChunk.isOpCheckMultiSig();
     }
 
     protected static boolean hasStandardRedeemScriptStructure(List<ScriptChunk> chunks) {
@@ -37,13 +38,13 @@ public class RedeemScriptValidator {
 
             // First chunk must be a number for the threshold
             ScriptChunk firstChunk = chunks.get(0);
-            if (!isN(firstChunk)) {
+            if (!firstChunk.isN()) {
                 return false;
             }
 
             int chunksSize = chunks.size();
             ScriptChunk lastChunk = chunks.get(chunksSize - 1);
-            if (!isOpCheckMultiSig(lastChunk)) {
+            if (!lastChunk.isOpCheckMultiSig()) {
                 return false;
             }
 
@@ -51,7 +52,7 @@ public class RedeemScriptValidator {
             // and there should be that many data chunks (keys).
             int secondToLastChunkIndex = chunksSize - 2;
             ScriptChunk secondToLastChunk = chunks.get(secondToLastChunkIndex);
-            if (!isN(secondToLastChunk)) {
+            if (!secondToLastChunk.isN()) {
                 return false;
             }
 
@@ -111,8 +112,7 @@ public class RedeemScriptValidator {
             return false;
         }
 
-        /***
-         * Expected structure:
+        /* The redeem script structure should be as follows:
          * OP_NOTIF
          *  OP_M
          *  PUBKEYS...N
@@ -129,7 +129,6 @@ public class RedeemScriptValidator {
          *  OP_CHECKMULTISIG
          * OP_ENDIF
          */
-
         // Validate both default and erp federations redeem scripts.
         // Extract the default PowPeg and the emergency multisig redeemscript chunks
         List<ScriptChunk> defaultFedRedeemScriptChunks = chunks.subList(1, elseOpcodeIndex);
@@ -239,25 +238,5 @@ public class RedeemScriptValidator {
         }
 
         throw new IllegalArgumentException("Cannot decode number from chunk.");
-    }
-
-    private static boolean isOpcodeSmallNumber(ScriptChunk chunk) {
-        return chunk.isOpCode()
-            && chunk.opcode >= ScriptOpCodes.OP_1
-            && chunk.opcode <= ScriptOpCodes.OP_16;
-    }
-
-    private static boolean isPushDataNumber(ScriptChunk chunk) {
-        return chunk.isPushData()
-            && !isNull(chunk.data)
-            && chunk.data[0] >= 1;
-    }
-
-    protected static boolean isN(ScriptChunk chunk) {
-        return isOpcodeSmallNumber(chunk) || isPushDataNumber(chunk);
-    }
-
-    private static boolean isOpCheckMultiSig(ScriptChunk chunk) {
-        return chunk.isOpCode() && chunk.opcode == ScriptOpCodes.OP_CHECKMULTISIG;
     }
 }
