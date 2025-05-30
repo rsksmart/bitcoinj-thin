@@ -1,7 +1,5 @@
 package co.rsk.bitcoinj.script;
 
-import static java.util.Objects.isNull;
-
 import co.rsk.bitcoinj.core.VerificationException;
 import java.util.List;
 
