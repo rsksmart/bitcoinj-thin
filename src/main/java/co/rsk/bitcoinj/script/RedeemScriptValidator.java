@@ -5,6 +5,10 @@ import java.util.List;
 
 public class RedeemScriptValidator {
 
+    private RedeemScriptValidator() {
+        // Prevent instantiation
+    }
+
     protected static boolean isRedeemLikeScript(List<ScriptChunk> chunks) {
         if (chunks.size() < 4) {
             return false;
@@ -12,9 +16,7 @@ public class RedeemScriptValidator {
 
         ScriptChunk lastChunk = chunks.get(chunks.size() - 1);
         // A standard multisig redeem script must end in OP_CHECKMULTISIG[VERIFY]
-        boolean isStandard = lastChunk.isOpCode() &&
-                (lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIG) ||
-                    lastChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIGVERIFY));
+        boolean isStandard = lastChunk.isOpCheckMultiSig();
         if (isStandard) {
             return true;
         }
@@ -23,9 +25,7 @@ public class RedeemScriptValidator {
         ScriptChunk penultimateChunk = chunks.get(chunks.size() - 2);
         return lastChunk.isOpCode() &&
             lastChunk.equalsOpCode(ScriptOpCodes.OP_ENDIF) &&
-            penultimateChunk.isOpCode() &&
-            (penultimateChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIG) ||
-                penultimateChunk.equalsOpCode(ScriptOpCodes.OP_CHECKMULTISIGVERIFY));
+            penultimateChunk.isOpCheckMultiSig();
     }
 
     protected static boolean hasStandardRedeemScriptStructure(List<ScriptChunk> chunks) {
@@ -34,24 +34,32 @@ public class RedeemScriptValidator {
                 return false;
             }
 
-            // First chunk must be an OP_N
-            if (!isOpN(chunks.get(0))) {
+            // First chunk must be a number for the threshold
+            ScriptChunk firstChunk = chunks.get(0);
+            if (!firstChunk.isN()) {
                 return false;
             }
 
-            // Second to last chunk must be an OP_N opcode too, and there should be
-            // that many data chunks (keys).
-            ScriptChunk secondToLastChunk = chunks.get(chunks.size() - 2);
-            if (!isOpN(secondToLastChunk)) {
+            int chunksSize = chunks.size();
+            ScriptChunk lastChunk = chunks.get(chunksSize - 1);
+            if (!lastChunk.isOpCheckMultiSig()) {
                 return false;
             }
 
-            int numKeys = Script.decodeFromOpN(secondToLastChunk.opcode);
-            if (numKeys < 1 || chunks.size() != numKeys + 3) { // numKeys + M + N + OP_CHECKMULTISIG
+            // Second to last chunk must be a number too,
+            // and there should be that many data chunks (keys).
+            int secondToLastChunkIndex = chunksSize - 2;
+            ScriptChunk secondToLastChunk = chunks.get(secondToLastChunkIndex);
+            if (!secondToLastChunk.isN()) {
                 return false;
             }
 
-            for (int i = 1; i < chunks.size() - 2; i++) {
+            int numKeys = secondToLastChunk.decodeN();
+            if (numKeys < 1 || chunksSize != numKeys + 3) { // numKeys + M + N + OP_CHECKMULTISIG
+                return false;
+            }
+
+            for (int i = 1; i < secondToLastChunkIndex; i++) {
                 if (chunks.get(i).isOpCode()) { // Should be the public keys, not op_codes
                     return false;
                 }
@@ -59,7 +67,7 @@ public class RedeemScriptValidator {
 
             return true;
         } catch (IllegalStateException e) {
-            return false;   // Not an OP_N opcode.
+            return false;   // Not a number
         }
     }
 
@@ -68,10 +76,11 @@ public class RedeemScriptValidator {
             return false;
         }
 
-        ScriptChunk firstChunk = chunks.get(0);
+        int opNotifIndex = 0;
+        boolean hasErpPrefix = chunks.get(opNotifIndex).equalsOpCode(ScriptOpCodes.OP_NOTIF);
 
-        boolean hasErpPrefix = firstChunk.opcode == ScriptOpCodes.OP_NOTIF;
-        boolean hasEndIfOpcode = chunks.get(chunks.size() - 1).equalsOpCode(ScriptOpCodes.OP_ENDIF);
+        int lastChunkIndex = chunks.size() - 1;
+        boolean hasEndIfOpcode = chunks.get(lastChunkIndex).equalsOpCode(ScriptOpCodes.OP_ENDIF);
 
         if (!hasErpPrefix || !hasEndIfOpcode) {
             return false;
@@ -101,8 +110,7 @@ public class RedeemScriptValidator {
             return false;
         }
 
-        /***
-         * Expected structure:
+        /* The redeem script structure should be as follows:
          * OP_NOTIF
          *  OP_M
          *  PUBKEYS...N
@@ -119,7 +127,6 @@ public class RedeemScriptValidator {
          *  OP_CHECKMULTISIG
          * OP_ENDIF
          */
-
         // Validate both default and erp federations redeem scripts.
         // Extract the default PowPeg and the emergency multisig redeemscript chunks
         List<ScriptChunk> defaultFedRedeemScriptChunks = chunks.subList(1, elseOpcodeIndex);
@@ -217,10 +224,5 @@ public class RedeemScriptValidator {
 
         // Remove the last chunk, which has CHECKMULTISIG op code
         return redeemScript.getChunks().subList(0, redeemScript.getChunks().size() - 1);
-    }
-
-    protected static boolean isOpN(ScriptChunk chunk) {
-        return chunk.isOpCode() &&
-            chunk.opcode >= ScriptOpCodes.OP_1 && chunk.opcode <= ScriptOpCodes.OP_16;
     }
 }

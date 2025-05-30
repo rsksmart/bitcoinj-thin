@@ -17,16 +17,16 @@
 
 package co.rsk.bitcoinj.script;
 
+import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.isNull;
+
 import co.rsk.bitcoinj.core.Utils;
 import com.google.common.base.Objects;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-
-import static com.google.common.base.Preconditions.checkState;
-import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
+import javax.annotation.Nullable;
 
 /**
  * A script element that is either a data push (signature, pubkey, etc) or a non-push (logic, numeric, etc) operation.
@@ -40,7 +40,7 @@ public class ScriptChunk {
      */
     @Nullable
     public final byte[] data;
-    private int startLocationInProgram;
+    private final int startLocationInProgram;
 
     public ScriptChunk(int opcode, byte[] data) {
         this(opcode, data, -1);
@@ -86,23 +86,30 @@ public class ScriptChunk {
      */
     public boolean isShortestPossiblePushData() {
         checkState(isPushData());
-        if (data == null)
+        if (data == null) {
             return true;   // OP_N
-        if (data.length == 0)
+        }
+        if (data.length == 0) {
             return opcode == OP_0;
+        }
         if (data.length == 1) {
             byte b = data[0];
-            if (b >= 0x01 && b <= 0x10)
+            if (b >= 0x01 && b <= 0x10) {
                 return opcode == OP_1 + b - 1;
-            if ((b & 0xFF) == 0x81)
+            }
+            if ((b & 0xFF) == 0x81) {
                 return opcode == OP_1NEGATE;
+            }
         }
-        if (data.length < OP_PUSHDATA1)
+        if (data.length < OP_PUSHDATA1) {
             return opcode == data.length;
-        if (data.length < 256)
+        }
+        if (data.length < 256) {
             return opcode == OP_PUSHDATA1;
-        if (data.length < 65536)
+        }
+        if (data.length < 65536) {
             return opcode == OP_PUSHDATA2;
+        }
 
         // can never be used, but implemented for completeness
         return opcode == OP_PUSHDATA4;
@@ -138,6 +145,39 @@ public class ScriptChunk {
         }
     }
 
+    public boolean isN() {
+        return isOpcodeSmallNumber() || isPushDataNumber();
+    }
+
+    public boolean isOpCheckMultiSig() {
+        return isOpCode() &&
+            (opcode == ScriptOpCodes.OP_CHECKMULTISIG || opcode == ScriptOpCodes.OP_CHECKMULTISIGVERIFY);
+    }
+
+    private boolean isOpcodeSmallNumber() {
+        return isOpCode()
+            && opcode >= ScriptOpCodes.OP_1
+            && opcode <= ScriptOpCodes.OP_16;
+    }
+
+    private boolean isPushDataNumber() {
+        return isPushData()
+            && !isNull(data)
+            && data[0] >= 1;
+    }
+
+    public int decodeN() {
+        if (isOpCode()) {
+            return decodeOpN();
+        }
+
+        if (isN()) {
+            return data[0];
+        }
+
+        throw new IllegalArgumentException("Cannot decode number from chunk");
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
@@ -155,11 +195,17 @@ public class ScriptChunk {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
         ScriptChunk other = (ScriptChunk) o;
-        return opcode == other.opcode && startLocationInProgram == other.startLocationInProgram
-            && Arrays.equals(data, other.data);
+        return opcode == other.opcode &&
+            startLocationInProgram == other.startLocationInProgram &&
+            Arrays.equals(data, other.data);
     }
 
     @Override

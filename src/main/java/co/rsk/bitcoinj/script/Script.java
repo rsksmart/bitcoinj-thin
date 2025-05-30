@@ -21,6 +21,7 @@ package co.rsk.bitcoinj.script;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.isNull;
 
 import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
@@ -97,6 +98,9 @@ public class Script {
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
+
+    /** The maximum size in bytes of a standard witnessScript */
+    public static final long MAX_STANDARD_P2WSH_SCRIPT_SIZE = 3600;
     public static final int SIG_SIZE = 75;
     /** Max number of sigops allowed in a standard p2sh redeem script */
     public static final int MAX_P2SH_SIGOPS = 15;
@@ -560,22 +564,24 @@ public class Script {
 
     static int decodeFromOpN(int opcode) {
         checkArgument((opcode == OP_0 || opcode == OP_1NEGATE) || (opcode >= OP_1 && opcode <= OP_16), "decodeFromOpN called on non OP_N opcode");
-        if (opcode == OP_0)
+        if (opcode == OP_0) {
             return 0;
-        else if (opcode == OP_1NEGATE)
+        } else if (opcode == OP_1NEGATE) {
             return -1;
-        else
+        } else {
             return opcode + 1 - OP_1;
+        }
     }
 
     static int encodeToOpN(int value) {
         checkArgument(value >= -1 && value <= 16, "encodeToOpN called for " + value + " which we cannot encode in an opcode.");
-        if (value == 0)
+        if (value == 0) {
             return OP_0;
-        else if (value == -1)
+        } else if (value == -1) {
             return OP_1NEGATE;
-        else
+        } else {
             return value - 1 + OP_1;
+        }
     }
 
     /**
