@@ -86,23 +86,30 @@ public class ScriptChunk {
      */
     public boolean isShortestPossiblePushData() {
         checkState(isPushData());
-        if (data == null)
+        if (data == null) {
             return true;   // OP_N
-        if (data.length == 0)
+        }
+        if (data.length == 0) {
             return opcode == OP_0;
+        }
         if (data.length == 1) {
             byte b = data[0];
-            if (b >= 0x01 && b <= 0x10)
+            if (b >= 0x01 && b <= 0x10) {
                 return opcode == OP_1 + b - 1;
-            if ((b & 0xFF) == 0x81)
+            }
+            if ((b & 0xFF) == 0x81) {
                 return opcode == OP_1NEGATE;
+            }
         }
-        if (data.length < OP_PUSHDATA1)
+        if (data.length < OP_PUSHDATA1) {
             return opcode == data.length;
-        if (data.length < 256)
+        }
+        if (data.length < 256) {
             return opcode == OP_PUSHDATA1;
-        if (data.length < 65536)
+        }
+        if (data.length < 65536) {
             return opcode == OP_PUSHDATA2;
+        }
 
         // can never be used, but implemented for completeness
         return opcode == OP_PUSHDATA4;
@@ -157,6 +164,18 @@ public class ScriptChunk {
         return isPushData()
             && !isNull(data)
             && data[0] >= 1;
+    }
+
+    public int decodeN() {
+        if (isOpCode()) {
+            return decodeOpN();
+        }
+
+        if (isN()) {
+            return data[0];
+        }
+
+        throw new IllegalArgumentException("Cannot decode number from chunk");
     }
 
     @Override
