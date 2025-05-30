@@ -38,7 +38,7 @@ import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
  * protocol at a lower level.</p>
  */
 public class ScriptBuilder {
-    private List<ScriptChunk> chunks;
+    private final List<ScriptChunk> chunks;
 
     /** Creates a fresh ScriptBuilder with an empty program. */
     public ScriptBuilder() {
@@ -47,7 +47,7 @@ public class ScriptBuilder {
 
     /** Creates a fresh ScriptBuilder with the given program as the starting point. */
     public ScriptBuilder(Script template) {
-        chunks = new ArrayList<ScriptChunk>(template.getChunks());
+        chunks = new ArrayList<>(template.getChunks());
     }
 
     /** Adds the given chunk to the end of the program */
@@ -63,7 +63,7 @@ public class ScriptBuilder {
 
     /** Adds the given list of chunks to the end of the program */
     public ScriptBuilder addChunks(List<ScriptChunk> chunks) {
-        chunks.forEach(chunk -> addChunk(chunk));
+        chunks.forEach(this::addChunk);
         return this;
     }
 
@@ -80,10 +80,11 @@ public class ScriptBuilder {
 
     /** Adds a copy of the given byte array as a data element (i.e. PUSHDATA) at the end of the program. */
     public ScriptBuilder data(byte[] data) {
-        if (data.length == 0)
+        if (data.length == 0) {
             return smallNum(0);
-        else
+        } else {
             return data(chunks.size(), data);
+        }
     }
 
     /** Adds a copy of the given byte array as a data element (i.e. PUSHDATA) at the given index in the program. */
@@ -95,10 +96,11 @@ public class ScriptBuilder {
             opcode = OP_0;
         } else if (data.length == 1) {
             byte b = data[0];
-            if (b >= 1 && b <= 16)
+            if (b >= 1 && b <= 16) {
                 opcode = Script.encodeToOpN(b);
-            else
+            } else {
                 opcode = 1;
+            }
         } else if (data.length < OP_PUSHDATA1) {
             opcode = data.length;
         } else if (data.length < 256) {
