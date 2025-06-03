@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
 public class TransactionWitnessTest {
     private static final int FIRST_INPUT_INDEX = 0;
     private static final NetworkParameters MAINNET_PARAMS = MainNetParams.get();
-    private static final List<BtcECKey> FEDERATION_KEYS = RedeemScriptUtils.getDefaultRedeemScriptKeys();
+    private static final List<BtcECKey> FEDERATION_KEYS = getNDefaultRedeemScriptKeys(20);
     private static final BtcECKey fedKey1 = FEDERATION_KEYS.get(0);
     private static final BtcECKey fedKey2 = FEDERATION_KEYS.get(1);
     private static final BtcECKey fedKey3 = FEDERATION_KEYS.get(2);
@@ -722,5 +722,17 @@ public class TransactionWitnessTest {
         pushes.add(opNotIf);
         pushes.add(redeemScript.getProgram());
         return TransactionWitness.of(pushes);
+    }
+
+    public static List<BtcECKey> getNDefaultRedeemScriptKeys(int n) {
+        ArrayList<BtcECKey> keys = new ArrayList<>();
+        for (int i = 1; i <= n; i++) {
+            long seed = i * 100;
+            BtcECKey btcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(seed));
+            keys.add(btcECKey);
+        }
+        keys.sort(BtcECKey.PUBKEY_COMPARATOR);
+
+        return keys;
     }
 }
