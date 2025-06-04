@@ -145,6 +145,21 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
+    public void hasStandardRedeemScriptStructure_withARedeemLikeScript_WithTheLastOpCodeInvalid_shouldBeFalse() {
+        ScriptBuilder builder = new ScriptBuilder();
+        Script redeemScript = builder
+            .op(ScriptOpCodes.OP_2)
+            .data(ecKey1.getPubKey())
+            .data(ecKey2.getPubKey())
+            .data(ecKey3.getPubKey())
+            .op(ScriptOpCodes.OP_CHECKMULTISIG)
+            .op(ScriptOpCodes.OP_ENDIF)
+            .build();
+
+        Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
     public void hasStandardRedeemScriptStructure_non_standard_redeem_script() {
         List<ScriptChunk> nonStandardErpRedeemScriptChunks = nonStandardErpRedeemScript.getChunks();
         Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(nonStandardErpRedeemScriptChunks));
