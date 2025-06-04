@@ -78,7 +78,7 @@ public class FlyoverRedeemScriptParserTest {
 
     private void assertGetMValue(Script flyoverRedeemScript) {
         // Arrange
-        final int EXPECTED_M = 5;
+        final int EXPECTED_M = 11;
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
 
         // Act
@@ -129,7 +129,7 @@ public class FlyoverRedeemScriptParserTest {
 
     private void assertThrowsIllegalStateException(Script flyoverRedeemScript) {
         // Arrange
-        final BtcECKey differentKey = BtcECKey.fromPrivate(BigInteger.valueOf(1000));
+        final BtcECKey differentKey = BtcECKey.fromPrivate(BigInteger.valueOf(10001));
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
 
         // Act - Assert
