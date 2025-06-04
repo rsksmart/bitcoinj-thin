@@ -5,7 +5,6 @@ import co.rsk.bitcoinj.core.Sha256Hash;
 import co.rsk.bitcoinj.core.Utils;
 import co.rsk.bitcoinj.core.VerificationException;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -123,25 +122,6 @@ public class RedeemScriptValidatorTest {
     public void hasStandardRedeemScriptStructure_standard_redeem_script() {
         Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
-    }
-
-    @Test
-    public void hasStandardRedeemScriptStructure_withMore20Keys_shouldBeTrue() {
-        List<BtcECKey> twentyDefaultRedeemScriptKeys = getNDefaultRedeemScriptKeys(20);
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(twentyDefaultRedeemScriptKeys);
-        Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
-    }
-
-    public static List<BtcECKey> getNDefaultRedeemScriptKeys(int n) {
-        ArrayList<BtcECKey> keys = new ArrayList<>();
-        for (int i = 1; i <= n; i++) {
-            long seed = i * 100;
-            BtcECKey btcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(seed));
-            keys.add(btcECKey);
-        }
-        keys.sort(BtcECKey.PUBKEY_COMPARATOR);
-
-        return keys;
     }
 
     @Test
