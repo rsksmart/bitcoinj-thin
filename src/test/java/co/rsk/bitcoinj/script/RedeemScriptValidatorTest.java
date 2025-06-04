@@ -74,30 +74,18 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void isRedeemLikeScript_whenNonStandardErpRedeemScriptParser_shouldReturnTrue() {
-        List<ScriptChunk> nonStandardErpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys, CSV_VALUE).getChunks();
-        Assert.assertTrue(RedeemScriptValidator.isRedeemLikeScript(nonStandardErpRedeemScript));
+        Assert.assertTrue(RedeemScriptValidator.isRedeemLikeScript(nonStandardErpRedeemScript.getChunks()));
     }
 
     @Test
     public void isRedeemLikeScript_whenP2shErpRedeemScriptParserHardcoded_shouldReturnTrue() {
-        List<ScriptChunk> p2shRedeemScriptChunks = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys, CSV_VALUE).getChunks();
-
+        List<ScriptChunk> p2shRedeemScriptChunks = p2shErpRedeemScript.getChunks();
         Assert.assertTrue(RedeemScriptValidator.isRedeemLikeScript(p2shRedeemScriptChunks));
     }
 
     @Test
     public void isRedeemLikeScript_whenFlyoverStandardMultisigRedeemScript_shouldReturnTrue() {
-        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(
-            defaultRedeemScriptKeys);
-        List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            standardRedeemScript
-        ).getChunks();
-
+        List<ScriptChunk> flyoverRedeemScriptChunks = flyoverStandardRedeemScript.getChunks();
         Assert.assertTrue(RedeemScriptValidator.isRedeemLikeScript(flyoverRedeemScriptChunks));
     }
 
@@ -109,23 +97,13 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void isRedeemLikeScript_whenFlyoverP2shErpRedeemScript_shouldReturnTrue() {
-        Script p2shErpRedeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys, CSV_VALUE);
-        List<ScriptChunk> p2shRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            p2shErpRedeemScript
-        ).getChunks();
-
-        Assert.assertTrue(RedeemScriptValidator.isRedeemLikeScript(p2shRedeemScriptChunks));
+        List<ScriptChunk> p2shFlyoverRedeemScriptChunks = flyoverP2shErpRedeemScript.getChunks();
+        Assert.assertTrue(RedeemScriptValidator.isRedeemLikeScript(p2shFlyoverRedeemScriptChunks));
     }
 
     @Test
     public void isRedeemLikeScript_invalid_redeem_script_missing_checkSig() {
-        List<ScriptChunk> chunksWithoutCheckSig = RedeemScriptValidator.removeOpCheckMultisig(
-            RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys)
-        );
-
+        List<ScriptChunk> chunksWithoutCheckSig = RedeemScriptValidator.removeOpCheckMultisig(standardRedeemScript);
         Assert.assertFalse(RedeemScriptValidator.isRedeemLikeScript(chunksWithoutCheckSig));
     }
 
@@ -168,13 +146,8 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasStandardRedeemScriptStructure_non_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            CSV_VALUE
-        );
-
-        Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
+        List<ScriptChunk> nonStandardErpRedeemScriptChunks = nonStandardErpRedeemScript.getChunks();
+        Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(nonStandardErpRedeemScriptChunks));
     }
 
     @Test
@@ -214,13 +187,8 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasNonStandardErpRedeemScriptStructure_whenNonStandardErpFedRedeemScriptTwoBytesCsvValue_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            CSV_VALUE
-        );
-
-        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(redeemScript.getChunks()));
+        List<ScriptChunk> nonStandardErpRedeemScriptChunks = nonStandardErpRedeemScript.getChunks();
+        Assert.assertTrue(RedeemScriptValidator.hasNonStandardErpRedeemScriptStructure(nonStandardErpRedeemScriptChunks));
     }
 
     @Test
@@ -310,48 +278,21 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFlyoverPrefix_whenP2shErpRedeemScript_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            CSV_VALUE
-        );
-        Assert.assertFalse(RedeemScriptValidator.hasFlyoverPrefix(redeemScript.getChunks()));
+        List<ScriptChunk> p2shErpRedeemScriptChunks = p2shErpRedeemScript.getChunks();
+        Assert.assertFalse(RedeemScriptValidator.hasFlyoverPrefix(p2shErpRedeemScriptChunks));
     }
 
     @Test
     public void hasFlyoverPrefix_whenScriptSig_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            CSV_VALUE
-        );
-
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
-        );
-
-        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
-
-        Script scriptSig = p2shOutputScript.createEmptyInputScript(null, flyoverRedeemScript);
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverP2shErpRedeemScript);
+        Script scriptSig = p2shOutputScript.createEmptyInputScript(null, flyoverP2shErpRedeemScript);
 
         Assert.assertFalse(RedeemScriptValidator.hasFlyoverPrefix(scriptSig.getChunks()));
     }
 
     @Test
     public void hasFlyoverPrefix_whenP2shOutputScript_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            CSV_VALUE
-        );
-
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
-        );
-
-        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverP2shErpRedeemScript);
 
         Assert.assertFalse(RedeemScriptValidator.hasFlyoverPrefix(p2shOutputScript.getChunks()));
     }
@@ -394,13 +335,8 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFlyoverPrefix_whenFlyoverStandardMultisigRedeemScript_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
-        );
-
-        Assert.assertTrue(RedeemScriptValidator.hasFlyoverPrefix(flyoverRedeemScript.getChunks()));
+        List<ScriptChunk> flyoverRedeemScriptChunks = flyoverStandardRedeemScript.getChunks();
+        Assert.assertTrue(RedeemScriptValidator.hasFlyoverPrefix(flyoverRedeemScriptChunks));
     }
 
     @Test
@@ -411,18 +347,8 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFlyoverPrefix_whenFlyoverP2shErpRedeemScript_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys,
-            CSV_VALUE
-        );
-
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
-        );
-
-        Assert.assertTrue(RedeemScriptValidator.hasFlyoverPrefix(flyoverRedeemScript.getChunks()));
+        List<ScriptChunk> flyoverP2shRedeemScriptChunks = flyoverP2shErpRedeemScript.getChunks();
+        Assert.assertTrue(RedeemScriptValidator.hasFlyoverPrefix(flyoverP2shRedeemScriptChunks));
     }
 
     @Test
@@ -438,58 +364,36 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFlyoverRedeemScriptStructure_whenEmptyFlyoverDerivationHash_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
         List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
             new byte[]{},
-            redeemScript
+            standardRedeemScript
         ).getChunks();
         Assert.assertFalse(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(flyoverRedeemScriptChunks));
     }
 
     @Test
     public void hasFlyoverRedeemScriptStructure_whenScriptSig_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
-        );
-
-        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
-        Script scriptSig = p2shOutputScript.createEmptyInputScript(null, flyoverRedeemScript);
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverStandardRedeemScript);
+        Script scriptSig = p2shOutputScript.createEmptyInputScript(null, flyoverStandardRedeemScript);
 
         Assert.assertFalse(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(scriptSig.getChunks()));
     }
 
     @Test
     public void hasFlyoverRedeemScriptStructure_whenP2shOutputScript_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
-        );
-
-        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
-
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverStandardRedeemScript);
         Assert.assertFalse(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(p2shOutputScript.getChunks()));
     }
 
     @Test
     public void hasFlyoverRedeemScriptStructure_whenZeroFlyoverDerivationHash_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
-            Sha256Hash.ZERO_HASH.getBytes(),
-            redeemScript
-        ).getChunks();
+        List<ScriptChunk> flyoverRedeemScriptChunks = flyoverStandardRedeemScript.getChunks();
         Assert.assertTrue(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(flyoverRedeemScriptChunks));
     }
 
     @Test
     public void hasFlyoverRedeemScriptStructure_whenFlyoverStandardMultisigRedeemScript_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
-        ).getChunks();
+        List<ScriptChunk> flyoverRedeemScriptChunks = flyoverStandardRedeemScript.getChunks();
         Assert.assertTrue(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(flyoverRedeemScriptChunks));
     }
 
@@ -501,14 +405,8 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFlyoverRedeemScriptStructure_whenFlyoverP2shErpRedeemScript_shouldReturnTrue() {
-        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
-            defaultRedeemScriptKeys,
-            emergencyRedeemScriptKeys, CSV_VALUE);
-        List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
-            FLYOVER_DERIVATION_HASH.getBytes(),
-            redeemScript
-        ).getChunks();
-        Assert.assertTrue(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(flyoverRedeemScriptChunks));
+        List<ScriptChunk> flyoverP2shErpRedeemScriptChunks = flyoverP2shErpRedeemScript.getChunks();
+        Assert.assertTrue(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(flyoverP2shErpRedeemScriptChunks));
     }
 
     @Test
