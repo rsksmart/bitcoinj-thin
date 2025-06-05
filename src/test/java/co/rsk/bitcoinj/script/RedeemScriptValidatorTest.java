@@ -125,6 +125,25 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
+    public void hasStandardRedeemScriptStructure_with50defaultRedeemScriptKeys_shouldBeTrue() {
+        List<BtcECKey> bigNumberOfDefaultRedeemScriptKeys = RedeemScriptUtils.getNKeys(50);
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(bigNumberOfDefaultRedeemScriptKeys);
+        Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
+    public void hasStandardRedeemScriptStructure_withInvalidNumberOfKeys_shouldBeFalse() {
+        ScriptBuilder builder = new ScriptBuilder();
+        Script redeemScript = builder
+            .op(ScriptOpCodes.OP_4)
+            .data(ecKey1.getPubKey())
+            .op(ScriptOpCodes.OP_4)
+            .op(ScriptOpCodes.OP_CHECKMULTISIG)
+            .build();
+        Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
+    }
+
+    @Test
     public void hasStandardRedeemScriptStructure_withARedeemLikeScript_WithTheLastOpCodeInvalid_shouldBeFalse() {
         ScriptBuilder builder = new ScriptBuilder();
         Script redeemScript = builder
