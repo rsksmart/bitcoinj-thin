@@ -109,7 +109,7 @@ public final class RedeemScriptUtils {
         return keys;
     }
 
-    public static List<BtcECKey> getNKeys(int n) {
+    private static List<BtcECKey> getNKeys(int n) {
         ArrayList<BtcECKey> keys = new ArrayList<>();
         for (int i = 1; i <= n; i++) {
             long seed = i * 100;
