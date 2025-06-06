@@ -26,9 +26,8 @@ public class ScriptBuilderTest {
         assertEquals(threshold, actualThreshold);
 
         for (int i = 0; i < twentyPubKeys.size(); i++) {
-            byte[] actualPubKeyInTheScript = chunks.get(i + 1).data;
+            byte[] actualPubKeyInTheScript = chunks.get(index++).data;
             assertArrayEquals(twentyPubKeys.get(i), actualPubKeyInTheScript);
-            index++;
         }
 
         int actualTotalKeysNumber = chunks.get(index++).decodeN();
