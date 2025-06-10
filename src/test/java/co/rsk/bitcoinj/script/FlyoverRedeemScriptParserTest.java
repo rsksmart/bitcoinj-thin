@@ -25,7 +25,6 @@ import org.junit.Test;
 public class FlyoverRedeemScriptParserTest {
 
     private final List<BtcECKey> keys = RedeemScriptUtils.getDefaultRedeemScriptKeys();
-    private final int requiredSignatures = keys.size() / 2 + 1;
     private final List<BtcECKey> emergencyKeys = RedeemScriptUtils.getEmergencyRedeemScriptKeys();
     private final Sha256Hash flyoverDerivationHash = Sha256Hash.of(new byte[]{1});
 
@@ -79,6 +78,7 @@ public class FlyoverRedeemScriptParserTest {
 
     private void assertGetMValue(Script flyoverRedeemScript) {
         // Arrange
+        int requiredSignatures = keys.size() / 2 + 1;
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
 
         // Act
