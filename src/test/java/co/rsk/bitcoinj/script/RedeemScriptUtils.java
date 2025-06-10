@@ -110,7 +110,7 @@ public final class RedeemScriptUtils {
     }
 
     public static List<BtcECKey> getNKeys(int n) {
-        ArrayList<BtcECKey> keys = new ArrayList<>();
+        ArrayList<BtcECKey> keys = new ArrayList<>(n);
         for (int i = 1; i <= n; i++) {
             long seed = i * 100;
             BtcECKey btcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(seed));
