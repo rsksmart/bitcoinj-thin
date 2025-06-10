@@ -1,6 +1,7 @@
 package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
+import co.rsk.bitcoinj.core.VerificationException;
 import org.junit.Test;
 
 import java.util.List;
@@ -22,6 +23,44 @@ public class ScriptBuilderTest {
     public void createMultiSigOutputScript_withFifteenPubKeys_shouldReturnAValidScript() {
         // Arrange
         int numberOfKeys = 15;
+
+        // Act & Assert
+        assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(numberOfKeys);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createMultiSigOutputScript_withZeroPubKeys_shouldThrowAnException() {
+        // Arrange
+        List<BtcECKey> ecKeys = RedeemScriptUtils.getNKeys(0);
+        int expectedThreshold = 1;
+
+        // Act & Assert
+        ScriptBuilder.createMultiSigOutputScript(expectedThreshold, ecKeys);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createMultiSigOutputScript_withLessKeysThanTheThreshold_shouldThrowAnException() {
+        // Arrange
+        List<BtcECKey> ecKeys = RedeemScriptUtils.getNKeys(1);
+        int expectedThreshold = 2;
+
+        // Act & Assert
+        ScriptBuilder.createMultiSigOutputScript(expectedThreshold, ecKeys);
+    }
+
+    @Test
+    public void createMultiSigOutputScript_withOnePubKey_shouldReturnAValidScript() {
+        // Arrange
+        int numberOfKeys = 1;
+
+        // Act & Assert
+        assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(numberOfKeys);
+    }
+
+    @Test
+    public void createMultiSigOutputScript_withTenPubKeys_shouldReturnAValidScript() {
+        // Arrange
+        int numberOfKeys = 10;
 
         // Act & Assert
         assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(numberOfKeys);
