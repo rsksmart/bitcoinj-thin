@@ -43,7 +43,7 @@ public class ScriptBuilderTest {
         Script multiSigOutputScript = ScriptBuilder.createMultiSigOutputScript(expectedThreshold, ecKeys);
 
         // threshold (1) + pubkeys (numberOfKeys) + num of pubKeys (1) + OP_CHECKMULTISIG (1)
-        int expectedNumberOfChunks = getExpectedNumberOfChunks(numberOfKeys);
+        int expectedNumberOfChunks = numberOfKeys + 3;
         List<ScriptChunk> chunks = multiSigOutputScript.getChunks();
         assertEquals(expectedNumberOfChunks, chunks.size());
 
@@ -63,11 +63,6 @@ public class ScriptBuilderTest {
 
         int actualMultiSigOpCode = chunks.get(index).opcode;
         assertEquals(ScriptOpCodes.OP_CHECKMULTISIG, actualMultiSigOpCode);
-    }
-
-    private static int getExpectedNumberOfChunks(int pubKeys) {
-        // threshold (1) + pubkeys (N) + num of pubKeys (1) + OP_CHECKMULTISIG (1)
-        return pubKeys + 3;
     }
 
 }
