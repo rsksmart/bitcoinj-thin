@@ -11,29 +11,63 @@ import static org.junit.Assert.*;
 public class ScriptBuilderTest {
     @Test
     public void createMultiSigOutputScript_withTwentyPubKeys_shouldReturnAValidScript() {
-        List<BtcECKey> twentyECKeys = RedeemScriptUtils.getNKeys(20);
-        List<byte[]> twentyPubKeys = twentyECKeys.stream().map(BtcECKey::getPubKey).collect(Collectors.toList());
-        int threshold = 10;
-        Script multiSigOutputScript = ScriptBuilder.createMultiSigOutputScript(threshold, twentyECKeys);
-        List<ScriptChunk> chunks = multiSigOutputScript.getChunks();
+        // Arrange
+        int numberOfKeys = 20;
 
-        // threshold (1) + pubkeys (20) + num of pubKeys (1) + OP_CHECKMULTISIG (1)
-        int expectedNumberOfChunks = 23;
+        // Act & Assert
+        assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(numberOfKeys);
+    }
+
+    @Test
+    public void createMultiSigOutputScript_withFifteenPubKeys_shouldReturnAValidScript() {
+        // Arrange
+        int numberOfKeys = 15;
+
+        // Act & Assert
+        assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(numberOfKeys);
+    }
+
+    @Test
+    public void createMultiSigOutputScript_withSixteenPubKeys_shouldReturnAValidScript() {
+        // Arrange
+        int numberOfKeys = 16;
+
+        // Act & Assert
+        assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(numberOfKeys);
+    }
+
+    private static void assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(int numberOfKeys) {
+        List<BtcECKey> ecKeys = RedeemScriptUtils.getNKeys(numberOfKeys);
+        int threshold = numberOfKeys / 2 + 1;
+
+        Script multiSigOutputScript = ScriptBuilder.createMultiSigOutputScript(threshold, ecKeys);
+
+        // threshold (1) + pubkeys (numberOfKeys) + num of pubKeys (1) + OP_CHECKMULTISIG (1)
+        int expectedNumberOfChunks = getExpectedNumberOfChunks(numberOfKeys);
+        List<ScriptChunk> chunks = multiSigOutputScript.getChunks();
         assertEquals(expectedNumberOfChunks, chunks.size());
 
         int index = 0;
         int actualThreshold = chunks.get(index++).decodeN();
         assertEquals(threshold, actualThreshold);
 
-        for (int i = 0; i < twentyPubKeys.size(); i++) {
-            byte[] actualPubKeyInTheScript = chunks.get(index++).data;
-            assertArrayEquals(twentyPubKeys.get(i), actualPubKeyInTheScript);
+        List<byte[]> pubKeys = ecKeys.stream().map(BtcECKey::getPubKey).collect(Collectors.toList());
+        for (int i = 0; i < pubKeys.size(); i++) {
+            byte[] actualPubKeyInTheScript = chunks.get(i + 1).data;
+            assertArrayEquals(pubKeys.get(i), actualPubKeyInTheScript);
+            index++;
         }
 
         int actualTotalKeysNumber = chunks.get(index++).decodeN();
-        assertEquals(twentyPubKeys.size(), actualTotalKeysNumber);
+        assertEquals(pubKeys.size(), actualTotalKeysNumber);
 
         int actualMultiSigOpCode = chunks.get(index).opcode;
         assertEquals(ScriptOpCodes.OP_CHECKMULTISIG, actualMultiSigOpCode);
     }
+
+    private static int getExpectedNumberOfChunks(int pubKeys) {
+        // threshold (1) + pubkeys (N) + num of pubKeys (1) + OP_CHECKMULTISIG (1)
+        return pubKeys + 3;
+    }
+
 }
