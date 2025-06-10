@@ -78,14 +78,14 @@ public class FlyoverRedeemScriptParserTest {
 
     private void assertGetMValue(Script flyoverRedeemScript) {
         // Arrange
-        int requiredSignatures = keys.size() / 2 + 1;
+        int expectedNumberOfSignatures = keys.size() / 2 + 1;
         FlyoverRedeemScriptParser flyoverRedeemScriptParser = new FlyoverRedeemScriptParser(flyoverRedeemScript.getChunks());
 
         // Act
-        int actualM = flyoverRedeemScriptParser.getM();
+        int actualNumberOfSignatures = flyoverRedeemScriptParser.getM();
 
         // Assert
-        assertEquals(requiredSignatures, actualM);
+        assertEquals(expectedNumberOfSignatures, actualNumberOfSignatures);
     }
 
     @Test
