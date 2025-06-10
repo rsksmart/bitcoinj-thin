@@ -38,9 +38,9 @@ public class ScriptBuilderTest {
 
     private static void assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(int numberOfKeys) {
         List<BtcECKey> ecKeys = RedeemScriptUtils.getNKeys(numberOfKeys);
-        int threshold = numberOfKeys / 2 + 1;
+        int expectedThreshold = numberOfKeys / 2 + 1;
 
-        Script multiSigOutputScript = ScriptBuilder.createMultiSigOutputScript(threshold, ecKeys);
+        Script multiSigOutputScript = ScriptBuilder.createMultiSigOutputScript(expectedThreshold, ecKeys);
 
         // threshold (1) + pubkeys (numberOfKeys) + num of pubKeys (1) + OP_CHECKMULTISIG (1)
         int expectedNumberOfChunks = getExpectedNumberOfChunks(numberOfKeys);
@@ -49,7 +49,7 @@ public class ScriptBuilderTest {
 
         int index = 0;
         int actualThreshold = chunks.get(index++).decodeN();
-        assertEquals(threshold, actualThreshold);
+        assertEquals(expectedThreshold, actualThreshold);
 
         List<byte[]> pubKeys = ecKeys.stream().map(BtcECKey::getPubKey).collect(Collectors.toList());
         for (int i = 0; i < pubKeys.size(); i++) {
