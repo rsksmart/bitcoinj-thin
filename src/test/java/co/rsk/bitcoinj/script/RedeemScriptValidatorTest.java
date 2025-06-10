@@ -59,8 +59,8 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void isRedeemLikeScript_whenStandardMultisig_shouldReturnTrue() {
-        List<ScriptChunk> chunks = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys).getChunks();
-        Assert.assertTrue(RedeemScriptValidator.isRedeemLikeScript(chunks));
+        List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
+        Assert.assertTrue(RedeemScriptValidator.isRedeemLikeScript(standardRedeemScriptChunks));
     }
 
     @Test
@@ -120,8 +120,8 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasStandardRedeemScriptStructure_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScript.getChunks()));
+        List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
+        Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(standardRedeemScriptChunks));
     }
 
     @Test
@@ -273,12 +273,10 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFlyoverPrefix_whenEmptyFlyoverPrefix_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-
         byte[] emptyFlyoverPrefix = {};
         Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
             emptyFlyoverPrefix,
-            redeemScript
+            standardRedeemScript
         );
 
         Assert.assertFalse(RedeemScriptValidator.hasFlyoverPrefix(flyoverRedeemScript.getChunks()));
@@ -286,8 +284,8 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFlyoverPrefix_whenStandardMultisigRedeemScript_shouldReturnFalse() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        Assert.assertFalse(RedeemScriptValidator.hasFlyoverPrefix(redeemScript.getChunks()));
+        List<ScriptChunk> standardRedeemScriptChunks = standardRedeemScript.getChunks();
+        Assert.assertFalse(RedeemScriptValidator.hasFlyoverPrefix(standardRedeemScriptChunks));
     }
 
     @Test
@@ -401,7 +399,10 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void hasFlyoverRedeemScriptStructure_whenZeroFlyoverDerivationHash_shouldReturnTrue() {
-        List<ScriptChunk> flyoverRedeemScriptChunks = flyoverStandardRedeemScript.getChunks();
+        List<ScriptChunk> flyoverRedeemScriptChunks = RedeemScriptUtils.createFlyoverRedeemScript(
+            Sha256Hash.ZERO_HASH.getBytes(),
+            standardRedeemScript
+        ).getChunks();
         Assert.assertTrue(RedeemScriptValidator.hasFlyoverRedeemScriptStructure(flyoverRedeemScriptChunks));
     }
 
@@ -446,8 +447,7 @@ public class RedeemScriptValidatorTest {
 
     @Test
     public void removeOpCheckMultiSig_standard_redeem_script() {
-        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(defaultRedeemScriptKeys);
-        List<ScriptChunk> chunks = RedeemScriptValidator.removeOpCheckMultisig(redeemScript);
+        List<ScriptChunk> chunks = RedeemScriptValidator.removeOpCheckMultisig(standardRedeemScript);
 
         Assert.assertEquals(defaultRedeemScriptKeys.size() + 2, chunks.size()); // 1 chunk per key + OP_M + OP_N
         Assert.assertFalse(RedeemScriptValidator.isRedeemLikeScript(chunks));
