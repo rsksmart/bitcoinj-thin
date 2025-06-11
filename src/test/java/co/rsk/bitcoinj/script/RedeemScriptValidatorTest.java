@@ -148,7 +148,7 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasStandardRedeemScriptStructure_withARedeemLikeScript_WithTheLastOpCodeInvalid_shouldBeFalse() {
+    public void hasStandardRedeemScriptStructure_withARedeemLikeScript_withoutOpCheckMultisigAsLastOpcode_shouldBeFalse() {
         ScriptBuilder builder = new ScriptBuilder();
         Script redeemScript = builder
             .op(ScriptOpCodes.OP_2)
