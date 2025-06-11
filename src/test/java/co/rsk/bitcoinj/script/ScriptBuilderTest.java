@@ -31,7 +31,7 @@ public class ScriptBuilderTest {
     @Test(expected = IllegalArgumentException.class)
     public void createMultiSigOutputScript_withZeroPubKeys_shouldThrowAnException() {
         // Arrange
-        List<BtcECKey> ecKeys = RedeemScriptUtils.getNKeys(0);
+        List<BtcECKey> ecKeys = new ArrayList();
         int expectedThreshold = 1;
 
         // Act & Assert
