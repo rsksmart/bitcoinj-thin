@@ -19,9 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Java & Gradle
+      - name: Setup Java & Maven
         uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
-          cache: 'gradle'
+          cache: 'maven'
