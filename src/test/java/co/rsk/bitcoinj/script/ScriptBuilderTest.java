@@ -1,9 +1,9 @@
 package co.rsk.bitcoinj.script;
 
 import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.VerificationException;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,11 +31,11 @@ public class ScriptBuilderTest {
     @Test(expected = IllegalArgumentException.class)
     public void createMultiSigOutputScript_withZeroPubKeys_shouldThrowAnException() {
         // Arrange
-        List<BtcECKey> ecKeys = new ArrayList();
+        ArrayList<BtcECKey> emptyKeys = new ArrayList<>();
         int expectedThreshold = 1;
 
         // Act & Assert
-        ScriptBuilder.createMultiSigOutputScript(expectedThreshold, ecKeys);
+        ScriptBuilder.createMultiSigOutputScript(expectedThreshold, emptyKeys);
     }
 
     @Test(expected = IllegalArgumentException.class)
