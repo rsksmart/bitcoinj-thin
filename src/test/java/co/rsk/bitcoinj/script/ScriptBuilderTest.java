@@ -75,11 +75,31 @@ public class ScriptBuilderTest {
         assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(numberOfKeys);
     }
 
+    @Test
+    public void createMultiSigOutputScript_with20PubKeys_shouldReturnAValidScript() {
+        // Arrange
+        int numberOfKeys = 20;
+
+        // Act & Assert
+        assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(numberOfKeys);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createMultiSigOutputScript_withMoreThan20PubKeys_shouldThrowAnException() {
+        // Arrange
+        List<BtcECKey> ecKeys = RedeemScriptUtils.getNKeys(21);
+        int expectedThreshold = 11;
+
+        // Act & Assert
+        ScriptBuilder.createMultiSigOutputScript(expectedThreshold, ecKeys);
+    }
+
     private static void assertGivenNumberOfKeysCreatesAValidMultiSigOutputScript(int numberOfKeys) {
         List<BtcECKey> ecKeys = RedeemScriptUtils.getNKeys(numberOfKeys);
         int expectedThreshold = numberOfKeys / 2 + 1;
 
         Script multiSigOutputScript = ScriptBuilder.createMultiSigOutputScript(expectedThreshold, ecKeys);
+        assertTrue(multiSigOutputScript.isSentToMultiSig());
 
         // threshold (1) + pubkeys (numberOfKeys) + num of pubKeys (1) + OP_CHECKMULTISIG (1)
         int expectedNumberOfChunks = numberOfKeys + 3;
@@ -103,5 +123,4 @@ public class ScriptBuilderTest {
         int actualMultiSigOpCode = chunks.get(index).opcode;
         assertEquals(ScriptOpCodes.OP_CHECKMULTISIG, actualMultiSigOpCode);
     }
-
 }
