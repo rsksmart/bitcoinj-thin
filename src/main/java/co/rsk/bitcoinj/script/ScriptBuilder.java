@@ -269,6 +269,7 @@ public class ScriptBuilder {
     public static Script createMultiSigOutputScript(int threshold, List<BtcECKey> pubkeys) {
         checkArgument(threshold > 0);
         checkArgument(threshold <= pubkeys.size());
+        checkArgument(pubkeys.size() <= 20); // That's the max OP_CHECKMULTISIG allows.
         ScriptBuilder builder = new ScriptBuilder();
         builder.number(threshold);
         for (BtcECKey key : pubkeys) {
