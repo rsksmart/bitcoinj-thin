@@ -137,114 +137,67 @@ public class ScriptChunkTest {
     }
 
     @Test
-    public void isN_withSmallNumber_returnsTrue() {
-        for (int i=0; i<16; i++) {
-            ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_1 + i, null);
-            assertTrue(chunk.isN());
+    public void decodePositiveN_withSmallNumber_returnsTrue() {
+        for (int i=1; i<16; i++) {
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.number(i);
+            Script script = builder.build();
+
+            ScriptChunk chunk = script.chunks.get(0);
+            assertEquals(i, chunk.decodePositiveN());
         }
     }
 
     @Test
-    public void isN_withPushData_returnsTrue() {
-        // Need to review the range of values for OP_PUSHDATA1, OP_PUSHDATA2, and OP_PUSHDATA4,
-        // above 127 they are serialized as negative numbers and isPushDataNumber() will return false.
-        for (int i=1; i<100; i++) {
-            ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_PUSHDATA1, new byte[]{(byte) i});
-            assertTrue(chunk.isN());
+    public void decodePositiveN_withNumber_returnsTrue() {
+        for (int n=0; n<10; n++) { // technically we could go up to Integer.MAX_VALUE, but it's not worth it to go that far
+            int i = 1 << n; // i = 2^n
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.number(i);
+            Script script = builder.build();
 
-            chunk = new ScriptChunk(ScriptOpCodes.OP_PUSHDATA2, new byte[]{(byte) i});
-            assertTrue(chunk.isN());
-
-            chunk = new ScriptChunk(ScriptOpCodes.OP_PUSHDATA4, new byte[]{(byte) i});
-            assertTrue(chunk.isN());
+            ScriptChunk chunk = script.chunks.get(0);
+            assertEquals(i, chunk.decodePositiveN());
         }
     }
 
     @Test
-    public void isN_withNonNumber_returnsFalse() {
-        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null);
-        assertFalse(chunk.isN());
+    public void decodePositiveN_withNegativeNumber_throwsIAE() {
+        for (int n=0; n<10; n++) { // technically we could go down to Integer.MIN_VALUE, but it's not worth it to go that deep
+            int i = -(1 << n); // i = -(2^n)
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.number(i);
+            Script script = builder.build();
 
-        chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null);
-        assertFalse(chunk.isN());
-
-        chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, null);
-        assertFalse(chunk.isN());
-
-        chunk = new ScriptChunk(ScriptOpCodes.OP_0, null);
-        assertFalse(chunk.isN());
+            ScriptChunk chunk = script.chunks.get(0);
+            assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+        }
     }
 
     @Test
-    public void isN_withNonPushData_returnsFalse() {
+    public void decodePositiveN_withNonPushData_throwsNPE() {
         ScriptChunk chunk = new ScriptChunk(OP_PUSHDATA1, null);
-        assertFalse(chunk.isN());
+        assertThrows(NullPointerException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(OP_PUSHDATA2, null);
-        assertFalse(chunk.isN());
+        assertThrows(NullPointerException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(OP_PUSHDATA4, null);
-        assertFalse(chunk.isN());
-    }
-
-    @Test
-    public void decodeN_withSmallNumber_returnsValue() {
-        for (int i=0; i<16; i++) {
-            ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_1 + i, null);
-            assertTrue(chunk.isN());
-            assertEquals(i + 1, chunk.decodeN());
-        }
-    }
-
-    @Test
-    public void decodeN_withPushData_returnsValue() {
-        // What happens if the value is larger than 1 byte?
-        for (int i=1; i<100; i++) {
-            ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_PUSHDATA1, new byte[]{(byte) i});
-            assertTrue(chunk.isN());
-            assertEquals(i, chunk.decodeN());
-
-            chunk = new ScriptChunk(ScriptOpCodes.OP_PUSHDATA2, new byte[]{(byte) i});
-            assertTrue(chunk.isN());
-            assertEquals(i, chunk.decodeN());
-
-            chunk = new ScriptChunk(ScriptOpCodes.OP_PUSHDATA4, new byte[]{(byte) i});
-            assertTrue(chunk.isN());
-            assertEquals(i, chunk.decodeN());
-        }
-    }
-
-    @Test
-    public void decodeN_withNonNumber_throwsException() {
-        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null);
-        assertFalse(chunk.isN());
-        assertThrows(IllegalArgumentException.class, chunk::decodeN);
-
-        chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null);
-        assertFalse(chunk.isN());
-        assertThrows(IllegalArgumentException.class, chunk::decodeN);
-
-        chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, null);
-        assertFalse(chunk.isN());
-        assertThrows(IllegalArgumentException.class, chunk::decodeN);
+        assertThrows(NullPointerException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(ScriptOpCodes.OP_0, null);
-        assertFalse(chunk.isN());
-        assertThrows(IllegalArgumentException.class, chunk::decodeN);
+        assertThrows(NullPointerException.class, chunk::decodePositiveN);
     }
 
     @Test
-    public void decodeN_withNonPushData_throwsException() {
-        ScriptChunk chunk = new ScriptChunk(OP_PUSHDATA1, null);
-        assertFalse(chunk.isN());
-        assertThrows(IllegalArgumentException.class, chunk::decodeN);
+    public void decodePositiveN_withWrongOpcodes_throwsIAE() {
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null);
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
 
-        chunk = new ScriptChunk(OP_PUSHDATA2, null);
-        assertFalse(chunk.isN());
-        assertThrows(IllegalArgumentException.class, chunk::decodeN);
+        chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null);
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
 
-        chunk = new ScriptChunk(OP_PUSHDATA4, null);
-        assertFalse(chunk.isN());
-        assertThrows(IllegalArgumentException.class, chunk::decodeN);
+        chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, null);
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
     }
 }

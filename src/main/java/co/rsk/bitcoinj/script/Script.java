@@ -774,7 +774,7 @@ public class Script {
      * sizes.
      * @throws ScriptException if the chunk is longer than 4 bytes.
      */
-    private static BigInteger castToBigInteger(byte[] chunk) throws ScriptException {
+    public static BigInteger castToBigInteger(byte[] chunk) throws ScriptException {
         if (chunk.length > 4)
             throw new ScriptException("Script attempted to use an integer larger than 4 bytes");
         return Utils.decodeMPI(Utils.reverseBytes(chunk), false);

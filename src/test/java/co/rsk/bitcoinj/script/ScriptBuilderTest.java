@@ -107,7 +107,7 @@ public class ScriptBuilderTest {
         assertEquals(expectedNumberOfChunks, chunks.size());
 
         int index = 0;
-        int actualThreshold = chunks.get(index++).decodeN();
+        int actualThreshold = chunks.get(index++).decodePositiveN();
         assertEquals(expectedThreshold, actualThreshold);
 
         List<byte[]> pubKeys = ecKeys.stream().map(BtcECKey::getPubKey).collect(Collectors.toList());
@@ -117,7 +117,7 @@ public class ScriptBuilderTest {
             index++;
         }
 
-        int actualTotalKeysNumber = chunks.get(index++).decodeN();
+        int actualTotalKeysNumber = chunks.get(index++).decodePositiveN();
         assertEquals(pubKeys.size(), actualTotalKeysNumber);
 
         int actualMultiSigOpCode = chunks.get(index).opcode;
