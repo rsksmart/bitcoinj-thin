@@ -23,7 +23,7 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
     @Override
     public int getM() {
         ScriptChunk firstChunk = redeemScriptChunks.get(0);
-        return firstChunk.decodeN();
+        return firstChunk.decodePositiveN();
     }
 
     @Override
@@ -78,6 +78,6 @@ public class StandardRedeemScriptParser implements RedeemScriptParser {
 
     private int getN() {
         ScriptChunk secondToLastChunk = redeemScriptChunks.get(redeemScriptChunks.size() - 2); // OP_N, last chunk is OP_CHECKMULTISIG
-        return secondToLastChunk.decodeN();
+        return secondToLastChunk.decodePositiveN();
     }
 }
