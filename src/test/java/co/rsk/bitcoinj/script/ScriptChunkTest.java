@@ -137,7 +137,7 @@ public class ScriptChunkTest {
     }
 
     @Test
-    public void decodePositiveN_withSmallNumber_returnsTrue() {
+    public void decodePositiveN_withPositiveSmallNumber_returnsExpectedNumber() {
         for (int i=1; i<16; i++) {
             ScriptBuilder builder = new ScriptBuilder();
             builder.number(i);
@@ -149,7 +149,7 @@ public class ScriptChunkTest {
     }
 
     @Test
-    public void decodePositiveN_withNumber_returnsTrue() {
+    public void decodePositiveN_withPositiveNumber_returnsExpectedNumber() {
         for (int n=0; n<10; n++) { // technically we could go up to Integer.MAX_VALUE, but it's not worth it to go that far
             int i = 1 << n; // i = 2^n
             ScriptBuilder builder = new ScriptBuilder();
@@ -159,6 +159,17 @@ public class ScriptChunkTest {
             ScriptChunk chunk = script.chunks.get(0);
             assertEquals(i, chunk.decodePositiveN());
         }
+    }
+
+    @Test
+    public void decodePositiveN_forZero_throwsNPE() {
+        int zero = 0;
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.number(zero);
+        Script script = builder.build();
+
+        ScriptChunk chunk = script.chunks.get(0);
+        assertThrows(NullPointerException.class, chunk::decodePositiveN);
     }
 
     @Test
@@ -175,7 +186,7 @@ public class ScriptChunkTest {
     }
 
     @Test
-    public void decodePositiveN_withNonPushData_throwsNPE() {
+    public void decodePositiveN_withNullPushData_throwsNPE() {
         ScriptChunk chunk = new ScriptChunk(OP_PUSHDATA1, null);
         assertThrows(NullPointerException.class, chunk::decodePositiveN);
 
@@ -183,9 +194,6 @@ public class ScriptChunkTest {
         assertThrows(NullPointerException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(OP_PUSHDATA4, null);
-        assertThrows(NullPointerException.class, chunk::decodePositiveN);
-
-        chunk = new ScriptChunk(ScriptOpCodes.OP_0, null);
         assertThrows(NullPointerException.class, chunk::decodePositiveN);
     }
 
@@ -198,6 +206,9 @@ public class ScriptChunkTest {
         assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, null);
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_DROP, null);
         assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
     }
 }
