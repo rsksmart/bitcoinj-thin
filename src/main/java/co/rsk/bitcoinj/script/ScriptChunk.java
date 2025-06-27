@@ -18,8 +18,8 @@
 package co.rsk.bitcoinj.script;
 
 import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.Objects.isNull;
 
 import co.rsk.bitcoinj.core.Utils;
 import com.google.common.base.Objects;
@@ -145,13 +145,16 @@ public class ScriptChunk {
         }
     }
 
-    public boolean isN() {
-        return isOpcodeSmallNumber() || isPushDataNumber();
-    }
+    public int decodePositiveN() {
+        if (isOpcodeSmallNumber()) {
+            return decodeOpN();
+        }
 
-    public boolean isOpCheckMultiSig() {
-        return isOpCode() &&
-            (opcode == ScriptOpCodes.OP_CHECKMULTISIG || opcode == ScriptOpCodes.OP_CHECKMULTISIGVERIFY);
+        if (isPushData()) {
+            return decodePositiveNConsideringEncoding();
+        }
+
+        throw new IllegalArgumentException("Cannot decode positive number from chunk");
     }
 
     private boolean isOpcodeSmallNumber() {
@@ -160,22 +163,25 @@ public class ScriptChunk {
             && opcode <= ScriptOpCodes.OP_16;
     }
 
-    private boolean isPushDataNumber() {
-        return isPushData()
-            && !isNull(data)
-            && data[0] >= 1;
+    public boolean isOpCheckMultiSig() {
+        return isOpCode() &&
+            (opcode == ScriptOpCodes.OP_CHECKMULTISIG || opcode == ScriptOpCodes.OP_CHECKMULTISIGVERIFY);
     }
 
-    public int decodeN() {
-        if (isOpCode()) {
-            return decodeOpN();
+    private int decodePositiveNConsideringEncoding() {
+        checkNotNull(data);
+        int dataLength = data.length;
+
+        int signByte = data[dataLength - 1] & 0x80;
+        boolean isPositive = signByte == 0;
+        if (!isPositive) {
+            throw new IllegalArgumentException("Number from chunk is not positive.");
         }
 
-        if (isN()) {
+        if (dataLength == 1) {
             return data[0];
         }
-
-        throw new IllegalArgumentException("Cannot decode number from chunk");
+        return Script.castToBigInteger(data).intValue(); // values down to Integer.MIN_VALUE and up to Integer.MAX_VALUE can be cast as ints
     }
 
     @Override
