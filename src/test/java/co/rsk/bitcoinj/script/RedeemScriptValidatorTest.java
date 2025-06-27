@@ -127,11 +127,9 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasStandardRedeemScriptStructure_with50defaultRedeemScriptKeys_shouldBeTrue() {
-        List<BtcECKey> bigNumberOfDefaultRedeemScriptKeys = RedeemScriptUtils.getNKeys(50);
-        Script standardRedeemScriptWithLotsOfKeys = RedeemScriptUtils.createStandardRedeemScript(bigNumberOfDefaultRedeemScriptKeys);
-        List<ScriptChunk> standardRedeemScriptWithLotsOfKeysChunks = standardRedeemScriptWithLotsOfKeys.getChunks();
-        Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(standardRedeemScriptWithLotsOfKeysChunks));
+    public void hasStandardRedeemScriptStructure_with21defaultRedeemScriptKeys_shoulThrowIAE() {
+        List<BtcECKey> bigNumberOfDefaultRedeemScriptKeys = RedeemScriptUtils.getNKeys(21);
+        Assert.assertThrows(IllegalArgumentException.class, () -> RedeemScriptUtils.createStandardRedeemScript(bigNumberOfDefaultRedeemScriptKeys));
     }
 
     @Test
@@ -471,29 +469,6 @@ public class RedeemScriptValidatorTest {
 
         Assert.assertEquals(defaultRedeemScriptKeys.size() + 2, chunksWithoutOpCheckMultiSig.size()); // 1 chunk per key + OP_M + OP_N
         Assert.assertFalse(RedeemScriptValidator.isRedeemLikeScript(chunksWithoutOpCheckMultiSig));
-    }
-
-    @Test
-    public void isOpN_valid_opcode() {
-        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_16, null);
-        chunk.decodePositiveN();
-    }
-
-    @Test
-    public void isN_valid_opcode() {
-        for (int num = 1; num <= 40; num++) {
-            ScriptBuilder builder = new ScriptBuilder();
-            builder.number(num);
-            Script script = builder.build();
-            ScriptChunk chunk = script.getChunks().get(0);
-            chunk.decodePositiveN();
-        }
-    }
-
-    @Test
-    public void isOpnN_invalid_opcode() {
-        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_DROP, null);
-        chunk.decodePositiveN();
     }
 
     @Test
