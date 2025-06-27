@@ -150,7 +150,7 @@ public class ScriptChunkTest {
 
     @Test
     public void decodePositiveN_withPositiveNumber_returnsExpectedNumber() {
-        for (int n=0; n<10; n++) { // technically we could go up to Integer.MAX_VALUE, but it's not worth it to go that far
+        for (int n=0; n<20; n++) { // technically we could go up to Integer.MAX_VALUE, but it's not worth it to go that far
             int i = 1 << n; // i = 2^n
             ScriptBuilder builder = new ScriptBuilder();
             builder.number(i);
@@ -174,7 +174,7 @@ public class ScriptChunkTest {
 
     @Test
     public void decodePositiveN_withNegativeNumber_throwsIAE() {
-        for (int n=0; n<10; n++) { // technically we could go down to Integer.MIN_VALUE, but it's not worth it to go that deep
+        for (int n=0; n<20; n++) { // technically we could go down to Integer.MIN_VALUE, but it's not worth it to go that deep
             int i = -(1 << n); // i = -(2^n)
             ScriptBuilder builder = new ScriptBuilder();
             builder.number(i);
