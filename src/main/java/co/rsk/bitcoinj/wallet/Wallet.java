@@ -658,9 +658,26 @@ public class Wallet
             if (req.signInputs)
                 signTransaction(req);
 
-            // Check size.
-            final int size = req.tx.unsafeBitcoinSerialize().length;
-            if (size > BtcTransaction.MAX_STANDARD_TX_SIZE)
+            // Check virtual size.
+            int baseSize = req.tx.unsafeBitcoinSerialize().length;
+            if (req.isSegwitCompatible) {
+                // in segwit-compatible, the scriptSig is a 36-bytes-fixed-size hash,
+                // so we should count its bytes manually.
+                int segwitCompatibleScriptSigSize = 36;
+                baseSize += req.tx.getInputs().size() * segwitCompatibleScriptSigSize;
+            }
+            int totalSize = baseSize;
+            if (!req.signInputs) {
+                if (!req.isSegwitCompatible) {
+                    baseSize += estimateBytesForSigning(bestCoinSelection);
+                    totalSize = baseSize;
+                } else {
+                    totalSize += estimateBytesForSigning(bestCoinSelection);
+                }
+            }
+
+            int virtualSize = calculateVirtualSize(baseSize, totalSize);
+            if (virtualSize > BtcTransaction.MAX_STANDARD_TX_SIZE)
                 throw new ExceededMaxTransactionSize();
 
             // Label the transaction as being a user requested payment. This can be used to render GUI wallet
@@ -731,7 +748,7 @@ public class Wallet
         Coin feePerKb,
         boolean ensureMinRequiredFee
     ) {
-        final int size = calculateTxSize(tx, isSegwit, coinSelection);
+        final int size = calculateTxSizeBeforeSigning(tx, isSegwit, coinSelection);
         Coin fee = feePerKb.multiply(size).divide(1000);
         if (ensureMinRequiredFee && fee.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
             fee = BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE;
@@ -1007,7 +1024,7 @@ public class Wallet
                 checkState(input.getScriptBytes().length == 0);
             }
 
-            int size = calculateTxSize(tx, req.isSegwitCompatible, selection);
+            int size = calculateTxSizeBeforeSigning(tx, req.isSegwitCompatible, selection);
 
             Coin feePerKb = req.feePerKb;
             if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
@@ -1026,32 +1043,28 @@ public class Wallet
         return result;
     }
 
-    private int calculateTxSize(BtcTransaction tx, boolean isSegwitCompatible, CoinSelection selection) {
-        int baseSize = calculateTxBaseSize(tx, isSegwitCompatible);
-        int totalSize = baseSize + estimateBytesForSigning(selection);
-
-        if (!isSegwitCompatible) {
-            return totalSize;
+    private int calculateTxSizeBeforeSigning(BtcTransaction tx, boolean isSegwitCompatible, CoinSelection bestCoinSelection) {
+        int baseSize = tx.unsafeBitcoinSerialize().length;
+        if (isSegwitCompatible) {
+            // in segwit-compatible, the scriptSig is a 36-bytes-fixed-size hash,
+            // so we should count its bytes manually.
+            int segwitCompatibleScriptSigSize = 36;
+            baseSize += tx.getInputs().size() * segwitCompatibleScriptSigSize;
         }
+        int totalSize = baseSize;
+        if (!isSegwitCompatible) {
+            baseSize += estimateBytesForSigning(bestCoinSelection);
+            totalSize = baseSize;
+        } else {
+            totalSize += estimateBytesForSigning(bestCoinSelection);
+        }
+        return calculateVirtualSize(baseSize, totalSize);
+    }
 
+    private int calculateVirtualSize(int baseSize, int totalSize) {
         // As described in BIP141
         int txWeight = totalSize + (3 * baseSize);
         return txWeight / 4;
-    }
-
-    private static int calculateTxBaseSize(BtcTransaction tx, boolean isSegwit) {
-        int baseSize = tx.unsafeBitcoinSerialize().length;
-        if (!isSegwit) {
-            return baseSize;
-        }
-
-        // at this time the script sig for every input is empty.
-        // in segwit-compatible, this is a 36-bytes-fixed-size hash,
-        // so we should count its bytes manually.
-        int segwitCompatibleScriptSigSize = 36;
-        baseSize += tx.getInputs().size() * segwitCompatibleScriptSigSize;
-
-        return baseSize;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
