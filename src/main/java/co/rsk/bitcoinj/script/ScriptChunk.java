@@ -25,6 +25,7 @@ import co.rsk.bitcoinj.core.Utils;
 import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.Arrays;
 import javax.annotation.Nullable;
 
@@ -145,13 +146,25 @@ public class ScriptChunk {
         }
     }
 
-    public boolean isN() {
-        return isOpcodeSmallNumber() || isPushDataNumber();
+    public boolean isPositiveN() {
+        try {
+            decodePositiveN();
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
-    public boolean isOpCheckMultiSig() {
-        return isOpCode() &&
-            (opcode == ScriptOpCodes.OP_CHECKMULTISIG || opcode == ScriptOpCodes.OP_CHECKMULTISIGVERIFY);
+    public int decodePositiveN() {
+        if (isOpcodeSmallNumber()) {
+            return decodeOpN();
+        }
+
+        if (isPushData()) {
+            return decodePositiveNConsideringEncoding();
+        }
+
+        throw new IllegalArgumentException("Cannot decode positive number from chunk");
     }
 
     private boolean isOpcodeSmallNumber() {
@@ -160,22 +173,28 @@ public class ScriptChunk {
             && opcode <= ScriptOpCodes.OP_16;
     }
 
-    private boolean isPushDataNumber() {
-        return isPushData()
-            && !isNull(data)
-            && data[0] >= 1;
+    public boolean isOpCheckMultiSig() {
+        return isOpCode() &&
+            (opcode == ScriptOpCodes.OP_CHECKMULTISIG || opcode == ScriptOpCodes.OP_CHECKMULTISIGVERIFY);
     }
 
-    public int decodeN() {
-        if (isOpCode()) {
-            return decodeOpN();
+    private int decodePositiveNConsideringEncoding() {
+        if (isNull(data)) {
+            throw new IllegalArgumentException("Chunk has null data.");
+        }
+        int dataLength = data.length;
+
+        int signByte = data[dataLength - 1] & 0x80;
+        boolean isPositive = signByte == 0;
+        if (!isPositive) {
+            throw new IllegalArgumentException("Number from chunk is not positive.");
         }
 
-        if (isN()) {
-            return data[0];
+        if (dataLength > 4) {
+            throw new IllegalArgumentException("Number from chunk has more than 4 bytes.");
         }
-
-        throw new IllegalArgumentException("Cannot decode number from chunk");
+        BigInteger bigInteger = Utils.decodeMPI(Utils.reverseBytes(data), false);
+        return bigInteger.intValue(); // values up to Integer.MAX_VALUE can be cast as ints
     }
 
     @Override

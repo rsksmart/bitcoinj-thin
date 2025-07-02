@@ -34,28 +34,26 @@ public class RedeemScriptValidator {
                 return false;
             }
 
-            // First chunk must be a number for the threshold
-            ScriptChunk firstChunk = chunks.get(0);
-            if (!firstChunk.isN()) {
-                return false;
-            }
-
+            // last chunk should be OP_CHECKMULTISIG
             int chunksSize = chunks.size();
             ScriptChunk lastChunk = chunks.get(chunksSize - 1);
             if (!lastChunk.isOpCheckMultiSig()) {
                 return false;
             }
 
-            // Second to last chunk must be a number too,
-            // and there should be that many data chunks (keys).
+            // First chunk must be a number for the threshold
+            ScriptChunk firstChunk = chunks.get(0);
+            // Second to last chunk must be a number for the keys
             int secondToLastChunkIndex = chunksSize - 2;
             ScriptChunk secondToLastChunk = chunks.get(secondToLastChunkIndex);
-            if (!secondToLastChunk.isN()) {
+
+            if (!(firstChunk.isPositiveN() && secondToLastChunk.isPositiveN())) {
                 return false;
             }
 
-            int numKeys = secondToLastChunk.decodeN();
-            if (numKeys < 1 || chunksSize != numKeys + 3) { // numKeys + M + N + OP_CHECKMULTISIG
+            int numKeys = secondToLastChunk.decodePositiveN();
+            // and there should be numKeys+3 total chunks (keys + OP_M + OP_N + OP_CHECKMULTISIG)
+            if (chunksSize != numKeys + 3) {
                 return false;
             }
 
@@ -67,7 +65,7 @@ public class RedeemScriptValidator {
 
             return true;
         } catch (IllegalStateException e) {
-            return false;   // Not a number
+            return false; // Not a number
         }
     }
 

@@ -23,6 +23,7 @@ public class RedeemScriptValidatorTest {
     private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(110));
     private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(220));
     private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(330));
+    private final BtcECKey ecKey4 = BtcECKey.fromPrivate(BigInteger.valueOf(440));
 
     private Script standardRedeemScript;
     private Script flyoverStandardRedeemScript;
@@ -127,11 +128,9 @@ public class RedeemScriptValidatorTest {
     }
 
     @Test
-    public void hasStandardRedeemScriptStructure_with50defaultRedeemScriptKeys_shouldBeTrue() {
-        List<BtcECKey> bigNumberOfDefaultRedeemScriptKeys = RedeemScriptUtils.getNKeys(50);
-        Script standardRedeemScriptWithLotsOfKeys = RedeemScriptUtils.createStandardRedeemScript(bigNumberOfDefaultRedeemScriptKeys);
-        List<ScriptChunk> standardRedeemScriptWithLotsOfKeysChunks = standardRedeemScriptWithLotsOfKeys.getChunks();
-        Assert.assertTrue(RedeemScriptValidator.hasStandardRedeemScriptStructure(standardRedeemScriptWithLotsOfKeysChunks));
+    public void hasStandardRedeemScriptStructure_with21defaultRedeemScriptKeys_shoulThrowIAE() {
+        List<BtcECKey> bigNumberOfDefaultRedeemScriptKeys = RedeemScriptUtils.getNKeys(21);
+        Assert.assertThrows(IllegalArgumentException.class, () -> RedeemScriptUtils.createStandardRedeemScript(bigNumberOfDefaultRedeemScriptKeys));
     }
 
     @Test
@@ -145,6 +144,46 @@ public class RedeemScriptValidatorTest {
             .build();
         List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
         Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScriptChunks));
+    }
+
+    @Test
+    public void hasStandardRedeemScriptStructure_withNegativeThreshold_shouldBeFalse() {
+        for (int n=0; n<20; n++) {
+            int i = -(1 << n); // i = -(2^n)
+            ScriptBuilder builder = new ScriptBuilder();
+            Script redeemScript = builder
+                .number(i)
+                .data(ecKey1.getPubKey())
+                .data(ecKey2.getPubKey())
+                .data(ecKey3.getPubKey())
+                .data(ecKey4.getPubKey())
+                .op(ScriptOpCodes.OP_4)
+                .op(ScriptOpCodes.OP_CHECKMULTISIG)
+                .build();
+
+            List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
+            Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScriptChunks));
+        }
+    }
+
+    @Test
+    public void hasStandardRedeemScriptStructure_withNegativeTotalKeys_shouldBeFalse() {
+        for (int n=0; n<20; n++) {
+            int i = -(1 << n); // i = -(2^n)
+            ScriptBuilder builder = new ScriptBuilder();
+            Script redeemScript = builder
+                .op(ScriptOpCodes.OP_4)
+                .data(ecKey1.getPubKey())
+                .data(ecKey2.getPubKey())
+                .data(ecKey3.getPubKey())
+                .data(ecKey4.getPubKey())
+                .number(i)
+                .op(ScriptOpCodes.OP_CHECKMULTISIG)
+                .build();
+
+            List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
+            Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScriptChunks));
+        }
     }
 
     @Test
@@ -471,29 +510,6 @@ public class RedeemScriptValidatorTest {
 
         Assert.assertEquals(defaultRedeemScriptKeys.size() + 2, chunksWithoutOpCheckMultiSig.size()); // 1 chunk per key + OP_M + OP_N
         Assert.assertFalse(RedeemScriptValidator.isRedeemLikeScript(chunksWithoutOpCheckMultiSig));
-    }
-
-    @Test
-    public void isOpN_valid_opcode() {
-        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_16, null);
-        Assert.assertTrue(chunk.isN());
-    }
-
-    @Test
-    public void isN_valid_opcode() {
-        for (int num = 1; num <= 40; num++) {
-            ScriptBuilder builder = new ScriptBuilder();
-            builder.number(num);
-            Script script = builder.build();
-            ScriptChunk chunk = script.getChunks().get(0);
-            Assert.assertTrue(chunk.isN());
-        }
-    }
-
-    @Test
-    public void isOpnN_invalid_opcode() {
-        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_DROP, null);
-        Assert.assertFalse(chunk.isN());
     }
 
     @Test
