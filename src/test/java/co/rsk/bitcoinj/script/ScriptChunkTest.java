@@ -144,6 +144,7 @@ public class ScriptChunkTest {
             Script script = builder.build();
 
             ScriptChunk chunk = script.chunks.get(0);
+            assertTrue(chunk.isPositiveN());
             assertEquals(i, chunk.decodePositiveN());
         }
     }
@@ -157,6 +158,7 @@ public class ScriptChunkTest {
             Script script = builder.build();
 
             ScriptChunk chunk = script.chunks.get(0);
+            assertTrue(chunk.isPositiveN());
             assertEquals(i, chunk.decodePositiveN());
         }
     }
@@ -169,7 +171,8 @@ public class ScriptChunkTest {
         Script script = builder.build();
 
         ScriptChunk chunk = script.chunks.get(0);
-        assertThrows(NullPointerException.class, chunk::decodePositiveN);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
     }
 
     @Test
@@ -181,6 +184,7 @@ public class ScriptChunkTest {
             Script script = builder.build();
 
             ScriptChunk chunk = script.chunks.get(0);
+            assertFalse(chunk.isPositiveN());
             assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
         }
     }
@@ -188,27 +192,34 @@ public class ScriptChunkTest {
     @Test
     public void decodePositiveN_withNullPushData_throwsNPE() {
         ScriptChunk chunk = new ScriptChunk(OP_PUSHDATA1, null);
-        assertThrows(NullPointerException.class, chunk::decodePositiveN);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(OP_PUSHDATA2, null);
-        assertThrows(NullPointerException.class, chunk::decodePositiveN);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(OP_PUSHDATA4, null);
-        assertThrows(NullPointerException.class, chunk::decodePositiveN);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
     }
 
     @Test
     public void decodePositiveN_withWrongOpcodes_throwsIAE() {
         ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null);
+        assertFalse(chunk.isPositiveN());
         assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null);
+        assertFalse(chunk.isPositiveN());
         assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, null);
+        assertFalse(chunk.isPositiveN());
         assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
 
         chunk = new ScriptChunk(ScriptOpCodes.OP_DROP, null);
+        assertFalse(chunk.isPositiveN());
         assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
     }
 }
