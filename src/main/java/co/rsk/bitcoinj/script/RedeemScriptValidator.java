@@ -52,8 +52,8 @@ public class RedeemScriptValidator {
             }
 
             int numKeys = secondToLastChunk.decodePositiveN();
-            // and there should be as many data chunks as keys
-            if (numKeys < 1 || chunksSize != numKeys + 3) { // numKeys + M + N + OP_CHECKMULTISIG
+            // and there should be numKeys+3 total chunks (keys + OP_M + OP_N + OP_CHECKMULTISIG)
+            if (chunksSize != numKeys + 3) {
                 return false;
             }
 
@@ -65,7 +65,7 @@ public class RedeemScriptValidator {
 
             return true;
         } catch (IllegalStateException e) {
-            return false;   // Not a number
+            return false; // Not a number
         }
     }
 
