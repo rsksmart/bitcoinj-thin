@@ -164,9 +164,9 @@ public class ScriptChunkTest {
     }
 
     @Test
-    public void decodePositiveN_forZero_throwsNPE() {
-        int zero = 0;
+    public void decodePositiveN_forZero_throwsIAE() {
         ScriptBuilder builder = new ScriptBuilder();
+        int zero = 0;
         builder.number(zero);
         Script script = builder.build();
 
@@ -190,7 +190,19 @@ public class ScriptChunkTest {
     }
 
     @Test
-    public void decodePositiveN_withNullPushData_throwsNPE() {
+    public void decodePositiveN_withNumberLargerThan4Bytes_throwsIAE() {
+        long i = 1L << 32;
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.number(i);
+        Script script = builder.build();
+
+        ScriptChunk chunk = script.chunks.get(0);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+    }
+
+    @Test
+    public void decodePositiveN_withNullPushData_throwsIAE() {
         ScriptChunk chunk = new ScriptChunk(OP_PUSHDATA1, null);
         assertFalse(chunk.isPositiveN());
         assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);

@@ -21,7 +21,6 @@ import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
 
-import co.rsk.bitcoinj.core.ScriptException;
 import co.rsk.bitcoinj.core.Utils;
 import com.google.common.base.Objects;
 import java.io.IOException;
@@ -151,7 +150,7 @@ public class ScriptChunk {
         try {
             decodePositiveN();
             return true;
-        } catch(IllegalArgumentException | ScriptException e) {
+        } catch (IllegalArgumentException e) {
             return false;
         }
     }
@@ -191,14 +190,11 @@ public class ScriptChunk {
             throw new IllegalArgumentException("Number from chunk is not positive.");
         }
 
-        return castToBigInteger(data).intValue(); // values up to Integer.MAX_VALUE can be cast as ints
-    }
-
-    // copied implementation from Script.castToBigInteger to avoid circular dependency
-    private static BigInteger castToBigInteger(byte[] chunk) throws ScriptException {
-        if (chunk.length > 4)
-            throw new ScriptException("Script attempted to use an integer larger than 4 bytes");
-        return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
+        if (dataLength > 4) {
+            throw new IllegalArgumentException("Number from chunk has more than 4 bytes.");
+        }
+        BigInteger bigInteger = Utils.decodeMPI(Utils.reverseBytes(data), false);
+        return bigInteger.intValue(); // values up to Integer.MAX_VALUE can be cast as ints
     }
 
     @Override
