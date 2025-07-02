@@ -22,15 +22,7 @@ import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import co.rsk.bitcoinj.core.Address;
-import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.BtcTransaction;
-import co.rsk.bitcoinj.core.NetworkParameters;
-import co.rsk.bitcoinj.core.ProtocolException;
-import co.rsk.bitcoinj.core.ScriptException;
-import co.rsk.bitcoinj.core.Sha256Hash;
-import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
-import co.rsk.bitcoinj.core.Utils;
+import co.rsk.bitcoinj.core.*;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -40,14 +32,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +82,9 @@ public class Script {
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
+
+    /** The maximum size in bytes of a standard witnessScript */
+    public static final long MAX_STANDARD_P2WSH_SCRIPT_SIZE = 3600;
     public static final int SIG_SIZE = 75;
     /** Max number of sigops allowed in a standard p2sh redeem script */
     public static final int MAX_P2SH_SIGOPS = 15;
@@ -459,17 +447,23 @@ public class Script {
      * Returns a copy of the given scriptSig with the signature inserted in the given position.
      */
     public Script getScriptSigWithSignature(Script scriptSig, byte[] sigBytes, int index) {
-        int sigsPrefixCount = 0;
-        int sigsSuffixCount = 0;
-        if (isPayToScriptHash()) {
-            sigsPrefixCount = 1; // OP_0 <sig>* <redeemScript>
-            sigsSuffixCount = 1;
-        } else if (isSentToMultiSig()) {
-            sigsPrefixCount = 1; // OP_0 <sig>*
-        } else if (isSentToAddress()) {
-            sigsSuffixCount = 1; // <sig> <pubkey>
-        }
+        int sigsPrefixCount = getSigsPrefixCount();
+        int sigsSuffixCount = getSigsSuffixCount();
         return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, sigsPrefixCount, sigsSuffixCount);
+    }
+
+    public int getSigsPrefixCount() {
+        if (isPayToScriptHash() || isSentToMultiSig()) { // OP_0 <sig>* || OP_0 <sig>*
+            return 1;
+        }
+        return 0;
+    }
+
+    public int getSigsSuffixCount() {
+        if (isPayToScriptHash() || isSentToAddress()) {  // <sig>* <redeemScript> || <sig> <pubkey>
+            return 1;
+        }
+        return 0;
     }
 
     private RedeemScriptParser getRedeemScriptParser() {
@@ -554,22 +548,24 @@ public class Script {
 
     static int decodeFromOpN(int opcode) {
         checkArgument((opcode == OP_0 || opcode == OP_1NEGATE) || (opcode >= OP_1 && opcode <= OP_16), "decodeFromOpN called on non OP_N opcode");
-        if (opcode == OP_0)
+        if (opcode == OP_0) {
             return 0;
-        else if (opcode == OP_1NEGATE)
+        } else if (opcode == OP_1NEGATE) {
             return -1;
-        else
+        } else {
             return opcode + 1 - OP_1;
+        }
     }
 
     static int encodeToOpN(int value) {
         checkArgument(value >= -1 && value <= 16, "encodeToOpN called for " + value + " which we cannot encode in an opcode.");
-        if (value == 0)
+        if (value == 0) {
             return OP_0;
-        else if (value == -1)
+        } else if (value == -1) {
             return OP_1NEGATE;
-        else
+        } else {
             return value - 1 + OP_1;
+        }
     }
 
     /**

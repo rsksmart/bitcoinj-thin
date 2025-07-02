@@ -1,12 +1,14 @@
 package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.crypto.TransactionSignature;
+import co.rsk.bitcoinj.script.RedeemScriptParser;
+import co.rsk.bitcoinj.script.RedeemScriptParserFactory;
+import co.rsk.bitcoinj.script.Script;
+import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import static com.google.common.base.Preconditions.checkState;
 
 public class TransactionWitness {
     static TransactionWitness empty = new TransactionWitness(0);
@@ -66,6 +68,105 @@ public class TransactionWitness {
             return pushes.get(pushes.size() - 1);
     }
 
+    /**
+     replicated logic from {@link Script#getSigInsertionIndex}
+     * */
+    public int getSigInsertionIndex(Sha256Hash sigHash, BtcECKey signingKey) {
+        int witnessSize = getPushCount();
+        int redeemScriptIndex = witnessSize - 1;
+        byte[] redeemScriptData = getPush(redeemScriptIndex);
+        Script redeemScript = new Script(redeemScriptData);
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+
+        int sigInsertionIndex = 0;
+        int keyIndexInRedeem = redeemScriptParser.findKeyInRedeem(signingKey);
+
+        byte[] emptyByte = new byte[]{};
+        // the pushes that should have the signatures
+        // are between first one (empty byte for checkmultisig bug)
+        // and second to last one (op_notif + redeem script)
+        for (int i = 1; i < getPushCount() - 1; i ++) {
+            byte[] push = getPush(i);
+            Preconditions.checkNotNull(push);
+            if (!Arrays.equals(push, emptyByte)) {
+                if (keyIndexInRedeem < redeemScriptParser.findSigInRedeem(push, sigHash)) {
+                    return sigInsertionIndex;
+                }
+
+                sigInsertionIndex++;
+            }
+        }
+
+        return sigInsertionIndex;
+    }
+
+    /**
+        replicated logic from {@link Script#getScriptSigWithSignature}
+    * */
+    public TransactionWitness updateWitnessWithSignature(Script outputScript, byte[] signature, int targetIndex) {
+        int sigsPrefixCount = outputScript.getSigsPrefixCount();
+        int sigsSuffixCount = outputScript.getSigsSuffixCount();
+        return updateWitnessWithSignature(signature, targetIndex, sigsPrefixCount, sigsSuffixCount);
+    }
+
+    /**
+        replicated logic from {@link co.rsk.bitcoinj.script.ScriptBuilder#updateScriptWithSignature}
+     * */
+    private TransactionWitness updateWitnessWithSignature(byte[] signature, int targetIndex, int sigsPrefixCount, int sigsSuffixCount) {
+        int totalPushes = getPushCount();
+
+        byte[] emptyByte = new byte[]{};
+        // since we fill the signatures in order, checking
+        // the second to last push is enough to know
+        // if there's space for new signatures
+        byte[] secondToLastPush = getPush(totalPushes - sigsSuffixCount - 1);
+        boolean hasMissingSigs = Arrays.equals(secondToLastPush, emptyByte);
+        Preconditions.checkArgument(hasMissingSigs, "Witness script is already filled with signatures");
+
+        List<byte[]> updatedPushes = new ArrayList<>();
+        // the signatures appear after the prefix
+        for (int i = 0; i < sigsPrefixCount; i++) {
+            byte[] push = getPush(i);
+            updatedPushes.add(push);
+        }
+
+        int index = 0;
+        boolean inserted = false;
+        // copy existing sigs
+        for (int i = sigsPrefixCount; i < totalPushes - sigsSuffixCount; i++) {
+            if (index == targetIndex) {
+                inserted = true;
+                updatedPushes.add(signature);
+                ++index;
+            }
+
+            byte[] push = getPush(i);
+            if (!Arrays.equals(push, emptyByte)) {
+                updatedPushes.add(push);
+                ++index;
+            }
+        }
+
+        // add zeros for missing signatures
+        while (index < totalPushes - sigsPrefixCount - sigsSuffixCount) {
+            if (index == targetIndex) {
+                inserted = true;
+                updatedPushes.add(signature);
+            } else {
+                updatedPushes.add(emptyByte);
+            }
+            index++;
+        }
+
+        // copy the suffix
+        for (int i = totalPushes - sigsSuffixCount; i < totalPushes; i++) {
+            byte[] push = getPush(i);
+            updatedPushes.add(push);
+        }
+
+        checkState(inserted);
+        return TransactionWitness.of(updatedPushes);
+    }
 
     @Override
     public boolean equals(Object otherObject) {

@@ -5,6 +5,7 @@ import static co.rsk.bitcoinj.script.RedeemScriptValidator.removeOpCheckMultisig
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.Utils;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -102,18 +103,19 @@ public final class RedeemScriptUtils {
     }
 
     public static List<BtcECKey> getDefaultRedeemScriptKeys() {
-        List<BtcECKey> keys = Arrays.asList(
-            BtcECKey.fromPrivate(BigInteger.valueOf(100)),
-            BtcECKey.fromPrivate(BigInteger.valueOf(200)),
-            BtcECKey.fromPrivate(BigInteger.valueOf(300)),
-            BtcECKey.fromPrivate(BigInteger.valueOf(400)),
-            BtcECKey.fromPrivate(BigInteger.valueOf(500)),
-            BtcECKey.fromPrivate(BigInteger.valueOf(600)),
-            BtcECKey.fromPrivate(BigInteger.valueOf(700)),
-            BtcECKey.fromPrivate(BigInteger.valueOf(800)),
-            BtcECKey.fromPrivate(BigInteger.valueOf(900))
-        );
+        List<BtcECKey> keys = getNKeys(20);
         keys.sort(BtcECKey.PUBKEY_COMPARATOR);
+
+        return keys;
+    }
+
+    public static List<BtcECKey> getNKeys(int n) {
+        ArrayList<BtcECKey> keys = new ArrayList<>(n);
+        for (int i = 1; i <= n; i++) {
+            long seed = i * 100;
+            BtcECKey btcECKey = BtcECKey.fromPrivate(BigInteger.valueOf(seed));
+            keys.add(btcECKey);
+        }
 
         return keys;
     }

@@ -23,21 +23,8 @@ import static co.rsk.bitcoinj.script.ScriptOpCodes.*;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.*;
 
-import co.rsk.bitcoinj.core.Address;
-import co.rsk.bitcoinj.core.BtcECKey;
-import co.rsk.bitcoinj.core.BtcTransaction;
+import co.rsk.bitcoinj.core.*;
 import co.rsk.bitcoinj.core.BtcTransaction.SigHash;
-import co.rsk.bitcoinj.core.Coin;
-import co.rsk.bitcoinj.core.MessageSerializer;
-import co.rsk.bitcoinj.core.NetworkParameters;
-import co.rsk.bitcoinj.core.ScriptException;
-import co.rsk.bitcoinj.core.Sha256Hash;
-import co.rsk.bitcoinj.core.TransactionInput;
-import co.rsk.bitcoinj.core.TransactionOutPoint;
-import co.rsk.bitcoinj.core.TransactionOutput;
-import co.rsk.bitcoinj.core.UnsafeByteArrayOutputStream;
-import co.rsk.bitcoinj.core.Utils;
-import co.rsk.bitcoinj.core.VerificationException;
 import co.rsk.bitcoinj.crypto.TransactionSignature;
 import co.rsk.bitcoinj.params.MainNetParams;
 import co.rsk.bitcoinj.script.Script.ScriptType;
@@ -52,8 +39,6 @@ import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
-
 import org.hamcrest.core.IsNot;
 import org.junit.Assert;
 import org.junit.Test;
@@ -807,6 +792,261 @@ public class ScriptTest {
         );
 
         assertScriptIsMultiSig(nonStandardErpRedeemScript);
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenP2PKOutputScript_shouldReturnZero() {
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        Script p2pkScript = ScriptBuilder.createOutputScript(signer);
+        assertEquals(0, p2pkScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenP2PKOutputScript_shouldReturnZero() {
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        Script p2pkScript = ScriptBuilder.createOutputScript(signer);
+        assertEquals(0, p2pkScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenMultiSigOutputScript_shouldReturnOne() {
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        BtcECKey signer2 = FEDERATION_KEYS.get(1);
+        Script multisigOutputScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(signer, signer2));
+        assertEquals(1, multisigOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenMultiSigOutputScript_shouldReturnZero() {
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        BtcECKey signer2 = FEDERATION_KEYS.get(1);
+        Script multisigOutputScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(signer, signer2));
+        assertEquals(0, multisigOutputScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenP2shMultisigOutputScript_shouldReturnOne() {
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        BtcECKey signer2 = FEDERATION_KEYS.get(1);
+        Script p2shMultisigOutputScript = ScriptBuilder.createP2SHOutputScript(2, Arrays.asList(signer, signer2));
+        assertEquals(1, p2shMultisigOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenP2shMultisigOutputScript_shouldReturnOne() {
+        BtcECKey signer = FEDERATION_KEYS.get(0);
+        BtcECKey signer2 = FEDERATION_KEYS.get(1);
+        Script p2shMultisigOutputScript = ScriptBuilder.createP2SHOutputScript(2, Arrays.asList(signer, signer2));
+        assertEquals(1, p2shMultisigOutputScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenP2shErpRedeemScript_withP2SHOutputScript_shouldBothReturnOne() {
+        Script p2shErpRedeemScript = createP2shErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(p2shErpRedeemScript);
+
+        assertEquals(1, p2shErpRedeemScript.getSigsPrefixCount());
+        assertEquals(1, p2shOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenP2shErpRedeemScript_withP2SHOutputScript_shouldReturnZeroAndOne() {
+        Script p2shErpRedeemScript = createP2shErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        // Actually it should be 2 (redeemScript + OP_NOTIF)
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(p2shErpRedeemScript);
+
+        assertEquals(0, p2shErpRedeemScript.getSigsSuffixCount());
+        assertEquals(1, p2shOutputScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenFlyoverStandardRedeemScript_withP2SHOutputScript_shouldBothReturnOne() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+
+        assertEquals(1, flyoverRedeemScript.getSigsPrefixCount());
+        assertEquals(1, p2shOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenFlyoverStandardRedeemScript_withP2SHOutputScript_shouldReturnZeroAndOne() {
+        Script redeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+
+        assertEquals(0, flyoverRedeemScript.getSigsSuffixCount());
+        assertEquals(1, p2shOutputScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenFlyoverNonStandardErpRedeemScript_withP2SHOutputScript_shouldBothReturnOne() {
+        Script nonStandardErpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            nonStandardErpRedeemScript
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+
+        assertEquals(1, flyoverRedeemScript.getSigsPrefixCount());
+        assertEquals(1, p2shOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenFlyoverNonStandardErpRedeemScript_withP2SHOutputScript_shouldReturnZeroAndOne() {
+        Script nonStandardErpRedeemScript = RedeemScriptUtils.createNonStandardErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            nonStandardErpRedeemScript
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+
+        assertEquals(0, flyoverRedeemScript.getSigsSuffixCount());
+        assertEquals(1, p2shOutputScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenFlyoverP2shErpRedeemScript_withP2SHOutputScript_shouldBothReturnOne() {
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+
+        assertEquals(1, flyoverRedeemScript.getSigsPrefixCount());
+        assertEquals(1, p2shOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenFlyoverP2shErpRedeemScript_withP2SHOutputScript_shouldReturnZeroAndOne() {
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
+        );
+
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(flyoverRedeemScript);
+
+        assertEquals(0, flyoverRedeemScript.getSigsSuffixCount());
+        assertEquals(1, p2shOutputScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenStandardRedeemScript_withP2SHOutputScript_shouldBothReturnOne() {
+        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
+        Script standardP2SHOutputScript = ScriptBuilder.createP2SHOutputScript(standardRedeemScript);
+
+        assertEquals(1, standardRedeemScript.getSigsPrefixCount());
+        assertEquals(1, standardP2SHOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenStandardRedeemScript_withP2SHOutputScript_shouldReturnZeroAndOne() {
+        Script standardRedeemScript = RedeemScriptUtils.createStandardRedeemScript(FEDERATION_KEYS);
+        Script standardP2SHOutputScript = ScriptBuilder.createP2SHOutputScript(standardRedeemScript);
+
+        assertEquals(0, standardRedeemScript.getSigsSuffixCount());
+        assertEquals(1, standardP2SHOutputScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenNonStandardRedeemScript_withP2SHOutputScript_shouldBothReturnOne() {
+        Script nonStandardErpRedeemScript = createNonStandardErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script standardP2SHOutputScript = ScriptBuilder.createP2SHOutputScript(nonStandardErpRedeemScript);
+
+        assertEquals(1, nonStandardErpRedeemScript.getSigsPrefixCount());
+        assertEquals(1, standardP2SHOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenNonStandardRedeemScript_withP2SHOutputScript_shouldReturnZeroAndOne() {
+        Script nonStandardErpRedeemScript = createNonStandardErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script standardP2SHOutputScript = ScriptBuilder.createP2SHOutputScript(nonStandardErpRedeemScript);
+
+        assertEquals(0, nonStandardErpRedeemScript.getSigsSuffixCount());
+        assertEquals(1, standardP2SHOutputScript.getSigsSuffixCount());
+    }
+
+    @Test
+    public void getSigsPrefixCount_whenStandardRedeemScript_withP2SHP2WSHOutputScript_shouldReturnOne() {
+        Script standardErpRedeemScript = createP2shErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script standardP2SHP2WSHOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(standardErpRedeemScript);
+
+        assertEquals(1, standardErpRedeemScript.getSigsPrefixCount());
+        assertEquals(1, standardP2SHP2WSHOutputScript.getSigsPrefixCount());
+    }
+
+    @Test
+    public void getSigsSuffixCount_whenStandardRedeemScript_withP2SHP2WSHOutputScript_shouldReturnOne() {
+        Script standardErpRedeemScript = createP2shErpRedeemScript(
+            FEDERATION_KEYS,
+            ERP_FEDERATION_KEYS,
+            CSV_VALUE
+        );
+
+        Script standardP2SHP2WSHOutputScript = ScriptBuilder.createP2SHP2WSHOutputScript(standardErpRedeemScript);
+
+        assertEquals(0, standardErpRedeemScript.getSigsSuffixCount());
+        assertEquals(1, standardP2SHP2WSHOutputScript.getSigsSuffixCount());
     }
 
     @Test
