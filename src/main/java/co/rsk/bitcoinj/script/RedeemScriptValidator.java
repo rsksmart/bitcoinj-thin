@@ -46,15 +46,12 @@ public class RedeemScriptValidator {
             // Second to last chunk must be a number for the keys
             int secondToLastChunkIndex = chunksSize - 2;
             ScriptChunk secondToLastChunk = chunks.get(secondToLastChunkIndex);
-            int numKeys;
 
-            try {
-                firstChunk.decodePositiveN();
-                numKeys = secondToLastChunk.decodePositiveN();
-            } catch (IllegalArgumentException e) {
+            if (!(firstChunk.isPositiveN() && secondToLastChunk.isPositiveN())) {
                 return false;
             }
 
+            int numKeys = secondToLastChunk.decodePositiveN();
             // and there should be as many data chunks as keys
             if (numKeys < 1 || chunksSize != numKeys + 3) { // numKeys + M + N + OP_CHECKMULTISIG
                 return false;
