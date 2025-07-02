@@ -23,6 +23,7 @@ public class RedeemScriptValidatorTest {
     private final BtcECKey ecKey1 = BtcECKey.fromPrivate(BigInteger.valueOf(110));
     private final BtcECKey ecKey2 = BtcECKey.fromPrivate(BigInteger.valueOf(220));
     private final BtcECKey ecKey3 = BtcECKey.fromPrivate(BigInteger.valueOf(330));
+    private final BtcECKey ecKey4 = BtcECKey.fromPrivate(BigInteger.valueOf(440));
 
     private Script standardRedeemScript;
     private Script flyoverStandardRedeemScript;
@@ -143,6 +144,46 @@ public class RedeemScriptValidatorTest {
             .build();
         List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
         Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScriptChunks));
+    }
+
+    @Test
+    public void hasStandardRedeemScriptStructure_withNegativeThreshold_shouldBeFalse() {
+        for (int n=0; n<20; n++) {
+            int i = -(1 << n); // i = -(2^n)
+            ScriptBuilder builder = new ScriptBuilder();
+            Script redeemScript = builder
+                .number(i)
+                .data(ecKey1.getPubKey())
+                .data(ecKey2.getPubKey())
+                .data(ecKey3.getPubKey())
+                .data(ecKey4.getPubKey())
+                .op(ScriptOpCodes.OP_4)
+                .op(ScriptOpCodes.OP_CHECKMULTISIG)
+                .build();
+
+            List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
+            Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScriptChunks));
+        }
+    }
+
+    @Test
+    public void hasStandardRedeemScriptStructure_withNegativeTotalKeys_shouldBeFalse() {
+        for (int n=0; n<20; n++) {
+            int i = -(1 << n); // i = -(2^n)
+            ScriptBuilder builder = new ScriptBuilder();
+            Script redeemScript = builder
+                .op(ScriptOpCodes.OP_4)
+                .data(ecKey1.getPubKey())
+                .data(ecKey2.getPubKey())
+                .data(ecKey3.getPubKey())
+                .data(ecKey4.getPubKey())
+                .number(i)
+                .op(ScriptOpCodes.OP_CHECKMULTISIG)
+                .build();
+
+            List<ScriptChunk> redeemScriptChunks = redeemScript.getChunks();
+            Assert.assertFalse(RedeemScriptValidator.hasStandardRedeemScriptStructure(redeemScriptChunks));
+        }
     }
 
     @Test
