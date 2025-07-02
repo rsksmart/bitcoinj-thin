@@ -1,6 +1,7 @@
 package co.rsk.bitcoinj.wallet;
 
 import co.rsk.bitcoinj.core.*;
+import co.rsk.bitcoinj.params.UnitTestParams;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
 import org.junit.Test;
@@ -51,6 +52,9 @@ public class WalletTest {
     private SendRequest sr;
 
     private void setUp(Script scriptPubKey) {
+        // network is UNITTESTNET by default and we need it to match wallet impl network
+        Context.propagate(new Context(TESTNET));
+
         wallet = new Wallet(TESTNET) {
             @Override
             public RedeemData findRedeemDataFromScriptHash(byte[] payToScriptHash) {
