@@ -9,9 +9,7 @@ import org.spongycastle.util.encoders.Hex;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.*;
 
 public class WalletTest {
     // data from tx https://mempool.space/testnet/tx/1744459aeaf7369aadc9fc40de9ab2bf575b14e35029b35a7ee4bbd3de65af7f
@@ -82,8 +80,8 @@ public class WalletTest {
         List<UTXO> utxos = new ArrayList<>();
         for (int i = 0; i < AMOUNT_OF_UTXOS_TO_USE; i++) {
             String hash = "hash" + "i";
-            Sha256Hash UTXO_HASH = Sha256Hash.of(hash.getBytes(StandardCharsets.UTF_8));
-            UTXO utxo = new UTXO(UTXO_HASH, i, AMOUNT_IN_EACH_UTXO, 10, false, scriptPubKey);
+            Sha256Hash utxoHash = Sha256Hash.of(hash.getBytes(StandardCharsets.UTF_8));
+            UTXO utxo = new UTXO(utxoHash, i, AMOUNT_IN_EACH_UTXO, 10, false, scriptPubKey);
             utxos.add(utxo);
         }
 
@@ -123,11 +121,12 @@ public class WalletTest {
         wallet.completeTx(sr);
 
         // assert
-        double expectedSize = 375;
+        double realSize = 375;
+        int expectedCalculatedSize = 340;
         // for legacy tx, the calculation has a 10% diff approx,
         // but we have to keep the same implementation for backwards compatibility
         double allowedPercentageError = 10.0;
-        assertCalculatedSizeIsCloseToExpectedSize(expectedSize, allowedPercentageError);
+        assertCalculatedSizeIsCloseToExpectedSize(realSize, allowedPercentageError, expectedCalculatedSize);
     }
 
     @Test
@@ -148,10 +147,11 @@ public class WalletTest {
         wallet.completeTx(sr);
 
         // assert
-        double expectedSize = 183.75;
+        double realSize = 183.75;
+        int expectedCalculatedSize = 184;
         // for segwit, the calculation seems to be pretty accurate
         double allowedPercentageError = 1.0;
-        assertCalculatedSizeIsCloseToExpectedSize(expectedSize, allowedPercentageError);
+        assertCalculatedSizeIsCloseToExpectedSize(realSize, allowedPercentageError, expectedCalculatedSize);
     }
 
     @Test
@@ -176,8 +176,8 @@ public class WalletTest {
         assertThrows(Wallet.ExceededMaxTransactionSize.class, () -> wallet.completeTx(sr));
     }
 
-    private void assertCalculatedSizeIsCloseToExpectedSize(double expectedSize, double allowedPercentageError) {
-        double allowedError = Math.ceil(expectedSize * allowedPercentageError / 100);
+    private void assertCalculatedSizeIsCloseToExpectedSize(double realSize, double allowedPercentageError, int expectedCalculatedSize) {
+        double allowedError = Math.ceil(realSize * allowedPercentageError / 100);
 
         Coin availableAmount = AMOUNT_IN_EACH_UTXO.multiply(AMOUNT_OF_UTXOS_TO_USE);
         Coin actualValueSent = tx.getOutputs().get(0).getValue();
@@ -185,8 +185,9 @@ public class WalletTest {
         // fee = (tx size * feePerKb) / 1000 => fee = (tx size * 10_000) / 1000
         // => fee = tx size * 10 => tx size = fee / 10
         long size = fee.divide(10L).getValue();
+        assertEquals(expectedCalculatedSize, size); // to make the test deterministic
 
-        double diff = Math.abs(expectedSize - size);
+        double diff = Math.abs(realSize - size);
         assertTrue(diff <= allowedError);
     }
 }
