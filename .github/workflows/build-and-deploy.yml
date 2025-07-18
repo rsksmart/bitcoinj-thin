@@ -1,0 +1,62 @@
+name: Build and push to S3
+
+# This workflow is to be triggered manually.
+on:
+  workflow_dispatch:
+
+# Declare default permissions as read only.
+jobs:
+  build-and-push:
+    permissions: 
+      contents: read
+      id-token: write
+    environment: bitcoinj-thin-cd
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'   # Or 'zulu', 'adopt', etc., if you prefer
+        java-version: '8'
+
+    - name: Install required tools
+      run: |
+        sudo apt-get update && \
+        sudo apt-get install -qq --no-install-recommends strip-nondeterminism
+
+    - name: Reproducible Build with Maven
+      run: |
+        mvn clean package -DskipTests && \
+        strip-nondeterminism ./target/bitcoinj-thin-* && \
+        md5sum ./target/bitcoinj-thin-* >md5sums-1 && \
+        rm -f ./target/bitcoinj-thin-* && \
+        mvn clean package -DskipTests && \
+        strip-nondeterminism ./target/bitcoinj-thin-* && \
+        md5sum ./target/bitcoinj-thin-* >md5sums-2 && \
+        cmp md5sums-1 md5sums-2
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: 'us-east-1'  
+
+    - name: Upload to S3
+      run: |
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout) && \
+        GROUP_ID="org.bitcoinj" && \
+        ARTIFACT_ID="bitcoinj-thin" && \
+        cp pom.xml bitcoinj-thin-${VERSION}.pom && \
+        cp target/bitcoinj-thin-${VERSION}.jar ./bitcoinj-thin-${VERSION}.jar && \
+        aws s3 sync . s3://rsk-repository/co/rsk/bitcoinj/bitcoinj-thin/${VERSION} \
+          --exclude "*" \
+          --include "bitcoinj-thin-${VERSION}.jar" \
+          --include "bitcoinj-thin-${VERSION}.pom" && \
+        if [[ "${VERSION}" == *-SNAPSHOT ]]; then \
+          echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata><groupId>${GROUP_ID}</groupId><artifactId>${ARTIFACT_ID}</artifactId><versioning><latest>${VERSION}</latest><release>${VERSION}</release><versions><version>${VERSION}</version></versions><lastUpdated>$(date +%Y%m%d%H%M%S)</lastUpdated></versioning></metadata>" > maven-metadata.xml && \
+          aws s3 cp maven-metadata.xml s3://rsk-repository/co/rsk/bitcoinj/bitcoinj-thin/${VERSION}/maven-metadata.xml
+        fi
