@@ -19,7 +19,9 @@ package co.rsk.bitcoinj.script;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
 import static co.rsk.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -45,5 +47,191 @@ public class ScriptChunkTest {
         assertFalse("push of 75 bytes", new ScriptChunk(OP_PUSHDATA1, new byte[75]).isShortestPossiblePushData());
         assertFalse("push of 255 bytes", new ScriptChunk(OP_PUSHDATA2, new byte[255]).isShortestPossiblePushData());
         assertFalse("push of 65535 bytes", new ScriptChunk(OP_PUSHDATA4, new byte[65535]).isShortestPossiblePushData());
+    }
+
+    @Test
+    public void isOpCheckMultiSig_withNullData_returnsTrue() {
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null);
+        assertTrue(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIGVERIFY, null);
+        assertTrue(chunk.isOpCheckMultiSig());
+    }
+
+    @Test
+    public void isOpCheckMultiSig_withEmptyData_returnsTrue() {
+        byte[] emptyData = new byte[]{};
+
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, emptyData);
+        assertTrue(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIGVERIFY, emptyData);
+        assertTrue(chunk.isOpCheckMultiSig());
+    }
+
+    @Test
+    public void isOpCheckMultiSig_withData_returnsTrue() {
+        byte[] randomData = new byte[]{1, 2, 3};
+
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, randomData);
+        assertTrue(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIGVERIFY, randomData);
+        assertTrue(chunk.isOpCheckMultiSig());
+    }
+
+    @Test
+    public void isOpCheckMultiSig_withNonOpCheckMultiSig_nullData_returnsFalse() {
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, null);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_0, null);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_1, null);
+        assertFalse(chunk.isOpCheckMultiSig());
+    }
+
+    @Test
+    public void isOpCheckMultiSig_withNonOpCheckMultiSig_emptyData_returnsFalse() {
+        byte[] emptyData = new byte[]{};
+
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, emptyData);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, emptyData);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_0, emptyData);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_1, emptyData);
+        assertFalse(chunk.isOpCheckMultiSig());
+    }
+
+    @Test
+    public void isOpCheckMultiSig_withNonOpCheckMultiSig_withData_returnsFalse() {
+        byte[] randomData = new byte[]{1, 2, 3};
+
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, randomData);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, randomData);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_0, randomData);
+        assertFalse(chunk.isOpCheckMultiSig());
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_1, randomData);
+        assertFalse(chunk.isOpCheckMultiSig());
+    }
+
+    @Test
+    public void isOpCheckMultiSig_withNonOpCode_returnsFalse() {
+        ScriptChunk chunk = new ScriptChunk(OP_PUSHDATA1, null);
+        assertFalse(chunk.isOpCode());
+        assertFalse(chunk.isOpCheckMultiSig());
+    }
+
+    @Test
+    public void decodePositiveN_withPositiveSmallNumber_returnsExpectedNumber() {
+        for (int i=1; i<16; i++) {
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.number(i);
+            Script script = builder.build();
+
+            ScriptChunk chunk = script.chunks.get(0);
+            assertTrue(chunk.isPositiveN());
+            assertEquals(i, chunk.decodePositiveN());
+        }
+    }
+
+    @Test
+    public void decodePositiveN_withPositiveNumber_returnsExpectedNumber() {
+        for (int n=0; n<20; n++) { // technically we could go up to Integer.MAX_VALUE, but it's not worth it to go that far
+            int i = 1 << n; // i = 2^n
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.number(i);
+            Script script = builder.build();
+
+            ScriptChunk chunk = script.chunks.get(0);
+            assertTrue(chunk.isPositiveN());
+            assertEquals(i, chunk.decodePositiveN());
+        }
+    }
+
+    @Test
+    public void decodePositiveN_forZero_throwsIAE() {
+        ScriptBuilder builder = new ScriptBuilder();
+        int zero = 0;
+        builder.number(zero);
+        Script script = builder.build();
+
+        ScriptChunk chunk = script.chunks.get(0);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+    }
+
+    @Test
+    public void decodePositiveN_withNegativeNumber_throwsIAE() {
+        for (int n=0; n<20; n++) { // technically we could go down to Integer.MIN_VALUE, but it's not worth it to go that deep
+            int i = -(1 << n); // i = -(2^n)
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.number(i);
+            Script script = builder.build();
+
+            ScriptChunk chunk = script.chunks.get(0);
+            assertFalse(chunk.isPositiveN());
+            assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+        }
+    }
+
+    @Test
+    public void decodePositiveN_withNumberLargerThan4Bytes_throwsIAE() {
+        long i = 1L << 32;
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.number(i);
+        Script script = builder.build();
+
+        ScriptChunk chunk = script.chunks.get(0);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+    }
+
+    @Test
+    public void decodePositiveN_withNullPushData_throwsIAE() {
+        ScriptChunk chunk = new ScriptChunk(OP_PUSHDATA1, null);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+
+        chunk = new ScriptChunk(OP_PUSHDATA2, null);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+
+        chunk = new ScriptChunk(OP_PUSHDATA4, null);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+    }
+
+    @Test
+    public void decodePositiveN_withWrongOpcodes_throwsIAE() {
+        ScriptChunk chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKMULTISIG, null);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_RETURN, null);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+
+        chunk = new ScriptChunk(ScriptOpCodes.OP_DROP, null);
+        assertFalse(chunk.isPositiveN());
+        assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
     }
 }
