@@ -15,10 +15,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # V4.2.2
 
     - name: Set up JDK 8
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # V4.7.1
       with:
         distribution: 'temurin'   # Or 'zulu', 'adopt', etc., if you prefer
         java-version: '8'
@@ -40,7 +40,7 @@ jobs:
         cmp md5sums-1 md5sums-2
 
     - name: Set up AWS CLI
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # V4.2.1
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: 'us-east-1'  
