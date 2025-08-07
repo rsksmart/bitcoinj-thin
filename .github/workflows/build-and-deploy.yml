@@ -3,6 +3,7 @@ name: Build and push to S3
 # This workflow is to be triggered manually.
 on:
   workflow_dispatch:
+permissions: read-all
 
 # Declare default permissions as read only.
 jobs:
@@ -32,12 +33,12 @@ jobs:
       run: |
         mvn clean package -DskipTests && \
         strip-nondeterminism ./target/bitcoinj-thin-* && \
-        md5sum ./target/bitcoinj-thin-* >md5sums-1 && \
+        sha256sum ./target/bitcoinj-thin-* >shasums-1 && \
         rm -f ./target/bitcoinj-thin-* && \
         mvn clean package -DskipTests && \
         strip-nondeterminism ./target/bitcoinj-thin-* && \
-        md5sum ./target/bitcoinj-thin-* >md5sums-2 && \
-        cmp md5sums-1 md5sums-2
+        sha256sum ./target/bitcoinj-thin-* >shasums-2 && \
+        cmp shasums-1 shasums-2
 
     - name: Set up AWS CLI
       uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # V4.2.1
