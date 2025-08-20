@@ -22,7 +22,7 @@ jobs:
       uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # V4.7.1
       with:
         distribution: 'temurin'   # Or 'zulu', 'adopt', etc., if you prefer
-        java-version: '8'
+        java-version: '8.0.412+8'
 
     - name: Install required tools
       run: |
