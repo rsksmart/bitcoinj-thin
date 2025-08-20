@@ -26,6 +26,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+
 public class ScriptChunkTest {
 
     @Test
@@ -173,6 +175,23 @@ public class ScriptChunkTest {
         ScriptChunk chunk = script.chunks.get(0);
         assertFalse(chunk.isPositiveN());
         assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+    }
+
+    @Test
+    public void decodePositiveN_forNumberWithoutMinimalEncoding_throwsIAE() {
+        byte zero = 0x00;
+        for (int n=0; n<20; n++) {
+            int i = (1 << n); // i = (2^n)
+            byte[] numWithoutMinimalEncoding = new byte[] {(byte) i, zero};
+
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.data(numWithoutMinimalEncoding);
+            Script script = builder.build();
+
+            ScriptChunk chunk = script.chunks.get(0);
+            assertFalse(chunk.isPositiveN());
+            assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+        }
     }
 
     @Test
