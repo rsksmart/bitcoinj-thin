@@ -654,13 +654,27 @@ public class Wallet
             if (req.shuffleOutputs)
                 req.tx.shuffleOutputs();
 
-            // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
+            // Now sign the legacy inputs, thus proving that we are entitled to redeem the connected outputs.
             if (req.signInputs)
-                signTransaction(req);
+                signLegacyTransaction(req);
 
-            // Check size.
-            final int size = req.tx.unsafeBitcoinSerialize().length;
-            if (size > BtcTransaction.MAX_STANDARD_TX_SIZE)
+            // Check virtual size.
+            int baseSize = req.tx.unsafeBitcoinSerialize().length;
+            int totalSize = baseSize;
+            // if the tx was signed, there's nothing else to consider
+            if (!req.signInputs) {
+                if (req.isSegwitCompatible) {
+                    baseSize += calculateSegwitScriptSigSize(req.tx);
+                    totalSize = baseSize;
+                    totalSize += estimateBytesForSigning(bestCoinSelection);
+                } else {
+                    baseSize += estimateBytesForSigning(bestCoinSelection);
+                    totalSize = baseSize;
+                }
+            }
+
+            int virtualSize = calculateVirtualSize(baseSize, totalSize);
+            if (virtualSize > BtcTransaction.MAX_STANDARD_TX_SIZE)
                 throw new ExceededMaxTransactionSize();
 
             // Label the transaction as being a user requested payment. This can be used to render GUI wallet
@@ -676,12 +690,12 @@ public class Wallet
     }
 
     /**
-     * <p>Given a send request containing transaction, attempts to sign it's inputs. This method expects transaction
+     * <p>Given a send request containing a legacy transaction, attempts to sign it's inputs. This method expects transaction
      * to have all necessary inputs connected or they will be ignored.</p>
      * <p>Actual signing is done by pluggable {@link #signers} and it's not guaranteed that
      * transaction will be complete in the end.</p>
      */
-    public void signTransaction(SendRequest req) {
+    public void signLegacyTransaction(SendRequest req) {
         try {
             BtcTransaction tx = req.tx;
             List<TransactionInput> inputs = tx.getInputs();
@@ -731,7 +745,7 @@ public class Wallet
         Coin feePerKb,
         boolean ensureMinRequiredFee
     ) {
-        final int size = calculateTxSize(tx, isSegwit, coinSelection);
+        final int size = calculateTxSizeForFees(tx, isSegwit, coinSelection);
         Coin fee = feePerKb.multiply(size).divide(1000);
         if (ensureMinRequiredFee && fee.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
             fee = BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE;
@@ -1007,7 +1021,7 @@ public class Wallet
                 checkState(input.getScriptBytes().length == 0);
             }
 
-            int size = calculateTxSize(tx, req.isSegwitCompatible, selection);
+            int size = calculateTxSizeForFees(tx, req.isSegwitCompatible, selection);
 
             Coin feePerKb = req.feePerKb;
             if (needAtLeastReferenceFee && feePerKb.compareTo(BtcTransaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
@@ -1026,32 +1040,53 @@ public class Wallet
         return result;
     }
 
-    private int calculateTxSize(BtcTransaction tx, boolean isSegwitCompatible, CoinSelection selection) {
-        int baseSize = calculateTxBaseSize(tx, isSegwitCompatible);
-        int totalSize = baseSize + estimateBytesForSigning(selection);
-
+    /**
+     * Calculates the virtual size of a Bitcoin transaction for fee estimation purposes.
+     * When estimating fees, we assume the transaction is not yet signed, so we need to consider
+     * the expected size of the signatures.
+     * - If the transaction is legacy (non-SegWit), signature data is part of the base size,
+     *       and the total size is equal to the base size.
+     * - If the transaction is SegWit-compatible, the scriptSig is a 36-byte fixed-size hash
+     *       located in the input, so its part of the base size. Signatures are located in the
+     *       witness, so they are just part of the total size.
+     * @param tx the unsigned Bitcoin transaction
+     * @param isSegwitCompatible whether the transaction is SegWit-compatible
+     * @param bestCoinSelection the selected UTXOs for the transaction
+     * @return the estimated virtual size of the transaction
+     */
+    private int calculateTxSizeForFees(BtcTransaction tx, boolean isSegwitCompatible, CoinSelection bestCoinSelection) {
+        int baseSize = tx.unsafeBitcoinSerialize().length;
+        int totalSize;
         if (!isSegwitCompatible) {
-            return totalSize;
+            baseSize += estimateBytesForSigning(bestCoinSelection);
+            totalSize = baseSize;
+        } else {
+            baseSize += calculateSegwitScriptSigSize(tx);
+            totalSize = baseSize;
+            totalSize += estimateBytesForSigning(bestCoinSelection);
         }
-
-        // As described in BIP141
-        int txWeight = totalSize + (3 * baseSize);
-        return txWeight / 4;
+        return calculateVirtualSize(baseSize, totalSize);
     }
 
-    private static int calculateTxBaseSize(BtcTransaction tx, boolean isSegwit) {
-        int baseSize = tx.unsafeBitcoinSerialize().length;
-        if (!isSegwit) {
-            return baseSize;
-        }
-
-        // at this time the script sig for every input is empty.
-        // in segwit-compatible, this is a 36-bytes-fixed-size hash,
-        // so we should count its bytes manually.
+    private int calculateSegwitScriptSigSize(BtcTransaction tx) {
         int segwitCompatibleScriptSigSize = 36;
-        baseSize += tx.getInputs().size() * segwitCompatibleScriptSigSize;
+        return tx.getInputs().size() * segwitCompatibleScriptSigSize;
+    }
 
-        return baseSize;
+    /**
+     * Calculates the virtual size of a Bitcoin transaction as defined in BIP141.
+     * The virtual size is a weighted size used to properly account for the discount SegWit
+     * provides on witness data.
+     * - For legacy transactions, {@code baseSize == totalSize}, so the virtual size equals both.
+     * - For SegWit transactions, {@code baseSize} excludes witness data, and {@code totalSize} includes it.
+     *
+     * @param baseSize the size of the transaction excluding witness data
+     * @param totalSize the full size of the transaction including witness data
+     * @return the virtual size in vbytes
+     */
+    private int calculateVirtualSize(int baseSize, int totalSize) {
+        int txWeight = totalSize + (3 * baseSize);
+        return txWeight / 4;
     }
 
     private void addSuppliedInputs(BtcTransaction tx, List<TransactionInput> originalInputs) {
