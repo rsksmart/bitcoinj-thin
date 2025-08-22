@@ -6,3 +6,10 @@ repos:
     hooks:
       - id: "end-of-file-fixer"
       - id: "check-merge-conflict"
+
+  - repo: local
+    hooks:
+      - id: checkstyle
+        name: Checkstyle (staged Java files)
+        language: script
+        entry: ./tools/checkstyle.sh
