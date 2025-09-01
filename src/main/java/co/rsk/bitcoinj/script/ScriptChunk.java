@@ -183,16 +183,20 @@ public class ScriptChunk {
             throw new IllegalArgumentException("Chunk has null data.");
         }
         int dataLength = data.length;
-        byte moreSignificantByte = data[dataLength - 1];
+        byte mostSignificantByte = data[dataLength - 1];
 
-        if (moreSignificantByte == 0x00) {
-            throw new IllegalArgumentException("Number from chunk does not have minimal encoding.");
-        }
-
-        int signByte = moreSignificantByte & 0x80;
+        int signByte = mostSignificantByte & 0x80;
         boolean isPositive = signByte == 0;
         if (!isPositive) {
             throw new IllegalArgumentException("Number from chunk is not positive.");
+        }
+
+        boolean hasPadding = mostSignificantByte == 0;
+        if (hasPadding) {
+            boolean shouldAllowPadding = (data[dataLength - 2] & 0x80) != 0;
+            if (!shouldAllowPadding) {
+                throw new IllegalArgumentException("Number from chunk does not have minimal encoding.");
+            }
         }
 
         if (dataLength > 4) {

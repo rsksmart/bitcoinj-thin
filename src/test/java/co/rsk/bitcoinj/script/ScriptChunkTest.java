@@ -180,8 +180,10 @@ public class ScriptChunkTest {
     @Test
     public void decodePositiveN_forNumberWithoutMinimalEncoding_throwsIAE() {
         byte zero = 0x00;
-        for (int n=0; n<20; n++) {
-            int i = (1 << n); // i = (2^n)
+
+        // from 1 to 15, numbers are small numbers and therefore pushed as opcodes
+        // with null chunk data
+        for (int i=1; i<16; i++) {
             byte[] numWithoutMinimalEncoding = new byte[] {(byte) i, zero};
 
             ScriptBuilder builder = new ScriptBuilder();
@@ -191,6 +193,23 @@ public class ScriptChunkTest {
             ScriptChunk chunk = script.chunks.get(0);
             assertFalse(chunk.isPositiveN());
             assertThrows(IllegalArgumentException.class, chunk::decodePositiveN);
+        }
+
+        for (int n=4; n<20; n++) {
+            int i = (1 << n); // i = (2^n)
+            ScriptBuilder builder = new ScriptBuilder();
+            ScriptChunk chunk = builder.number(i).build().getChunks().get(0);
+            byte[] chunkData = chunk.data;
+
+            // add zero padding so the number does not have minimal encoding
+            byte [] numWithoutMinimalEncoding = Arrays.copyOf(chunkData, chunkData.length + 1);
+            numWithoutMinimalEncoding[chunkData.length] = zero;
+
+            // build the chunk for the number without minimal encoding
+            builder = new ScriptBuilder();
+            ScriptChunk newChunk = builder.data(numWithoutMinimalEncoding).build().chunks.get(0);
+            assertFalse(newChunk.isPositiveN());
+            assertThrows(IllegalArgumentException.class, newChunk::decodePositiveN);
         }
     }
 
