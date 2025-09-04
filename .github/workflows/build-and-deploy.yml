@@ -41,7 +41,7 @@ jobs:
         cmp shasums-1 shasums-2
 
     - name: Set up AWS CLI
-      uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # V4.2.1
+      uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838 # V5.0.0
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: 'us-east-1'  
