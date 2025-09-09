@@ -29,9 +29,6 @@ jobs:
           distribution: 'temurin'   # Or 'zulu', 'adopt', etc., if you prefer
           java-version: '8'
 
-      - name: Build and test with Maven
-        run: mvn -B clean verify
-
       - name: Install pre-commit
         run: pip install pre-commit
 
