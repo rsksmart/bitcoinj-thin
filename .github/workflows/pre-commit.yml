@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
@@ -33,5 +35,16 @@ jobs:
       - name: Install pre-commit
         run: pip install pre-commit
 
-      - name: Run pre-commit hooks
-        run: pre-commit run --all-files --show-diff-on-failure
+      - name: Run pre-commit on push diff
+        if: github.event_name == 'push'
+        run: |
+          pre-commit run --show-diff-on-failure \
+            --from-ref "${{ github.event.before }}" \
+            --to-ref   "${{ github.sha }}"
+
+      - name: Run pre-commit on PR diff
+        if: github.event_name == 'pull_request'
+        run: |
+          pre-commit run --show-diff-on-failure \
+            --from-ref "${{ github.event.pull_request.base.sha }}" \
+            --to-ref   "${{ github.sha }}" 

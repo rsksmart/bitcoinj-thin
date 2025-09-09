@@ -31,7 +31,6 @@ else
   while IFS= read -r -d '' f; do
     FILES+=("$f")
   done < <(git diff --cached --name-only --diff-filter=ACMR -z -- '*.java')
-
   # If none staged (e.g., in CI), check all tracked .java files
   if [ "${#FILES[@]}" -eq 0 ]; then
     while IFS= read -r -d '' f; do
