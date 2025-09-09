@@ -13,3 +13,5 @@ repos:
         name: Checkstyle (staged Java files)
         language: script
         entry: ./tools/checkstyle.sh
+        types: [ java ]         # pre-commit passes only .java files
+        pass_filenames: true  # so "$@" contains the files

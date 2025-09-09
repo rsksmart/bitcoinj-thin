@@ -1,23 +1,60 @@
-#!/bin/bash
-#set -euo pipefail
+#!/usr/bin/env bash
+# checkstyle.sh
+# Runs Checkstyle on either the files pre-commit passes in ($@),
+# or on staged .java files, or (in CI) on all tracked .java files.
 
-CHECKSTYLE_JAR="checkstyle-11.0.0-all.jar"
-CHECKSTYLE_CONFIG="checkstyle.xml"
+set -euo pipefail
 
-# Collect staged Java files (Added, Copied, Modified, Renamed)
-REPO_ROOT=$(git rev-parse --show-toplevel)
+# --- repo-relative locations (adjust if yours differ) ---
+CHECKSTYLE_JAR="tools/checkstyle-11.0.0-all.jar"
+CHECKSTYLE_CONFIG="tools/checkstyle.xml"
 
-STAGED_JAVA_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep java | sed "s|^|$REPO_ROOT/|")
+# --- move to repo root so relative paths resolve correctly ---
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
 
-if [ -n "$STAGED_JAVA_FILES" ]; then
-  echo "Running Checkstyle on staged Java files..."
-  java -jar "$REPO_ROOT/tools/$CHECKSTYLE_JAR" -c "$REPO_ROOT/tools/$CHECKSTYLE_CONFIG" $STAGED_JAVA_FILES
-  status=$?
-  if [ $status -ne 0 ]; then
-    echo "❌ Checkstyle violations found. Commit aborted."
-    exit $status
+# --- sanity checks ---
+[ -f "$CHECKSTYLE_JAR" ]    || { echo "Missing $CHECKSTYLE_JAR"; exit 1; }
+[ -f "$CHECKSTYLE_CONFIG" ] || { echo "Missing $CHECKSTYLE_CONFIG"; exit 1; }
+
+FILES=()
+
+if [ "$#" -gt 0 ]; then
+  # pre-commit will pass the staged Java files here when pass_filenames:true
+  # Preserve each filename exactly as an array element.
+  for f in "$@"; do
+    FILES+=("$f")
+  done
+else
+  # Collect staged .java files (Added, Copied, Modified, Renamed)
+  # Use NUL delimiters (-z) and read -d '' to be safe with spaces/newlines.
+  while IFS= read -r -d '' f; do
+    FILES+=("$f")
+  done < <(git diff --cached --name-only --diff-filter=ACMR -z -- '*.java')
+
+  # If none staged (e.g., in CI), check all tracked .java files
+  if [ "${#FILES[@]}" -eq 0 ]; then
+    while IFS= read -r -d '' f; do
+      FILES+=("$f")
+    done < <(git ls-files -z -- '*.java')
   fi
-  echo "✅ Checkstyle passed."
 fi
 
-exit 0
+# Nothing to check → exit cleanly
+if [ "${#FILES[@]}" -eq 0 ]; then
+  echo "No Java files to check."
+  exit 0
+fi
+
+echo "Running Checkstyle on:"
+for f in "${FILES[@]}"; do
+  echo " - $f"
+done
+
+# One JVM start, all files at once (faster)
+if ! java -jar "$CHECKSTYLE_JAR" -c "$CHECKSTYLE_CONFIG" "${FILES[@]}"; then
+  echo "❌ Checkstyle violations found. Commit/CI failed."
+  exit 1
+fi
+
+echo "✅ Checkstyle passed."
