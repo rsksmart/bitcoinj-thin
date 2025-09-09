@@ -6,7 +6,7 @@
 set -euo pipefail
 
 # --- repo-relative locations (adjust if yours differ) ---
-CHECKSTYLE_JAR="tools/checkstyle-11.0.0-all.jar"
+CHECKSTYLE_JAR="tools/checkstyle-8.45.1-all.jar"
 CHECKSTYLE_CONFIG="tools/checkstyle.xml"
 
 # --- move to repo root so relative paths resolve correctly ---
