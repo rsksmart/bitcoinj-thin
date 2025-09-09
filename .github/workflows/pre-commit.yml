@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "master"
-      - "*+precommit"
       - "*-rc"
   pull_request:
     types: [opened, reopened, synchronize]
@@ -35,4 +34,4 @@ jobs:
         run: pip install pre-commit
 
       - name: Run pre-commit hooks
-        run: pre-commit run
+        run: pre-commit run --all-files
