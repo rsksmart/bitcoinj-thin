@@ -1,0 +1,47 @@
+name: Pre-commit Checks
+
+on:
+  push:
+    branches:
+      - "master"
+      - "*-rc"
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - "**"
+
+# Declare default permissions as read only.
+permissions: read-all
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'   # Or 'zulu', 'adopt', etc., if you prefer
+          java-version: '8'
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit on push diff
+        if: github.event_name == 'push'
+        run: |
+          pre-commit run --show-diff-on-failure \
+            --from-ref "${{ github.event.before }}" \
+            --to-ref   "${{ github.sha }}"
+
+      - name: Run pre-commit on PR diff
+        if: github.event_name == 'pull_request'
+        run: |
+          pre-commit run --show-diff-on-failure \
+            --from-ref "${{ github.event.pull_request.base.sha }}" \
+            --to-ref   "${{ github.sha }}" 
