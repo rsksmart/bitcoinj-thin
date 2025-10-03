@@ -35,7 +35,7 @@ jobs:
           TRUSTED_SHASUM="05db678734d5c160196a018abc2fd6bbbfa4205ee237993a1599e4ceab1fcc78" # Example for an empty file
 
           # Calculate the shasum of the script in the pull request
-          CALCULATED_SHASUM=$(sha256sum ../../tools/checkstyle.sh | awk '{ print $1 }')
+          CALCULATED_SHASUM=$(sha256sum tools/checkstyle.sh | awk '{ print $1 }')
 
           # Compare the checksums
           if [ "$TRUSTED_SHASUM" != "$CALCULATED_SHASUM" ]; then
