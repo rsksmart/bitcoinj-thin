@@ -29,6 +29,20 @@ jobs:
           distribution: 'temurin'   # Or 'zulu', 'adopt', etc., if you prefer
           java-version: '8'
 
+      - name: Verify script integrity
+        run: |
+          # The trusted SHA-256 checksum of your script
+          TRUSTED_SHASUM="05db678734d5c160196a018abc2fd6bbbfa4205ee237993a1599e4ceab1fcc78" # Example for an empty file
+
+          # Calculate the shasum of the script in the pull request
+          CALCULATED_SHASUM=$(sha256sum ../../tools/checkstyle.sh | awk '{ print $1 }')
+
+          # Compare the checksums
+          if [ "$TRUSTED_SHASUM" != "$CALCULATED_SHASUM" ]; then
+            echo "::error::Script has been modified and its checksum does not match the trusted checksum."
+            exit 1
+          fi
+
       - name: Install pre-commit
         run: pip install pre-commit
 
