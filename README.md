@@ -32,3 +32,15 @@ Alternatively, just import the project using your IDE. [IntelliJ](http://www.jet
 ### Where next?
 
 Now you are ready to [follow the tutorial](https://bitcoinj.github.io/getting-started).
+
+#### Contributing
+
+In order to ease PR reviews and have a consistent style across the
+repository, please install https://pre-commit.com/ and run
+
+```
+pre-commit install
+```
+
+in the root of the repository. This will create a Git pre-commit hook
+that will check several things.
