@@ -45,6 +45,8 @@ public abstract class NetworkParameters {
     public static final String ID_MAINNET = "org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
     public static final String ID_TESTNET = "org.bitcoin.test";
+    /** The string returned by getId() for testnet4. Must match the value used in the (full) bitcoinj fork. */
+    public static final String ID_TESTNET4 = "org.bitcoin.testnet4";
     /** The string returned by getId() for regtest mode. */
     public static final String ID_REGTEST = "org.bitcoin.regtest";
     /** Unit test network. */
@@ -112,6 +114,30 @@ public abstract class NetworkParameters {
             ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
             Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode
                     ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
+            scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
+            t.addOutput(new TransactionOutput(n, t, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
+        } catch (Exception e) {
+            // Cannot happen.
+            throw new RuntimeException(e);
+        }
+        genesisBlock.addTransaction(t);
+        return genesisBlock;
+    }
+
+    /**
+     * Builds a genesis block with a custom coinbase input script and a custom output public key.
+     * Most Bitcoin networks (mainnet, testnet3, regtest) share the original
+     * "The Times 03/Jan/2009 ..." coinbase, but testnet4 (BIP-94) uses a different coinbase
+     * message and output, which produces a different merkle root and genesis hash.
+     * The caller is expected to set the genesis time/difficulty/nonce afterwards.
+     */
+    protected static BtcBlock buildGenesisBlock(NetworkParameters n, byte[] coinbaseScriptSig, byte[] outputPubKey) {
+        BtcBlock genesisBlock = new BtcBlock(n, BtcBlock.BLOCK_VERSION_GENESIS);
+        BtcTransaction t = new BtcTransaction(n);
+        try {
+            t.addInput(new TransactionInput(n, t, coinbaseScriptSig));
+            ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
+            Script.writeBytes(scriptPubKeyBytes, outputPubKey);
             scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
             t.addOutput(new TransactionOutput(n, t, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
         } catch (Exception e) {
@@ -207,6 +233,8 @@ public abstract class NetworkParameters {
             return MainNetParams.get();
         } else if (id.equals(ID_TESTNET)) {
             return TestNet3Params.get();
+        } else if (id.equals(ID_TESTNET4)) {
+            return TestNet4Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
         } else if (id.equals(ID_REGTEST)) {
