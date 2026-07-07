@@ -131,20 +131,20 @@ public abstract class NetworkParameters {
      * message and output, which produces a different merkle root and genesis hash.
      * The caller is expected to set the genesis time/difficulty/nonce afterwards.
      */
-    protected static BtcBlock buildGenesisBlock(NetworkParameters n, byte[] coinbaseScriptSig, byte[] outputPubKey) {
-        BtcBlock genesisBlock = new BtcBlock(n, BtcBlock.BLOCK_VERSION_GENESIS);
-        BtcTransaction t = new BtcTransaction(n);
+    protected static BtcBlock buildGenesisBlock(NetworkParameters params, byte[] coinbaseScriptSig, byte[] outputPubKey) {
+        BtcBlock genesisBlock = new BtcBlock(params, BtcBlock.BLOCK_VERSION_GENESIS);
+        BtcTransaction coinbaseTransaction = new BtcTransaction(params);
         try {
-            t.addInput(new TransactionInput(n, t, coinbaseScriptSig));
+            coinbaseTransaction.addInput(new TransactionInput(params, coinbaseTransaction, coinbaseScriptSig));
             ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
             Script.writeBytes(scriptPubKeyBytes, outputPubKey);
             scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-            t.addOutput(new TransactionOutput(n, t, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
-        } catch (Exception e) {
-            // Cannot happen.
-            throw new RuntimeException(e);
+            coinbaseTransaction.addOutput(
+                new TransactionOutput(params, coinbaseTransaction, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
+        } catch (Exception cannotHappen) {
+            throw new RuntimeException(cannotHappen);
         }
-        genesisBlock.addTransaction(t);
+        genesisBlock.addTransaction(coinbaseTransaction);
         return genesisBlock;
     }
 
