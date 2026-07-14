@@ -57,7 +57,7 @@ public class TestNet4ParamsTest {
     private static final String EXPECTED_GENESIS_HASH =
         "00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043"; // https://mempool.space/testnet4/block/00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043
     private static final String EXPECTED_GENESIS_MERKLE =
-        "7aa0a7ae1e223414cb807e40cd57e667b718e42aaf9306db9102fe28912b7b4e"; // // https://mempool.space/testnet4/block/00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043?showDetails=true&view=actual#details
+        "7aa0a7ae1e223414cb807e40cd57e667b718e42aaf9306db9102fe28912b7b4e"; // https://mempool.space/testnet4/block/00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043?showDetails=true&view=actual#details
 
     private static TestNet4Params params;
 

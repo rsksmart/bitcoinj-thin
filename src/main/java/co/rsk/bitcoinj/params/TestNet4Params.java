@@ -227,6 +227,10 @@ public class TestNet4Params extends AbstractBitcoinNetParams {
             }
             cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
         }
+        if (cursor == null) {
+            throw new VerificationException(
+                "Difficulty transition point but we did not find a way back to the genesis block.");
+        }
         return cursor.getHeader();
     }
 
@@ -247,8 +251,14 @@ public class TestNet4Params extends AbstractBitcoinNetParams {
      * Reduces a freshly-computed target to the precision of the declared compact bits and re-encodes it, so
      * the two can be compared exactly (the calculation is higher-precision than the compact-bits format).
      */
-    private static long reduceToDeclaredPrecision(final BigInteger target, final long declaredTargetCompact) {
-        int accuracyBytes = (int) (declaredTargetCompact >>> 24) - 3;
+    private static long reduceToDeclaredPrecision(final BigInteger target, final long declaredTargetCompact)
+        throws VerificationException {
+        int exponent = (int) (declaredTargetCompact >>> 24);
+        if (exponent < 3 || exponent > 32) {
+            throw new VerificationException(
+                "Invalid difficulty target (nBits): " + Long.toHexString(declaredTargetCompact));
+        }
+        int accuracyBytes = exponent - 3;
         BigInteger precisionMask = BigInteger.valueOf(0xFFFFFFL).shiftLeft(accuracyBytes * 8);
         return Utils.encodeCompactBits(target.and(precisionMask));
     }
