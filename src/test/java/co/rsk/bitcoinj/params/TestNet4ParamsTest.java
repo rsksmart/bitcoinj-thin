@@ -51,7 +51,7 @@ import org.junit.Test;
  */
 public class TestNet4ParamsTest {
 
-    private static final String FIXTURE = "/co/rsk/bitcoinj/params/testnet4-headers-141120-143136.tsv";
+    private static final String FIXTURE = "/co/rsk/bitcoinj/params/testnet4-headers-141120-143136.tsv"; // '|'-separated despite the .tsv extension
     private static final int BOUNDARY_HEIGHT = 143136; // multiple of 2016 -> a difficulty transition point
 
     private static final String EXPECTED_GENESIS_HASH =
@@ -267,7 +267,7 @@ public class TestNet4ParamsTest {
 
         @Override
         public NetworkParameters getParams() {
-            return TestNet4Params.get();
+            return params;
         }
     }
 }
