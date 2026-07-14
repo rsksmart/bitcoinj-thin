@@ -199,11 +199,15 @@ public class TestNet4Params extends AbstractBitcoinNetParams {
      * first block carrying a real difficulty (also stopping at the genesis block or a period boundary).
      */
     private StoredBlock findLastNonMinimumDifficultyBlock(final StoredBlock from, final BtcBlockStore blockStore)
-        throws BlockStoreException {
+        throws VerificationException, BlockStoreException {
 
         StoredBlock cursor = from;
-        while (isSkippableMinimumDifficultyBlock(cursor)) {
+        while (cursor != null && isSkippableMinimumDifficultyBlock(cursor)) {
             cursor = cursor.getPrev(blockStore);
+        }
+        if (cursor == null) {
+            throw new VerificationException(
+                "Unable to locate last non-minimum difficulty block: block store does not contain required history.");
         }
         return cursor;
     }
