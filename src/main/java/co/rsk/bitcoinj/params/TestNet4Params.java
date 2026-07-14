@@ -186,8 +186,8 @@ public class TestNet4Params extends AbstractBitcoinNetParams {
             .multiply(BigInteger.valueOf(periodTimespanSeconds))
             .divide(BigInteger.valueOf(getTargetTimespan()));
 
-        boolean targetBelowMinimumDifficulty = newTarget.compareTo(getMaxTarget()) > 0;
-        if (targetBelowMinimumDifficulty) {
+        boolean targetExceedsMaxTarget = newTarget.compareTo(getMaxTarget()) > 0;
+        if (targetExceedsMaxTarget) {
             newTarget = getMaxTarget();
         }
 
