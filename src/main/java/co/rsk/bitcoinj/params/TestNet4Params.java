@@ -107,6 +107,13 @@ public class TestNet4Params extends AbstractBitcoinNetParams {
         return instance;
     }
 
+    /**
+     * Testnet4 intentionally shares testnet3's address format (address/p2sh/WIF headers and segwit HRP)
+     * and, consequently, testnet3's BIP-70 payment-protocol network id ("test"). There is no standard
+     * "test4" identifier, so the two networks are indistinguishable at the payment-protocol level and
+     * {@link NetworkParameters#fromPmtProtocolID(String)} resolves "test" to testnet3. This is by design;
+     * no need to introduce a distinct id here.
+     */
     @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_TESTNET;
