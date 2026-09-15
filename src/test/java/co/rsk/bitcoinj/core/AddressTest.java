@@ -236,4 +236,48 @@ public class AddressTest {
         assertTrue( resultBytes < 0 );
         assertTrue( resultsString < 0 );
     }
+
+    @Test
+    public void equals_withDifferentClass_shouldReturnFalse() {
+        byte[] hash160 = HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc");
+
+        Address address = new Address(testParams, hash160);
+        VersionedChecksummedBytes sameVersionAndBytes =
+            new VersionedChecksummedBytes(testParams.getAddressHeader(), hash160);
+
+        assertNotEquals(address, sameVersionAndBytes);
+    }
+
+    @Test
+    public void equals_withDifferentVersion_shouldReturnFalse() {
+        byte[] hash160 = HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc");
+
+        Address mainNetAddress = new Address(mainParams, hash160);
+        Address testNetAddress = new Address(testParams, hash160);
+
+        assertNotEquals(mainNetAddress, testNetAddress);
+    }
+
+    @Test
+    public void equals_withDifferentHash_shouldReturnFalse() {
+        Address address = new Address(testParams, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
+        Address anotherAddress = new Address(testParams, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
+
+        assertNotEquals(address, anotherAddress);
+    }
+
+    @Test
+    public void hashCode_withEqualAddresses_shouldMatch() {
+        Address fromHash = new Address(testParams, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
+        Address fromBase58 = Address.fromBase58(testParams, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+
+        assertEquals(fromHash, fromBase58);
+        assertEquals(fromHash.hashCode(), fromBase58.hashCode());
+    }
+
+    @Test
+    public void constructor_withHashNotTwentyBytes_shouldThrow() {
+        assertThrows(IllegalArgumentException.class, () -> new Address(testParams, new byte[19]));
+        assertThrows(IllegalArgumentException.class, () -> new Address(testParams, new byte[21]));
+    }
 }
