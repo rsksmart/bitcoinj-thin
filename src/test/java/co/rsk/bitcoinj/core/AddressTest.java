@@ -49,14 +49,14 @@ public class AddressTest {
 
     @Test
     public void testJavaSerialization() throws Exception {
-        Address testAddress = Address.fromBase58(testParams, TESTNET_BASE58);
+        LegacyAddress testAddress = LegacyAddress.fromBase58(testParams, TESTNET_BASE58);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(testAddress);
         VersionedChecksummedBytes testAddressCopy = (VersionedChecksummedBytes) new ObjectInputStream(
                 new ByteArrayInputStream(os.toByteArray())).readObject();
         assertEquals(testAddress, testAddressCopy);
 
-        Address mainAddress = Address.fromBase58(mainParams, MAINNET_BASE58);
+        LegacyAddress mainAddress = LegacyAddress.fromBase58(mainParams, MAINNET_BASE58);
         os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(mainAddress);
         VersionedChecksummedBytes mainAddressCopy = (VersionedChecksummedBytes) new ObjectInputStream(
@@ -67,21 +67,21 @@ public class AddressTest {
     @Test
     public void stringification() throws Exception {
         // Test a testnet address.
-        Address a = new Address(testParams, HEX.decode(PUB_KEY_HASH_HEX));
+        LegacyAddress a = new LegacyAddress(testParams, HEX.decode(PUB_KEY_HASH_HEX));
         assertEquals(TESTNET_BASE58, a.toString());
         assertFalse(a.isP2SHAddress());
 
-        Address b = new Address(mainParams, HEX.decode(OTHER_PUB_KEY_HASH_HEX));
+        LegacyAddress b = new LegacyAddress(mainParams, HEX.decode(OTHER_PUB_KEY_HASH_HEX));
         assertEquals(MAINNET_BASE58, b.toString());
         assertFalse(b.isP2SHAddress());
     }
     
     @Test
     public void decoding() throws Exception {
-        Address a = Address.fromBase58(testParams, TESTNET_BASE58);
+        LegacyAddress a = LegacyAddress.fromBase58(testParams, TESTNET_BASE58);
         assertEquals("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc", Utils.HEX.encode(a.getHash160()));
 
-        Address b = Address.fromBase58(mainParams, MAINNET_BASE58);
+        LegacyAddress b = LegacyAddress.fromBase58(mainParams, MAINNET_BASE58);
         assertEquals("4a22c3c4cbb31e4d03b15550636762bda0baf85a", Utils.HEX.encode(b.getHash160()));
     }
     
@@ -89,7 +89,7 @@ public class AddressTest {
     public void errorPaths() {
         // Check what happens if we try and decode garbage.
         try {
-            Address.fromBase58(testParams, "this is not a valid address!");
+            LegacyAddress.fromBase58(testParams, "this is not a valid address!");
             fail();
         } catch (WrongNetworkException e) {
             fail();
@@ -99,7 +99,7 @@ public class AddressTest {
 
         // Check the empty case.
         try {
-            Address.fromBase58(testParams, "");
+            LegacyAddress.fromBase58(testParams, "");
             fail();
         } catch (WrongNetworkException e) {
             fail();
@@ -109,7 +109,7 @@ public class AddressTest {
 
         // Check the case of a mismatched network.
         try {
-            Address.fromBase58(testParams, MAINNET_BASE58);
+            LegacyAddress.fromBase58(testParams, MAINNET_BASE58);
             fail();
         } catch (WrongNetworkException e) {
             // Success.
@@ -122,9 +122,9 @@ public class AddressTest {
 
     @Test
     public void getNetwork() throws Exception {
-        NetworkParameters params = Address.getParametersFromAddress(MAINNET_BASE58);
+        NetworkParameters params = LegacyAddress.getParametersFromAddress(MAINNET_BASE58);
         assertEquals(MainNetParams.get().getId(), params.getId());
-        params = Address.getParametersFromAddress(TESTNET_BASE58);
+        params = LegacyAddress.getParametersFromAddress(TESTNET_BASE58);
         assertEquals(TestNet3Params.get().getId(), params.getId());
     }
 
@@ -144,15 +144,15 @@ public class AddressTest {
         // Add new network params
         Networks.register(altNetwork);
         // Check if can parse address
-        NetworkParameters params = Address.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+        NetworkParameters params = LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
         assertEquals(altNetwork.getId(), params.getId());
         // Check if main network works as before
-        params = Address.getParametersFromAddress(MAINNET_BASE58);
+        params = LegacyAddress.getParametersFromAddress(MAINNET_BASE58);
         assertEquals(MainNetParams.get().getId(), params.getId());
         // Unregister network
         Networks.unregister(altNetwork);
         try {
-            Address.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             fail();
         } catch (AddressFormatException e) { }
     }
@@ -160,33 +160,33 @@ public class AddressTest {
     @Test
     public void p2shAddress() throws Exception {
         // Test that we can construct P2SH addresses
-        Address mainNetP2SHAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        LegacyAddress mainNetP2SHAddress = LegacyAddress.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(mainNetP2SHAddress.version, MainNetParams.get().p2shHeader);
         assertTrue(mainNetP2SHAddress.isP2SHAddress());
-        Address testNetP2SHAddress = Address.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        LegacyAddress testNetP2SHAddress = LegacyAddress.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
         assertEquals(testNetP2SHAddress.version, TestNet3Params.get().p2shHeader);
         assertTrue(testNetP2SHAddress.isP2SHAddress());
 
         // Test that we can determine what network a P2SH address belongs to
-        NetworkParameters mainNetParams = Address.getParametersFromAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        NetworkParameters mainNetParams = LegacyAddress.getParametersFromAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(MainNetParams.get().getId(), mainNetParams.getId());
-        NetworkParameters testNetParams = Address.getParametersFromAddress("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        NetworkParameters testNetParams = LegacyAddress.getParametersFromAddress("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
         assertEquals(TestNet3Params.get().getId(), testNetParams.getId());
 
         // Test that we can convert them from hashes
         byte[] hex = HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e");
-        Address a = Address.fromP2SHHash(mainParams, hex);
+        LegacyAddress a = LegacyAddress.fromP2SHHash(mainParams, hex);
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
-        Address b = Address.fromP2SHHash(testParams, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
+        LegacyAddress b = LegacyAddress.fromP2SHHash(testParams, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
         assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
-        Address c = Address.fromP2SHScript(mainParams, ScriptBuilder.createP2SHOutputScript(hex));
+        LegacyAddress c = LegacyAddress.fromP2SHScript(mainParams, ScriptBuilder.createP2SHOutputScript(hex));
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
     }
 
     @Test
     public void cloning() throws Exception {
-        Address a = new Address(testParams, HEX.decode(PUB_KEY_HASH_HEX));
-        Address b = a.clone();
+        LegacyAddress a = new LegacyAddress(testParams, HEX.decode(PUB_KEY_HASH_HEX));
+        LegacyAddress b = a.clone();
 
         assertEquals(a, b);
         assertNotSame(a, b);
@@ -194,13 +194,13 @@ public class AddressTest {
 
     @Test
     public void roundtripBase58() throws Exception {
-        assertEquals(MAINNET_BASE58, Address.fromBase58(null, MAINNET_BASE58).toBase58());
+        assertEquals(MAINNET_BASE58, LegacyAddress.fromBase58(null, MAINNET_BASE58).toBase58());
     }
 
     @Test
     public void comparisonCloneEqualTo() throws Exception {
-        Address a = Address.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
-        Address b = a.clone();
+        LegacyAddress a = LegacyAddress.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
+        LegacyAddress b = a.clone();
 
         int result = a.compareTo(b);
         assertEquals(0, result);
@@ -208,8 +208,8 @@ public class AddressTest {
 
     @Test
     public void comparisonEqualTo() throws Exception {
-        Address a = Address.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
-        Address b = a.clone();
+        LegacyAddress a = LegacyAddress.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
+        LegacyAddress b = a.clone();
 
         int result = a.compareTo(b);
         assertEquals(0, result);
@@ -217,8 +217,8 @@ public class AddressTest {
 
     @Test
     public void comparisonLessThan() throws Exception {
-        Address a = Address.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
-        Address b = Address.fromBase58(mainParams, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
+        LegacyAddress a = LegacyAddress.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
+        LegacyAddress b = LegacyAddress.fromBase58(mainParams, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
 
         int result = a.compareTo(b);
         assertTrue(result < 0);
@@ -226,8 +226,8 @@ public class AddressTest {
 
     @Test
     public void comparisonGreaterThan() throws Exception {
-        Address a = Address.fromBase58(mainParams, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
-        Address b = Address.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
+        LegacyAddress a = LegacyAddress.fromBase58(mainParams, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
+        LegacyAddress b = LegacyAddress.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
 
         int result = a.compareTo(b);
         assertTrue(result > 0);
@@ -236,8 +236,8 @@ public class AddressTest {
     @Test
     public void comparisonBytesVsString() throws Exception {
         // TODO: To properly test this we need a much larger data set
-        Address a = Address.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
-        Address b = Address.fromBase58(mainParams, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
+        LegacyAddress a = LegacyAddress.fromBase58(mainParams, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
+        LegacyAddress b = LegacyAddress.fromBase58(mainParams, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
 
         int resultBytes = a.compareTo(b);
         int resultsString = a.toString().compareTo(b.toString());
@@ -258,7 +258,7 @@ public class AddressTest {
     private void assertNotEqualToPlainVersionedBytes(NetworkParameters params) {
         byte[] hash160 = HEX.decode(PUB_KEY_HASH_HEX);
 
-        Address address = new Address(params, hash160);
+        LegacyAddress address = new LegacyAddress(params, hash160);
         VersionedChecksummedBytes sameVersionAndBytes =
             new VersionedChecksummedBytes(params.getAddressHeader(), hash160);
 
@@ -269,8 +269,8 @@ public class AddressTest {
     public void equals_withDifferentVersion_shouldReturnFalse() {
         byte[] hash160 = HEX.decode(PUB_KEY_HASH_HEX);
 
-        Address mainNetAddress = new Address(mainParams, hash160);
-        Address testNetAddress = new Address(testParams, hash160);
+        LegacyAddress mainNetAddress = new LegacyAddress(mainParams, hash160);
+        LegacyAddress testNetAddress = new LegacyAddress(testParams, hash160);
 
         assertNotEquals(mainNetAddress, testNetAddress);
     }
@@ -286,8 +286,8 @@ public class AddressTest {
     }
 
     private void assertDifferentHashesAreNotEqual(NetworkParameters params) {
-        Address address = new Address(params, HEX.decode(PUB_KEY_HASH_HEX));
-        Address anotherAddress = new Address(params, HEX.decode(OTHER_PUB_KEY_HASH_HEX));
+        LegacyAddress address = new LegacyAddress(params, HEX.decode(PUB_KEY_HASH_HEX));
+        LegacyAddress anotherAddress = new LegacyAddress(params, HEX.decode(OTHER_PUB_KEY_HASH_HEX));
 
         assertNotEquals(address, anotherAddress);
     }
@@ -299,8 +299,8 @@ public class AddressTest {
     }
 
     private void assertHashCodeMatches(NetworkParameters params, String hash160Hex, String base58) {
-        Address fromHash = new Address(params, HEX.decode(hash160Hex));
-        Address fromBase58 = Address.fromBase58(params, base58);
+        LegacyAddress fromHash = new LegacyAddress(params, HEX.decode(hash160Hex));
+        LegacyAddress fromBase58 = LegacyAddress.fromBase58(params, base58);
 
         assertEquals(fromHash, fromBase58);
         assertEquals(fromHash.hashCode(), fromBase58.hashCode());
@@ -320,26 +320,26 @@ public class AddressTest {
         for (int length = 0; length < PUB_KEY_HASH_LENGTH; length++) {
             final int hashLength = length;
 
-            assertThrows(IllegalArgumentException.class, () -> new Address(params, new byte[hashLength]));
+            assertThrows(IllegalArgumentException.class, () -> new LegacyAddress(params, new byte[hashLength]));
         }
     }
 
     @Test
     public void constructor_withHashLongerThanTwentyBytes_onMainnet_shouldThrow() {
         assertThrows(IllegalArgumentException.class,
-            () -> new Address(mainParams, new byte[PUB_KEY_HASH_LENGTH + 1]));
+            () -> new LegacyAddress(mainParams, new byte[PUB_KEY_HASH_LENGTH + 1]));
     }
 
     @Test
     public void constructor_withHashLongerThanTwentyBytes_onTestnet_shouldThrow() {
         assertThrows(IllegalArgumentException.class,
-            () -> new Address(testParams, new byte[PUB_KEY_HASH_LENGTH + 1]));
+            () -> new LegacyAddress(testParams, new byte[PUB_KEY_HASH_LENGTH + 1]));
     }
 
     @Test
     public void constructor_withTwentyByteHash_shouldNotThrow() {
-        Address mainNetAddress = new Address(mainParams, new byte[PUB_KEY_HASH_LENGTH]);
-        Address testNetAddress = new Address(testParams, new byte[PUB_KEY_HASH_LENGTH]);
+        LegacyAddress mainNetAddress = new LegacyAddress(mainParams, new byte[PUB_KEY_HASH_LENGTH]);
+        LegacyAddress testNetAddress = new LegacyAddress(testParams, new byte[PUB_KEY_HASH_LENGTH]);
 
         assertEquals(PUB_KEY_HASH_LENGTH, mainNetAddress.getHash160().length);
         assertEquals(PUB_KEY_HASH_LENGTH, testNetAddress.getHash160().length);
