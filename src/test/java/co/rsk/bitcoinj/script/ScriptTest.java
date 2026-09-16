@@ -76,7 +76,7 @@ public class ScriptTest {
 
         // Assert
         byte[] deriveAddressInBytes = Utils.sha256hash160(pubKeyInBytes);
-        Address addressFromP2pkhScriptSig = new Address(MAINNET_PARAMS, deriveAddressInBytes);
+        Address addressFromP2pkhScriptSig = new LegacyAddress(MAINNET_PARAMS, deriveAddressInBytes);
         assertEquals(expectedAddress, addressFromP2pkhScriptSig.toString());
     }
 
@@ -105,7 +105,7 @@ public class ScriptTest {
         String expectedPubKey = "DUP HASH160 PUSHDATA(20)[742e7c6115d8ffa7a241ac3fff1d7fd9e149bd65] EQUALVERIFY CHECKSIG";
         assertEquals(expectedPubKey, pubKey.toString());
 
-        Address actualAddress = new Address(MAINNET_PARAMS, pubKey.getPubKeyHash());
+        Address actualAddress = new LegacyAddress(MAINNET_PARAMS, pubKey.getPubKeyHash());
         assertEquals(expectedAddressFromScriptSig, actualAddress.toString());
     }
 
@@ -138,7 +138,7 @@ public class ScriptTest {
     @Test
     public void testP2SHOutputScript() {
         final String addressFromP2shScript = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
-        Address p2shAddress = Address.fromBase58(MainNetParams.get(), addressFromP2shScript);
+        Address p2shAddress = LegacyAddress.fromBase58(MainNetParams.get(), addressFromP2shScript);
         assertTrue(ScriptBuilder.createOutputScript(p2shAddress).isPayToScriptHash());
     }
 
@@ -399,7 +399,7 @@ public class ScriptTest {
             MAINNET_PARAMS, true));
         // pay to script hash
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
-        Address scriptAddress = Address.fromP2SHScript(MAINNET_PARAMS, p2shScript);
+        Address scriptAddress = LegacyAddress.fromP2SHScript(MAINNET_PARAMS, p2shScript);
         assertEquals(scriptAddress, p2shScript.getToAddress(MAINNET_PARAMS, true));
     }
 
