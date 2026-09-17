@@ -35,11 +35,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * plus a set of network parameters. Not to be confused with a {@link PeerAddress} or {@link AddressMessage}
  * which are about network (TCP) addresses.</p>
  *
- * <p>A standard address is built by taking the RIPE-MD160 hash of the public key bytes, with a version prefix and a
- * checksum suffix, then encoding it textually as base58. The version prefix is used to both denote the network for
- * which the address is valid (see {@link NetworkParameters}, and also to indicate how the bytes inside the address
- * should be interpreted. Whilst almost all addresses today are hashes of public keys, another (currently unsupported
- * type) can contain a hash of a script instead.</p>
+ * <p>It is built by taking a 20 byte hash, adding a version prefix and a checksum suffix, and encoding
+ * the result as base58. The version prefix denotes both the network the address is valid for (see
+ * {@link NetworkParameters}) and how to interpret the hash: either a public key hash, or a script
+ * hash for the pay-to-script-hash form, which this class supports through {@link #fromP2SHHash} and
+ * {@link #fromP2SHScript}.</p>
  */
 public class LegacyAddress extends VersionedChecksummedBytes implements Address {
     /**
@@ -52,7 +52,7 @@ public class LegacyAddress extends VersionedChecksummedBytes implements Address 
     /**
      * Construct an address from parameters, the address version, and the hash160 form. Example:<p>
      *
-     * <pre>new Address(MainNetParams.get(), NetworkParameters.getAddressHeader(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
+     * <pre>new LegacyAddress(MainNetParams.get(), NetworkParameters.getAddressHeader(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
      */
     public LegacyAddress(NetworkParameters params, int version, byte[] hash160) throws WrongNetworkException {
         super(version, hash160);
@@ -63,7 +63,7 @@ public class LegacyAddress extends VersionedChecksummedBytes implements Address 
         this.params = params;
     }
 
-    /** Returns an Address that represents the given P2SH script hash. */
+    /** Returns a LegacyAddress that represents the given P2SH script hash. */
     public static LegacyAddress fromP2SHHash(NetworkParameters params, byte[] hash160) {
         try {
             return new LegacyAddress(params, params.getP2SHHeader(), hash160);
@@ -72,7 +72,7 @@ public class LegacyAddress extends VersionedChecksummedBytes implements Address 
         }
     }
 
-    /** Returns an Address that represents the script hash extracted from the given scriptPubKey */
+    /** Returns a LegacyAddress that represents the script hash extracted from the given scriptPubKey */
     public static LegacyAddress fromP2SHScript(NetworkParameters params, Script scriptPubKey) {
         checkArgument(scriptPubKey.isPayToScriptHash(), "Not a P2SH script");
         return fromP2SHHash(params, scriptPubKey.getPubKeyHash());
@@ -96,7 +96,7 @@ public class LegacyAddress extends VersionedChecksummedBytes implements Address 
     /**
      * Construct an address from parameters and the hash160 form. Example:<p>
      *
-     * <pre>new Address(MainNetParams.get(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
+     * <pre>new LegacyAddress(MainNetParams.get(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
      */
     public LegacyAddress(NetworkParameters params, byte[] hash160) {
         super(params.getAddressHeader(), hash160);
