@@ -220,34 +220,78 @@ public class ScriptBuilder {
         return new Script(chunks);
     }
 
-    /** Creates a scriptPubKey that encodes payment to the given address. */
+    /**
+     * Creates a scriptPubKey that locks an output to the given address.
+     *
+     * @param to address to lock an output to
+     * @return scriptPubKey that locks an output
+     */
     public static Script createOutputScript(Address to) {
-        // LegacyAddress is the only implementation that can be paid to for now. A later change
-        // dispatches on the address type instead, and this whole branch goes away with it. Until
-        // then, say so rather than letting a bare ClassCastException out of a public method.
-        if (!(to instanceof LegacyAddress)) {
-            throw new IllegalArgumentException(
-                "Cannot build an output script for " + to.getClass().getSimpleName()
-                    + " yet, only LegacyAddress is supported");
-        }
-        LegacyAddress legacyAddress = (LegacyAddress) to;
-        if (legacyAddress.isP2SHAddress()) {
-            // OP_HASH160 <scriptHash> OP_EQUAL
-            return new ScriptBuilder()
-                .op(OP_HASH160)
-                .data(legacyAddress.getHash160())
-                .op(OP_EQUAL)
-                .build();
+        return new ScriptBuilder().outputScript(to).build();
+    }
+
+    private ScriptBuilder outputScript(Address to) {
+        if (to instanceof LegacyAddress) {
+            LegacyAddress legacyAddress = (LegacyAddress) to;
+            if (legacyAddress.isP2SHAddress()) {
+                p2shOutputScript(legacyAddress.getHash160());
+            } else {
+                p2pkhOutputScript(legacyAddress.getHash160());
+            }
+        } else if (to instanceof SegwitAddress) {
+            p2whOutputScript((SegwitAddress) to);
         } else {
-            // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-            return new ScriptBuilder()
-                .op(OP_DUP)
-                .op(OP_HASH160)
-                .data(legacyAddress.getHash160())
-                .op(OP_EQUALVERIFY)
-                .op(OP_CHECKSIG)
-                .build();
+            throw new IllegalStateException("Cannot handle " + to);
         }
+        return this;
+    }
+
+    private ScriptBuilder p2pkhOutputScript(byte[] hash) {
+        checkArgument(hash.length == LegacyAddress.LENGTH);
+        // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
+        return op(OP_DUP)
+            .op(OP_HASH160)
+            .data(hash)
+            .op(OP_EQUALVERIFY)
+            .op(OP_CHECKSIG);
+    }
+
+    private ScriptBuilder p2shOutputScript(byte[] hash) {
+        checkArgument(hash.length == LegacyAddress.LENGTH);
+        // OP_HASH160 <scriptHash> OP_EQUAL
+        return op(OP_HASH160)
+            .data(hash)
+            .op(OP_EQUAL);
+    }
+
+    private ScriptBuilder p2whOutputScript(SegwitAddress address) {
+        // OP_<witnessVersion> <pubKeyHash|scriptHash>
+        // smallNum, not number: number() would push the opcode's numeric value as data.
+        return smallNum(address.getWitnessVersion())
+            .data(address.getWitnessProgram());
+    }
+
+    /**
+     * Creates a segwit scriptPubKey that locks an output to the given public key hash.
+     *
+     * @param pubKeyHash hash of the pubkey to lock an output to
+     * @return P2WPKH scriptPubKey that locks an output
+     */
+    public static Script createP2WPKHOutputScript(byte[] pubKeyHash) {
+        checkArgument(pubKeyHash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH);
+        return new ScriptBuilder().smallNum(0).data(pubKeyHash).build();
+    }
+
+    /**
+     * Creates a segwit scriptPubKey that locks an output to the hash of the given public key. In
+     * accordance with the segwit specification, the public key must be compressed.
+     *
+     * @param pubKey pubkey whose hash to lock an output to
+     * @return P2WPKH scriptPubKey that locks an output
+     */
+    public static Script createP2WPKHOutputScript(BtcECKey pubKey) {
+        checkArgument(pubKey.isCompressed());
+        return createP2WPKHOutputScript(pubKey.getPubKeyHash());
     }
 
     /** Creates a scriptPubKey that encodes payment to the given raw public key. */
