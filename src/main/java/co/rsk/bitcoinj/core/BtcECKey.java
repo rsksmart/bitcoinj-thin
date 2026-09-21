@@ -19,6 +19,7 @@
 package co.rsk.bitcoinj.core;
 
 import co.rsk.bitcoinj.crypto.*;
+import co.rsk.bitcoinj.script.Script;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -474,6 +475,32 @@ public class BtcECKey {
      */
     public LegacyAddress toAddress(NetworkParameters params) {
         return new LegacyAddress(params, getPubKeyHash());
+    }
+
+    /**
+     * Returns the address that corresponds to the public part of this ECKey, for the given output
+     * script type.
+     *
+     * <p>Ported from bitcoinj 0.17.1 {@code ECKey.toAddress(ScriptType, Network)}, which covers
+     * these two types and rejects the rest. P2SH-P2WPKH is not among them because it is not a
+     * distinct output script type: on chain it is plain P2SH. A caller that wants it composes it
+     * from {@code ScriptBuilder.createP2WPKHOutputScript} and
+     * {@code LegacyAddress.fromP2SHScript}. P2TR is not among them either, and composes from
+     * {@code Taproot.deriveOutputKey} and {@code SegwitAddress.fromProgram}.</p>
+     *
+     * @param scriptType the output script type
+     * @param params network this address is valid for
+     * @return the address
+     */
+    public Address toAddress(Script.ScriptType scriptType, NetworkParameters params) {
+        if (scriptType == Script.ScriptType.P2PKH) {
+            return new LegacyAddress(params, this.getPubKeyHash());
+        } else if (scriptType == Script.ScriptType.P2WPKH) {
+            checkArgument(this.isCompressed(), "only compressed keys allowed");
+            return SegwitAddress.fromHash(params, this.getPubKeyHash());
+        } else {
+            throw new IllegalArgumentException(scriptType.toString());
+        }
     }
 
     /**

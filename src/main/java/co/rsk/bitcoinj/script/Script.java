@@ -59,7 +59,11 @@ public class Script {
         NO_TYPE,
         P2PKH,
         PUB_KEY,
-        P2SH
+        P2SH,
+        // Appended, never inserted, for the same reason. Names follow bitcoinj 0.17.1's ScriptType.
+        P2WPKH,
+        P2WSH,
+        P2TR
     }
 
     /** Flags to pass to {@link Script#correctlySpends(BtcTransaction, long, Script, Set)}.
