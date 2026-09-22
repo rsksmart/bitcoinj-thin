@@ -148,6 +148,80 @@ public class SegwitAddressTest {
         assertEquals(expected, address.toBech32());
     }
 
+    /**
+     * Upstream folds this into its valid address loop, extracting the hash from the output script
+     * with ScriptPattern. Neither exists here yet, so the hash comes from the vector instead.
+     */
+    @Test
+    public void fromHash_withWitnessVersionZeroVectors_shouldMatchTheParsedAddress() {
+        for (AddressData valid : VALID_ADDRESSES) {
+            if (valid.expectedWitnessVersion != 0) {
+                continue;
+            }
+            SegwitAddress parsed = SegwitAddress.fromBech32(valid.expectedParams, valid.address);
+
+            SegwitAddress fromHash = SegwitAddress.fromHash(valid.expectedParams,
+                Utils.HEX.decode(valid.expectedWitnessProgram));
+
+            assertEquals(valid.address, parsed, fromHash);
+            assertEquals(valid.address, valid.address.toLowerCase(Locale.ROOT), fromHash.toBech32());
+        }
+    }
+
+    @Test
+    public void fromHash_withPubKeyHash_shouldBuildAP2wpkhAddress() {
+        byte[] hash = Utils.HEX.decode("751e76e8199196d454941c45d1b3a323f1433bd6");
+
+        SegwitAddress address = SegwitAddress.fromHash(MAINNET, hash);
+
+        assertEquals(0, address.getWitnessVersion());
+        assertArrayEquals(hash, address.getWitnessProgram());
+        assertEquals("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", address.toBech32());
+    }
+
+    @Test
+    public void fromHash_withScriptHash_shouldBuildAP2wshAddress() {
+        byte[] hash = Utils.HEX.decode(
+            "1863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262");
+
+        SegwitAddress address = SegwitAddress.fromHash(TESTNET, hash);
+
+        assertEquals(0, address.getWitnessVersion());
+        assertArrayEquals(hash, address.getWitnessProgram());
+        assertEquals("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
+            address.toBech32());
+    }
+
+    @Test
+    public void fromProgram_withTaproot_shouldBuildABech32mAddress() {
+        byte[] program = Utils.HEX.decode(
+            "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798");
+
+        SegwitAddress address = SegwitAddress.fromProgram(MAINNET, 1, program);
+
+        assertEquals(1, address.getWitnessVersion());
+        assertArrayEquals(program, address.getWitnessProgram());
+        assertEquals("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0",
+            address.toBech32());
+    }
+
+    /**
+     * The witness version picks the encoding, so the same program under version 0 and version 1
+     * must produce different addresses: bech32 for the first, bech32m for the second.
+     */
+    @Test
+    public void fromProgram_withTheSameProgramUnderTwoVersions_shouldEncodeDifferently() {
+        byte[] program = Utils.HEX.decode(
+            "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798");
+
+        String version0 = SegwitAddress.fromProgram(MAINNET, 0, program).toBech32();
+        String version1 = SegwitAddress.fromProgram(MAINNET, 1, program).toBech32();
+
+        assertEquals("bc1q0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqgp5m2n", version0);
+        assertEquals("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0", version1);
+        assertNotEquals(version0, version1);
+    }
+
     @Test
     public void fromProgram_withWitnessVersionZeroAndInvalidLength_shouldThrow() {
         assertThrows(AddressFormatException.InvalidDataLength.class,
