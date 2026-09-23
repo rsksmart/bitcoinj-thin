@@ -231,12 +231,13 @@ public class ScriptBuilder {
     }
 
     private ScriptBuilder outputScript(Address to) {
+        checkState(chunks.isEmpty());
         if (to instanceof LegacyAddress) {
             LegacyAddress legacyAddress = (LegacyAddress) to;
             if (legacyAddress.isP2SHAddress()) {
-                p2shOutputScript(legacyAddress.getHash160());
+                p2shOutputScript(legacyAddress.getHash());
             } else {
-                p2pkhOutputScript(legacyAddress.getHash160());
+                p2pkhOutputScript(legacyAddress.getHash());
             }
         } else if (to instanceof SegwitAddress) {
             p2whOutputScript((SegwitAddress) to);
@@ -248,6 +249,7 @@ public class ScriptBuilder {
 
     private ScriptBuilder p2pkhOutputScript(byte[] hash) {
         checkArgument(hash.length == LegacyAddress.LENGTH);
+        checkState(chunks.isEmpty());
         // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
         return op(OP_DUP)
             .op(OP_HASH160)
@@ -257,7 +259,8 @@ public class ScriptBuilder {
     }
 
     private ScriptBuilder p2shOutputScript(byte[] hash) {
-        checkArgument(hash.length == LegacyAddress.LENGTH);
+        checkArgument(hash.length == 20);
+        checkState(chunks.isEmpty());
         // OP_HASH160 <scriptHash> OP_EQUAL
         return op(OP_HASH160)
             .data(hash)
@@ -265,6 +268,7 @@ public class ScriptBuilder {
     }
 
     private ScriptBuilder p2whOutputScript(SegwitAddress address) {
+        checkState(chunks.isEmpty());
         // OP_<witnessVersion> <pubKeyHash|scriptHash>
         // smallNum, not number: number() would push the opcode's numeric value as data.
         return smallNum(address.getWitnessVersion())
