@@ -50,25 +50,14 @@ public final class Bech32 {
          1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1
     };
 
-    private static final int CHECKSUM_LENGTH = 6;
-    private static final int MAX_ENCODED_LENGTH = 90;
-    private static final int MIN_HRP_LENGTH = 1;
-    private static final int MAX_HRP_LENGTH = 83;
+    private static final int BECH32_CONST = 1;
+    private static final int BECH32M_CONST = 0x2bc830a3;
 
     /**
      * The two checksum variants. Same algorithm, different final constant. BIP350 introduced
      * bech32m and left bech32 in place for what already used it.
      */
-    public enum Encoding {
-        BECH32(1),
-        BECH32M(0x2bc830a3);
-
-        private final int constant;
-
-        Encoding(int constant) {
-            this.constant = constant;
-        }
-    }
+    public enum Encoding { BECH32, BECH32M }
 
     /**
      * The 5-bit payload of a bech32 string.
@@ -168,13 +157,13 @@ public final class Bech32 {
 
     /** Encodes a payload that is already in 5-bit groups. */
     public static String encode(Encoding encoding, String hrp, Bech32Bytes values) {
-        if (hrp.length() < MIN_HRP_LENGTH || hrp.length() > MAX_HRP_LENGTH) {
+        if (hrp.length() < 1 || hrp.length() > 83) {
             throw new AddressFormatException("Invalid human-readable part length: " + hrp.length());
         }
 
         String lowerCaseHrp = hrp.toLowerCase(Locale.ROOT);
         byte[] data = values.bytes;
-        byte[] checksum = createChecksum(lowerCaseHrp, data, encoding);
+        byte[] checksum = createChecksum(encoding, lowerCaseHrp, data);
 
         StringBuilder sb = new StringBuilder(lowerCaseHrp.length() + 1 + data.length + checksum.length);
         sb.append(lowerCaseHrp).append('1');
@@ -186,7 +175,7 @@ public final class Bech32 {
         }
 
         String encoded = sb.toString();
-        if (encoded.length() > MAX_ENCODED_LENGTH) {
+        if (encoded.length() > 90) {
             throw new AddressFormatException("Output too long: " + encoded.length());
         }
         return encoded;
@@ -200,7 +189,7 @@ public final class Bech32 {
         if (str.length() < 8) {
             throw new AddressFormatException("Input too short: " + str.length());
         }
-        if (str.length() > MAX_ENCODED_LENGTH) {
+        if (str.length() > 90) {
             throw new AddressFormatException("Input too long: " + str.length());
         }
 
@@ -230,7 +219,7 @@ public final class Bech32 {
             throw new AddressFormatException("Missing human-readable part");
         }
         int dataPartLength = str.length() - 1 - separatorIndex;
-        if (dataPartLength < CHECKSUM_LENGTH) {
+        if (dataPartLength < 6) {
             throw new AddressFormatException("Data part too short: " + dataPartLength);
         }
 
@@ -244,12 +233,12 @@ public final class Bech32 {
         }
 
         String hrp = str.substring(0, separatorIndex).toLowerCase(Locale.ROOT);
-        Encoding encoding = resolveEncoding(hrp, values);
+        Encoding encoding = verifyChecksum(hrp, values);
         if (encoding == null) {
             throw new AddressFormatException("Invalid checksum");
         }
 
-        return new Bech32Data(encoding, hrp, Arrays.copyOfRange(values, 0, values.length - CHECKSUM_LENGTH));
+        return new Bech32Data(encoding, hrp, Arrays.copyOfRange(values, 0, values.length - 6));
     }
 
     /** Re-groups the bits of {@code in} from {@code fromBits}-wide groups to {@code toBits}-wide ones. */
@@ -324,31 +313,28 @@ public final class Bech32 {
     }
 
     /** Returns the encoding whose constant the checksum matches, or null if it matches neither. */
-    private static Encoding resolveEncoding(String hrp, byte[] values) {
+    private static Encoding verifyChecksum(final String hrp, final byte[] values) {
         byte[] hrpExpanded = expandHrp(hrp);
         byte[] combined = new byte[hrpExpanded.length + values.length];
         System.arraycopy(hrpExpanded, 0, combined, 0, hrpExpanded.length);
         System.arraycopy(values, 0, combined, hrpExpanded.length, values.length);
-
-        int check = polymod(combined);
-        for (Encoding encoding : Encoding.values()) {
-            if (check == encoding.constant) {
-                return encoding;
-            }
-        }
-
-        return null;
+        final int check = polymod(combined);
+        if (check == BECH32_CONST)
+            return Encoding.BECH32;
+        else if (check == BECH32M_CONST)
+            return Encoding.BECH32M;
+        else
+            return null;
     }
 
-    private static byte[] createChecksum(String hrp, byte[] values, Encoding encoding) {
+    private static byte[] createChecksum(final Encoding encoding, final String hrp, final byte[] values) {
         byte[] hrpExpanded = expandHrp(hrp);
-        byte[] enc = new byte[hrpExpanded.length + values.length + CHECKSUM_LENGTH];
+        byte[] enc = new byte[hrpExpanded.length + values.length + 6];
         System.arraycopy(hrpExpanded, 0, enc, 0, hrpExpanded.length);
         System.arraycopy(values, 0, enc, hrpExpanded.length, values.length);
-
-        int mod = polymod(enc) ^ encoding.constant;
-        byte[] ret = new byte[CHECKSUM_LENGTH];
-        for (int i = 0; i < CHECKSUM_LENGTH; ++i) {
+        int mod = polymod(enc) ^ (encoding == Encoding.BECH32 ? BECH32_CONST : BECH32M_CONST);
+        byte[] ret = new byte[6];
+        for (int i = 0; i < 6; ++i) {
             ret[i] = (byte) ((mod >>> (5 * (5 - i))) & 31);
         }
         return ret;
