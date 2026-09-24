@@ -38,16 +38,27 @@ public class AddressTest {
     static final NetworkParameters testParams = TestNet3Params.get();
     static final NetworkParameters mainParams = MainNetParams.get();
 
+    /** A pub key hash and the base58 it renders as on testnet. */
+    private static final String PUB_KEY_HASH_HEX = "fda79a24e50ff70ff42f7d89585da5bd19d9e5cc";
+    private static final String TESTNET_BASE58 = "n4eA2nbYqErp7H6jebchxAN59DmNpksexv";
+    /** A second pub key hash and the base58 it renders as on mainnet. */
+    private static final String OTHER_PUB_KEY_HASH_HEX = "4a22c3c4cbb31e4d03b15550636762bda0baf85a";
+    private static final String MAINNET_BASE58 = "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL";
+
+    private static final int PUB_KEY_HASH_LENGTH = 20;
+
+    private static final NetworkParameters[] NETWORKS = { mainParams, testParams };
+
     @Test
     public void testJavaSerialization() throws Exception {
-        Address testAddress = Address.fromBase58(testParams, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        Address testAddress = Address.fromBase58(testParams, TESTNET_BASE58);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(testAddress);
         VersionedChecksummedBytes testAddressCopy = (VersionedChecksummedBytes) new ObjectInputStream(
                 new ByteArrayInputStream(os.toByteArray())).readObject();
         assertEquals(testAddress, testAddressCopy);
 
-        Address mainAddress = Address.fromBase58(mainParams, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        Address mainAddress = Address.fromBase58(mainParams, MAINNET_BASE58);
         os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(mainAddress);
         VersionedChecksummedBytes mainAddressCopy = (VersionedChecksummedBytes) new ObjectInputStream(
@@ -58,21 +69,21 @@ public class AddressTest {
     @Test
     public void stringification() throws Exception {
         // Test a testnet address.
-        Address a = new Address(testParams, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
-        assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
+        Address a = new Address(testParams, HEX.decode(PUB_KEY_HASH_HEX));
+        assertEquals(TESTNET_BASE58, a.toString());
         assertFalse(a.isP2SHAddress());
 
-        Address b = new Address(mainParams, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
-        assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
+        Address b = new Address(mainParams, HEX.decode(OTHER_PUB_KEY_HASH_HEX));
+        assertEquals(MAINNET_BASE58, b.toString());
         assertFalse(b.isP2SHAddress());
     }
     
     @Test
     public void decoding() throws Exception {
-        Address a = Address.fromBase58(testParams, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        Address a = Address.fromBase58(testParams, TESTNET_BASE58);
         assertEquals("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc", Utils.HEX.encode(a.getHash160()));
 
-        Address b = Address.fromBase58(mainParams, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        Address b = Address.fromBase58(mainParams, MAINNET_BASE58);
         assertEquals("4a22c3c4cbb31e4d03b15550636762bda0baf85a", Utils.HEX.encode(b.getHash160()));
     }
     
@@ -100,7 +111,7 @@ public class AddressTest {
 
         // Check the case of a mismatched network.
         try {
-            Address.fromBase58(testParams, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+            Address.fromBase58(testParams, MAINNET_BASE58);
             fail();
         } catch (WrongNetworkException e) {
             // Success.
@@ -113,9 +124,9 @@ public class AddressTest {
 
     @Test
     public void getNetwork() throws Exception {
-        NetworkParameters params = Address.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        NetworkParameters params = Address.getParametersFromAddress(MAINNET_BASE58);
         assertEquals(MainNetParams.get().getId(), params.getId());
-        params = Address.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        params = Address.getParametersFromAddress(TESTNET_BASE58);
         assertEquals(TestNet3Params.get().getId(), params.getId());
     }
 
@@ -138,7 +149,7 @@ public class AddressTest {
         NetworkParameters params = Address.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
         assertEquals(altNetwork.getId(), params.getId());
         // Check if main network works as before
-        params = Address.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        params = Address.getParametersFromAddress(MAINNET_BASE58);
         assertEquals(MainNetParams.get().getId(), params.getId());
         // Unregister network
         Networks.unregister(altNetwork);
@@ -176,7 +187,7 @@ public class AddressTest {
 
     @Test
     public void cloning() throws Exception {
-        Address a = new Address(testParams, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
+        Address a = new Address(testParams, HEX.decode(PUB_KEY_HASH_HEX));
         Address b = a.clone();
 
         assertEquals(a, b);
@@ -185,7 +196,7 @@ public class AddressTest {
 
     @Test
     public void roundtripBase58() throws Exception {
-        String base58 = "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL";
+        String base58 = MAINNET_BASE58;
         assertEquals(base58, Address.fromBase58(null, base58).toBase58());
     }
 
@@ -239,18 +250,20 @@ public class AddressTest {
 
     @Test
     public void equals_withDifferentClass_shouldReturnFalse() {
-        byte[] hash160 = HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc");
+        for (NetworkParameters params : NETWORKS) {
+            byte[] hash160 = HEX.decode(PUB_KEY_HASH_HEX);
 
-        Address address = new Address(testParams, hash160);
-        VersionedChecksummedBytes sameVersionAndBytes =
-            new VersionedChecksummedBytes(testParams.getAddressHeader(), hash160);
+            Address address = new Address(params, hash160);
+            VersionedChecksummedBytes sameVersionAndBytes =
+                new VersionedChecksummedBytes(params.getAddressHeader(), hash160);
 
-        assertNotEquals(address, sameVersionAndBytes);
+            assertNotEquals(params.getId(), address, sameVersionAndBytes);
+        }
     }
 
     @Test
     public void equals_withDifferentVersion_shouldReturnFalse() {
-        byte[] hash160 = HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc");
+        byte[] hash160 = HEX.decode(PUB_KEY_HASH_HEX);
 
         Address mainNetAddress = new Address(mainParams, hash160);
         Address testNetAddress = new Address(testParams, hash160);
@@ -260,24 +273,48 @@ public class AddressTest {
 
     @Test
     public void equals_withDifferentHash_shouldReturnFalse() {
-        Address address = new Address(testParams, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
-        Address anotherAddress = new Address(testParams, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
+        for (NetworkParameters params : NETWORKS) {
+            Address address = new Address(params, HEX.decode(PUB_KEY_HASH_HEX));
+            Address anotherAddress = new Address(params, HEX.decode(OTHER_PUB_KEY_HASH_HEX));
 
-        assertNotEquals(address, anotherAddress);
+            assertNotEquals(params.getId(), address, anotherAddress);
+        }
     }
 
     @Test
     public void hashCode_withEqualAddresses_shouldMatch() {
-        Address fromHash = new Address(testParams, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
-        Address fromBase58 = Address.fromBase58(testParams, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        assertHashCodeMatches(testParams, PUB_KEY_HASH_HEX, TESTNET_BASE58);
+        assertHashCodeMatches(mainParams, OTHER_PUB_KEY_HASH_HEX, MAINNET_BASE58);
+    }
 
-        assertEquals(fromHash, fromBase58);
-        assertEquals(fromHash.hashCode(), fromBase58.hashCode());
+    private void assertHashCodeMatches(NetworkParameters params, String hash160Hex, String base58) {
+        Address fromHash = new Address(params, HEX.decode(hash160Hex));
+        Address fromBase58 = Address.fromBase58(params, base58);
+
+        assertEquals(params.getId(), fromHash, fromBase58);
+        assertEquals(params.getId(), fromHash.hashCode(), fromBase58.hashCode());
     }
 
     @Test
     public void constructor_withHashNotTwentyBytes_shouldThrow() {
-        assertThrows(IllegalArgumentException.class, () -> new Address(testParams, new byte[19]));
-        assertThrows(IllegalArgumentException.class, () -> new Address(testParams, new byte[21]));
+        for (NetworkParameters params : NETWORKS) {
+            for (int length = 0; length <= PUB_KEY_HASH_LENGTH + 1; length++) {
+                if (length == PUB_KEY_HASH_LENGTH) {
+                    continue;
+                }
+                final int hashLength = length;
+                assertThrows(params.getId() + " accepted " + hashLength + " bytes",
+                    IllegalArgumentException.class, () -> new Address(params, new byte[hashLength]));
+            }
+        }
+    }
+
+    @Test
+    public void constructor_withTwentyByteHash_shouldNotThrow() {
+        for (NetworkParameters params : NETWORKS) {
+            Address address = new Address(params, new byte[PUB_KEY_HASH_LENGTH]);
+
+            assertEquals(params.getId(), PUB_KEY_HASH_LENGTH, address.getHash160().length);
+        }
     }
 }
