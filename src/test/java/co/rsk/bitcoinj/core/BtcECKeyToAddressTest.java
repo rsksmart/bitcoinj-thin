@@ -1,6 +1,8 @@
 package co.rsk.bitcoinj.core;
 
+import co.rsk.bitcoinj.params.MainNetParams;
 import co.rsk.bitcoinj.params.RegTestParams;
+import co.rsk.bitcoinj.params.TestNet3Params;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
 import org.junit.Test;
@@ -15,6 +17,8 @@ import static org.junit.Assert.assertThrows;
 public class BtcECKeyToAddressTest {
 
     private static final NetworkParameters REGTEST = RegTestParams.get();
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
 
     private static final BtcECKey KEY = BtcECKey.fromPublicOnly(
         Utils.HEX.decode("030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc8ad"));
@@ -61,21 +65,59 @@ public class BtcECKeyToAddressTest {
 
     @Test
     public void composingNestedSegwit_shouldMatchBitcoinCore() {
-        // P2SH-P2WPKH is not an output script type, so it composes from the pieces rather than
-        // being a case in toAddress. This is the shape a caller uses.
-        Script redeemScript = ScriptBuilder.createP2WPKHOutputScript(KEY.getPubKeyHash());
-        LegacyAddress address = LegacyAddress.fromP2SHHash(
-            REGTEST, Utils.sha256hash160(redeemScript.getProgram()));
-
-        assertEquals("2NAbe5uhy5x3de7CuT2ckaif2aF5BcsxJLf", address.toString());
+        assertEquals("2NAbe5uhy5x3de7CuT2ckaif2aF5BcsxJLf", nestedSegwit(REGTEST, KEY).toString());
     }
 
     @Test
     public void composingTaproot_shouldMatchBitcoinCore() {
-        // Same for taproot: the tweak plus fromProgram.
-        SegwitAddress address = SegwitAddress.fromProgram(REGTEST, 1, Taproot.deriveOutputKey(KEY));
-
         assertEquals("bcrt1pf3nev47234920c5aa24t4yzx8g40ncvzqynezyfxxnzdtpdnyjnsdgtqq8",
-            address.toString());
+            taproot(REGTEST, KEY).toString());
+    }
+
+    @Test
+    public void composingAllFourTypes_onMainnetAndTestnet_shouldMatchBitcoinCore() {
+        assertEquals("1PbwjuQP3y9F3ZnbbWUvue4zpgkQuSbgD5",
+            KEY.toAddress(Script.ScriptType.P2PKH, MAINNET).toString());
+        assertEquals("3K3S2AmwUVYHSKaMmtzsxmfmMts1s9RsXe", nestedSegwit(MAINNET, KEY).toString());
+        assertEquals("bc1q7lhf4defwy62pnx8du74p62daut53revvqv96s",
+            KEY.toAddress(Script.ScriptType.P2WPKH, MAINNET).toString());
+        assertEquals("bc1pf3nev47234920c5aa24t4yzx8g40ncvzqynezyfxxnzdtpdnyjnshehf0j",
+            taproot(MAINNET, KEY).toString());
+
+        assertEquals("n47u2xVMrzaVpgGDK5TJjZHKggM7r8CdAm",
+            KEY.toAddress(Script.ScriptType.P2PKH, TESTNET).toString());
+        assertEquals("2NAbe5uhy5x3de7CuT2ckaif2aF5BcsxJLf", nestedSegwit(TESTNET, KEY).toString());
+        assertEquals("tb1q7lhf4defwy62pnx8du74p62daut53revxxhkpr",
+            KEY.toAddress(Script.ScriptType.P2WPKH, TESTNET).toString());
+        assertEquals("tb1pf3nev47234920c5aa24t4yzx8g40ncvzqynezyfxxnzdtpdnyjnsq3px4a",
+            taproot(TESTNET, KEY).toString());
+    }
+
+    /**
+     * An uncompressed key hashes to 20 bytes like any other, so the byte[] overload would accept
+     * it and hand back a P2SH address whose witness cannot be relayed. The key overload is what
+     * rejects it, which is why the composition goes through that one.
+     */
+    @Test
+    public void composingNestedSegwit_withUncompressedKey_shouldThrow() {
+        BtcECKey uncompressed = KEY.decompress();
+
+        assertEquals(20, uncompressed.getPubKeyHash().length);
+        assertThrows(IllegalArgumentException.class, () -> nestedSegwit(REGTEST, uncompressed));
+    }
+
+    /**
+     * P2SH-P2WPKH is not an output script type, so it composes from the pieces rather than being a
+     * case in toAddress. This is the shape a caller uses.
+     */
+    private static LegacyAddress nestedSegwit(NetworkParameters params, BtcECKey key) {
+        Script redeemScript = ScriptBuilder.createP2WPKHOutputScript(key);
+
+        return LegacyAddress.fromP2SHHash(params, Utils.sha256hash160(redeemScript.getProgram()));
+    }
+
+    /** Same for taproot: the tweak plus fromProgram. */
+    private static SegwitAddress taproot(NetworkParameters params, BtcECKey key) {
+        return SegwitAddress.fromProgram(params, 1, Taproot.deriveOutputKey(key));
     }
 }
