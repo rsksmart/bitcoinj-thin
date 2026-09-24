@@ -41,10 +41,15 @@ public interface AddressParser {
      * <p>Base58 first, bech32 second, which is upstream's order. A wrong network is reported as
      * such from either encoding, rather than being reduced to a format error.</p>
      *
-     * <p>Upstream rethrows the base58 failure when it is bech32 that reports the wrong network,
-     * which turns a wrong-network address into an unrelated "illegal character" message. We throw
-     * the bech32 failure instead. This is the one behavioural difference from upstream in this
-     * class, and it matches what upstream's own javadoc says should happen.</p>
+     * <p>Upstream's per-network method discards both bech32 failures: it rethrows the base58 one
+     * when bech32 reports the wrong network, and replaces any other bech32 failure with a bare
+     * exception carrying only the input string. Both lose the reason an address was rejected,
+     * which matters when the caller is reading consensus storage. Upstream's own any-network
+     * method reaches the same conclusion on the second: the lossy line is commented out there.</p>
+     *
+     * <p>Letting both through is what removes the inner try altogether, so the structure here is
+     * shorter than upstream's. The base58 catch stays, since without it a wrong network on base58
+     * would fall through and be retried as bech32.</p>
      *
      * @param params the network to parse for
      * @return a parser for that network
@@ -56,13 +61,7 @@ public interface AddressParser {
             } catch (AddressFormatException.WrongNetwork x) {
                 throw x;
             } catch (AddressFormatException x) {
-                try {
-                    return SegwitAddress.fromBech32(params, addressString);
-                } catch (AddressFormatException.WrongNetwork x2) {
-                    throw x2;
-                } catch (AddressFormatException x2) {
-                    throw new AddressFormatException(addressString);
-                }
+                return SegwitAddress.fromBech32(params, addressString);
             }
         };
     }
