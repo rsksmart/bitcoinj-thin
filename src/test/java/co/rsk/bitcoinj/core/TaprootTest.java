@@ -34,6 +34,21 @@ public class TaprootTest {
             "882d74e5d0572d5a816cef0041a96b6c1de832f6f9676d9605c44d5e9a97d3dc");
     }
 
+    /**
+     * The one BIP341 key-path vector with an empty merkle root, which is the case this class
+     * covers. BIP341's other vectors tweak with a script tree, which the Bridge never builds.
+     * Asserted under both parities, since an x-only internal key carries none.
+     */
+    @Test
+    public void deriveOutputKey_withBip341EmptyTreeVector_shouldMatchTheVector() {
+        String internalKey = "d6889cb081036e0faefa3a35157ad71086b123b2b144b649798b494c300a961d";
+        String expected = "53a1f6e454df1aa2776a2814a721372d6258050de330b3c6d10ee8f4e0dda343";
+
+        assertDerives(internalKey, expected);
+        assertEquals(expected, Utils.HEX.encode(Taproot.deriveOutputKey(
+            BtcECKey.fromPublicOnly(Utils.HEX.decode("03" + internalKey)))));
+    }
+
     @Test
     public void deriveOutputKey_withOddYKey_shouldMatchItsEvenCounterpart() {
         // lift_x drops the y parity, so a key and its negation must tweak to the same output key.

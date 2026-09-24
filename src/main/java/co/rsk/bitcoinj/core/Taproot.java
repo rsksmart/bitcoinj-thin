@@ -62,7 +62,9 @@ public final class Taproot {
 
         BigInteger tweak = new BigInteger(1, taggedHash(TAP_TWEAK_TAG, internalKeyXOnly));
         if (tweak.compareTo(BtcECKey.CURVE.getN()) >= 0) {
-            // Astronomically unlikely, but BIP341 requires rejecting it rather than reducing.
+            // BIP341 requires rejecting this rather than reducing. No test covers it and none can
+            // without a seam: the tweak is a hash of the key, so reaching the branch means finding
+            // a key whose TapTweak hash lands in the last 2^-128 of the 256-bit range.
             throw new IllegalArgumentException("Taproot tweak is not a valid scalar for this key");
         }
 
