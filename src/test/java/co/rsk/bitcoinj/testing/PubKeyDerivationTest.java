@@ -6,7 +6,7 @@ import co.rsk.bitcoinj.core.NetworkParameters;
 import co.rsk.bitcoinj.crypto.*;
 import co.rsk.bitcoinj.script.Script;
 import co.rsk.bitcoinj.script.ScriptBuilder;
-import co.rsk.bitcoinj.core.Address;
+import co.rsk.bitcoinj.core.LegacyAddress;
 import org.junit.Test;
 
 import java.util.List;
@@ -43,7 +43,7 @@ public class PubKeyDerivationTest {
         Script redeemScript = ScriptBuilder.createRedeemScript(2, keys);
         Script script = ScriptBuilder.createP2SHOutputScript(redeemScript);
 
-        Address multisig = Address.fromP2SHScript(params, script);
+        LegacyAddress multisig = LegacyAddress.fromP2SHScript(params, script);
         assertEquals("3KwuACPswasN8iHybeJ7Vfs5rUBwQ5Y8UY", multisig.toString());
     }
 

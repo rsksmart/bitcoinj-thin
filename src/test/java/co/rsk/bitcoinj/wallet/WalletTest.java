@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
 public class WalletTest {
     // data from tx https://mempool.space/testnet/tx/1744459aeaf7369aadc9fc40de9ab2bf575b14e35029b35a7ee4bbd3de65af7f
     private static final NetworkParameters TESTNET = NetworkParameters.fromID(NetworkParameters.ID_TESTNET);
-    private static final Address ADDRESS_TO = Address.fromBase58(TESTNET, "mwUXQVdcCwCeYJx7mBhH4yLBU5N6QDSBZK");
+    private static final Address ADDRESS_TO = LegacyAddress.fromBase58(TESTNET, "mwUXQVdcCwCeYJx7mBhH4yLBU5N6QDSBZK");
 
     private static final BtcECKey PUBLIC_KEY_1 = BtcECKey.fromPublicOnly(Hex.decode("027de2af71862e0c64bf0ec5a66e3abc3b01fc57877802e6a6a81f6ea1d3561007"));
     private static final BtcECKey PUBLIC_KEY_2 = BtcECKey.fromPublicOnly(Hex.decode("02d9c67fef9f8d0707cbcca195eb5f26c6a65da6ca2d6130645c434bb924063856"));
@@ -66,7 +66,7 @@ public class WalletTest {
         UTXOProvider utxoProvider = getUtxoProvider(scriptPubKey);
         wallet.setUTXOProvider(utxoProvider);
 
-        Address address = Address.fromP2SHScript(TESTNET, scriptPubKey);
+        Address address = LegacyAddress.fromP2SHScript(TESTNET, scriptPubKey);
         wallet.addWatchedAddress(address);
 
         tx = new BtcTransaction(TESTNET);

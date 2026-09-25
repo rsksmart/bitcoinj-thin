@@ -222,11 +222,20 @@ public class ScriptBuilder {
 
     /** Creates a scriptPubKey that encodes payment to the given address. */
     public static Script createOutputScript(Address to) {
-        if (to.isP2SHAddress()) {
+        // LegacyAddress is the only implementation that can be paid to for now. A later change
+        // dispatches on the address type instead, and this whole branch goes away with it. Until
+        // then, say so rather than letting a bare ClassCastException out of a public method.
+        if (!(to instanceof LegacyAddress)) {
+            throw new IllegalArgumentException(
+                "Cannot build an output script for " + to.getClass().getSimpleName()
+                    + " yet, only LegacyAddress is supported");
+        }
+        LegacyAddress legacyAddress = (LegacyAddress) to;
+        if (legacyAddress.isP2SHAddress()) {
             // OP_HASH160 <scriptHash> OP_EQUAL
             return new ScriptBuilder()
                 .op(OP_HASH160)
-                .data(to.getHash160())
+                .data(legacyAddress.getHash160())
                 .op(OP_EQUAL)
                 .build();
         } else {
@@ -234,7 +243,7 @@ public class ScriptBuilder {
             return new ScriptBuilder()
                 .op(OP_DUP)
                 .op(OP_HASH160)
-                .data(to.getHash160())
+                .data(legacyAddress.getHash160())
                 .op(OP_EQUALVERIFY)
                 .op(OP_CHECKSIG)
                 .build();

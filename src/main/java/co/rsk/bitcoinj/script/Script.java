@@ -201,7 +201,7 @@ public class Script {
         return chunks.size() == 5 &&
                chunks.get(0).equalsOpCode(OP_DUP) &&
                chunks.get(1).equalsOpCode(OP_HASH160) &&
-               chunks.get(2).data.length == Address.LENGTH &&
+               chunks.get(2).data.length == LegacyAddress.LENGTH &&
                chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
@@ -300,7 +300,7 @@ public class Script {
      */
     @Deprecated
     public Address getFromAddress(NetworkParameters params) throws ScriptException {
-        return new Address(params, Utils.sha256hash160(getPubKey()));
+        return new LegacyAddress(params, Utils.sha256hash160(getPubKey()));
     }
 
     /**
@@ -319,9 +319,9 @@ public class Script {
      */
     public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
         if (isSentToAddress())
-            return new Address(params, getPubKeyHash());
+            return new LegacyAddress(params, getPubKeyHash());
         else if (isPayToScriptHash())
-            return Address.fromP2SHScript(params, this);
+            return LegacyAddress.fromP2SHScript(params, this);
         else if (forcePayToPubKey && isSentToRawPubKey())
             return BtcECKey.fromPublicOnly(getPubKey()).toAddress(params);
         else
