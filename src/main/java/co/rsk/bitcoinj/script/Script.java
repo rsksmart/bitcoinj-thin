@@ -53,13 +53,23 @@ import org.spongycastle.crypto.digests.RIPEMD160Digest;
  */
 public class Script {
 
-    /** Enumeration to encapsulate the type of this script. */
+    /**
+     * Enumeration to encapsulate the type of this script.
+     *
+     * <p>The three segwit values are inputs to {@link BtcECKey#toAddress} only.
+     * {@link #getScriptType()} does not return them: it still classifies a witness output as
+     * {@link #NO_TYPE}, as it did before they were added.</p>
+     */
     public enum ScriptType {
         // Do NOT change the ordering of the following definitions because their ordinals are stored in databases.
         NO_TYPE,
         P2PKH,
         PUB_KEY,
-        P2SH
+        P2SH,
+        // Appended, never inserted, for the same reason. Names follow bitcoinj 0.17.1's ScriptType.
+        P2WPKH,
+        P2WSH,
+        P2TR
     }
 
     /** Flags to pass to {@link Script#correctlySpends(BtcTransaction, long, Script, Set)}.
