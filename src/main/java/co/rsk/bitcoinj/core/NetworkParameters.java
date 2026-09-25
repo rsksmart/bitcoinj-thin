@@ -314,6 +314,29 @@ public abstract class NetworkParameters {
         return p2shHeader;
     }
 
+    /**
+     * The human-readable part of a segwit address on this network, as defined by BIP173.
+     *
+     * <p>Upstream keeps this on its {@code Network} enum, which this fork does not have. An
+     * unrecognised network throws rather than falling back: the prefix feeds the bech32 checksum,
+     * so a wrong one does not produce a broken address, it produces a valid one for another
+     * network.</p>
+     */
+    public String getSegwitHrp() {
+        if (ID_MAINNET.equals(getId())) {
+            return "bc";
+        }
+        if (ID_REGTEST.equals(getId())) {
+            return "bcrt";
+        }
+        if (ID_TESTNET.equals(getId()) || ID_UNITTESTNET.equals(getId())) {
+            return "tb";
+        }
+
+        throw new IllegalStateException("No segwit human-readable part is defined for network " + getId());
+    }
+
+
     /** First byte of a base58 encoded dumped private key. See {@link co.rsk.bitcoinj.core.DumpedPrivateKey}. */
     public int getDumpedPrivateKeyHeader() {
         return dumpedPrivateKeyHeader;

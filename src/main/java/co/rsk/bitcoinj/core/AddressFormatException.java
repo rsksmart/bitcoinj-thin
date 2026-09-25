@@ -26,4 +26,64 @@ public class AddressFormatException extends IllegalArgumentException {
     public AddressFormatException(String message) {
         super(message);
     }
+
+    /**
+     * This exception is thrown by {@link Base58}, {@link Bech32} and the address classes when you try to
+     * decode data and the data isn't of the right size. You shouldn't allow the user to proceed
+     * in this case.
+     */
+    public static class InvalidDataLength extends AddressFormatException {
+        public InvalidDataLength() {
+            super();
+        }
+
+        public InvalidDataLength(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * This exception is thrown by {@code SegwitAddress} when you try to decode data and the witness version doesn't
+     * match the Bech32 encoding as per BIP350. You shouldn't allow the user to proceed in this case.
+     */
+    public static class UnexpectedWitnessVersion extends AddressFormatException {
+        public UnexpectedWitnessVersion() {
+            super("Unexpected witness version");
+        }
+
+        public UnexpectedWitnessVersion(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * This exception is thrown by the address classes when you try and decode an address with an invalid
+     * prefix (version header or human-readable part). You shouldn't allow the
+     * user to proceed in this case.
+     */
+    public static class InvalidPrefix extends AddressFormatException {
+        public InvalidPrefix() {
+            super();
+        }
+
+        public InvalidPrefix(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * This exception is thrown by the address classes when you try and decode an address with a prefix
+     * (version header or human-readable part) that is used by another network (usually: mainnet vs
+     * testnet). You shouldn't allow the user to proceed in this case as they are trying to send money across different
+     * chains, an operation that is guaranteed to destroy the money.
+     */
+    public static class WrongNetwork extends InvalidPrefix {
+        public WrongNetwork(int versionHeader) {
+            super("Version code of address did not match acceptable versions for network: " + versionHeader);
+        }
+
+        public WrongNetwork(String hrp) {
+            super("human-readable part of address did not match acceptable HRPs for network: " + hrp);
+        }
+    }
 }
