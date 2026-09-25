@@ -483,10 +483,23 @@ public class BtcECKey {
      *
      * <p>Ported from bitcoinj 0.17.1 {@code ECKey.toAddress(ScriptType, Network)}, which covers
      * these two types and rejects the rest. P2SH-P2WPKH is not among them because it is not a
-     * distinct output script type: on chain it is plain P2SH. A caller that wants it composes it
-     * from {@code ScriptBuilder.createP2WPKHOutputScript} and
-     * {@code LegacyAddress.fromP2SHScript}. P2TR is not among them either, and composes from
-     * {@code Taproot.deriveOutputKey} and {@code SegwitAddress.fromProgram}.</p>
+     * distinct output script type: on chain it is plain P2SH. P2TR is not among them either,
+     * because the tweak is not a property of a key.</p>
+     *
+     * <p>A caller that wants either composes it:</p>
+     *
+     * <pre>
+     * // P2SH-P2WPKH
+     * Script redeemScript = ScriptBuilder.createP2WPKHOutputScript(key);
+     * LegacyAddress.fromP2SHHash(params, Utils.sha256hash160(redeemScript.getProgram()));
+     *
+     * // P2TR
+     * SegwitAddress.fromProgram(params, 1, Taproot.deriveOutputKey(key));
+     * </pre>
+     *
+     * <p>Take the {@code BtcECKey} overload of {@code createP2WPKHOutputScript}, not the
+     * {@code byte[]} one. That one only checks the length, and an uncompressed key hashes to 20
+     * bytes too, so it would hand back a P2SH address whose witness cannot be relayed.</p>
      *
      * @param scriptType the output script type
      * @param params network this address is valid for
