@@ -47,8 +47,6 @@ public class AddressTest {
 
     private static final int PUB_KEY_HASH_LENGTH = 20;
 
-    private static final NetworkParameters[] NETWORKS = { mainParams, testParams };
-
     @Test
     public void testJavaSerialization() throws Exception {
         Address testAddress = Address.fromBase58(testParams, TESTNET_BASE58);
@@ -196,8 +194,7 @@ public class AddressTest {
 
     @Test
     public void roundtripBase58() throws Exception {
-        String base58 = MAINNET_BASE58;
-        assertEquals(base58, Address.fromBase58(null, base58).toBase58());
+        assertEquals(MAINNET_BASE58, Address.fromBase58(null, MAINNET_BASE58).toBase58());
     }
 
     @Test
@@ -249,16 +246,23 @@ public class AddressTest {
     }
 
     @Test
-    public void equals_withDifferentClass_shouldReturnFalse() {
-        for (NetworkParameters params : NETWORKS) {
-            byte[] hash160 = HEX.decode(PUB_KEY_HASH_HEX);
+    public void equals_withDifferentClass_onMainnet_shouldReturnFalse() {
+        assertNotEqualToPlainVersionedBytes(mainParams);
+    }
 
-            Address address = new Address(params, hash160);
-            VersionedChecksummedBytes sameVersionAndBytes =
-                new VersionedChecksummedBytes(params.getAddressHeader(), hash160);
+    @Test
+    public void equals_withDifferentClass_onTestnet_shouldReturnFalse() {
+        assertNotEqualToPlainVersionedBytes(testParams);
+    }
 
-            assertNotEquals(params.getId(), address, sameVersionAndBytes);
-        }
+    private void assertNotEqualToPlainVersionedBytes(NetworkParameters params) {
+        byte[] hash160 = HEX.decode(PUB_KEY_HASH_HEX);
+
+        Address address = new Address(params, hash160);
+        VersionedChecksummedBytes sameVersionAndBytes =
+            new VersionedChecksummedBytes(params.getAddressHeader(), hash160);
+
+        assertNotEquals(address, sameVersionAndBytes);
     }
 
     @Test
@@ -272,13 +276,20 @@ public class AddressTest {
     }
 
     @Test
-    public void equals_withDifferentHash_shouldReturnFalse() {
-        for (NetworkParameters params : NETWORKS) {
-            Address address = new Address(params, HEX.decode(PUB_KEY_HASH_HEX));
-            Address anotherAddress = new Address(params, HEX.decode(OTHER_PUB_KEY_HASH_HEX));
+    public void equals_withDifferentHash_onMainnet_shouldReturnFalse() {
+        assertDifferentHashesAreNotEqual(mainParams);
+    }
 
-            assertNotEquals(params.getId(), address, anotherAddress);
-        }
+    @Test
+    public void equals_withDifferentHash_onTestnet_shouldReturnFalse() {
+        assertDifferentHashesAreNotEqual(testParams);
+    }
+
+    private void assertDifferentHashesAreNotEqual(NetworkParameters params) {
+        Address address = new Address(params, HEX.decode(PUB_KEY_HASH_HEX));
+        Address anotherAddress = new Address(params, HEX.decode(OTHER_PUB_KEY_HASH_HEX));
+
+        assertNotEquals(address, anotherAddress);
     }
 
     @Test
@@ -291,30 +302,46 @@ public class AddressTest {
         Address fromHash = new Address(params, HEX.decode(hash160Hex));
         Address fromBase58 = Address.fromBase58(params, base58);
 
-        assertEquals(params.getId(), fromHash, fromBase58);
-        assertEquals(params.getId(), fromHash.hashCode(), fromBase58.hashCode());
+        assertEquals(fromHash, fromBase58);
+        assertEquals(fromHash.hashCode(), fromBase58.hashCode());
     }
 
     @Test
-    public void constructor_withHashNotTwentyBytes_shouldThrow() {
-        for (NetworkParameters params : NETWORKS) {
-            for (int length = 0; length <= PUB_KEY_HASH_LENGTH + 1; length++) {
-                if (length == PUB_KEY_HASH_LENGTH) {
-                    continue;
-                }
-                final int hashLength = length;
-                assertThrows(params.getId() + " accepted " + hashLength + " bytes",
-                    IllegalArgumentException.class, () -> new Address(params, new byte[hashLength]));
-            }
+    public void constructor_withHashShorterThanTwentyBytes_onMainnet_shouldThrow() {
+        assertRejectsLengthsBelowTwenty(mainParams);
+    }
+
+    @Test
+    public void constructor_withHashShorterThanTwentyBytes_onTestnet_shouldThrow() {
+        assertRejectsLengthsBelowTwenty(testParams);
+    }
+
+    private void assertRejectsLengthsBelowTwenty(NetworkParameters params) {
+        for (int length = 0; length < PUB_KEY_HASH_LENGTH; length++) {
+            final int hashLength = length;
+
+            assertThrows(IllegalArgumentException.class, () -> new Address(params, new byte[hashLength]));
         }
+    }
+
+    @Test
+    public void constructor_withHashLongerThanTwentyBytes_onMainnet_shouldThrow() {
+        assertThrows(IllegalArgumentException.class,
+            () -> new Address(mainParams, new byte[PUB_KEY_HASH_LENGTH + 1]));
+    }
+
+    @Test
+    public void constructor_withHashLongerThanTwentyBytes_onTestnet_shouldThrow() {
+        assertThrows(IllegalArgumentException.class,
+            () -> new Address(testParams, new byte[PUB_KEY_HASH_LENGTH + 1]));
     }
 
     @Test
     public void constructor_withTwentyByteHash_shouldNotThrow() {
-        for (NetworkParameters params : NETWORKS) {
-            Address address = new Address(params, new byte[PUB_KEY_HASH_LENGTH]);
+        Address mainNetAddress = new Address(mainParams, new byte[PUB_KEY_HASH_LENGTH]);
+        Address testNetAddress = new Address(testParams, new byte[PUB_KEY_HASH_LENGTH]);
 
-            assertEquals(params.getId(), PUB_KEY_HASH_LENGTH, address.getHash160().length);
-        }
+        assertEquals(PUB_KEY_HASH_LENGTH, mainNetAddress.getHash160().length);
+        assertEquals(PUB_KEY_HASH_LENGTH, testNetAddress.getHash160().length);
     }
 }
