@@ -58,13 +58,24 @@ public final class Taproot {
         }
 
         ECPoint internalKey = liftX(key.getPubKeyPoint());
-        byte[] internalKeyXOnly = toXOnly(internalKey);
+        BigInteger tweak = new BigInteger(1, taggedHash(TAP_TWEAK_TAG, toXOnly(internalKey)));
 
-        BigInteger tweak = new BigInteger(1, taggedHash(TAP_TWEAK_TAG, internalKeyXOnly));
+        return applyTweak(internalKey, tweak);
+    }
+
+    /**
+     * BIP341 {@code taproot_tweak_pubkey}, from the point the tweak has already been derived.
+     *
+     * <p>Separate from {@link #deriveOutputKey} because the two rejections below cannot be reached
+     * through it: the tweak is a hash of the key, so a tweak outside the scalar range means a key
+     * whose TapTweak hash lands in the last 2^-128 of the 256-bit range. This is the step BIP341
+     * names, not a seam that exists only for the test.</p>
+     *
+     * @throws IllegalArgumentException if the tweak is not a valid scalar, or the result is the
+     *                                  point at infinity
+     */
+    static byte[] applyTweak(ECPoint internalKey, BigInteger tweak) {
         if (tweak.compareTo(BtcECKey.CURVE.getN()) >= 0) {
-            // BIP341 requires rejecting this rather than reducing. No test covers it and none can
-            // without a seam: the tweak is a hash of the key, so reaching the branch means finding
-            // a key whose TapTweak hash lands in the last 2^-128 of the 256-bit range.
             throw new IllegalArgumentException("Taproot tweak is not a valid scalar for this key");
         }
 
@@ -74,6 +85,11 @@ public final class Taproot {
         }
 
         return toXOnly(outputKey);
+    }
+
+    /** BIP340 {@code lift_x} applied to a public key, exposed for {@link #applyTweak}. */
+    static ECPoint internalKeyOf(BtcECKey key) {
+        return liftX(key.getPubKeyPoint());
     }
 
     /**

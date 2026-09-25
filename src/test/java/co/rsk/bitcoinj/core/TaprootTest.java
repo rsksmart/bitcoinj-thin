@@ -1,6 +1,8 @@
 package co.rsk.bitcoinj.core;
 
+import java.math.BigInteger;
 import org.junit.Test;
+import org.spongycastle.math.ec.ECPoint;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -85,6 +87,30 @@ public class TaprootTest {
             .decompress();
 
         assertThrows(IllegalArgumentException.class, () -> Taproot.deriveOutputKey(uncompressed));
+    }
+
+    /**
+     * BIP341 rejects a tweak that is not less than the curve order rather than reducing it. No key
+     * reaches that branch, so the tweak is handed in directly.
+     */
+    @Test
+    public void applyTweak_withTweakNotLessThanCurveOrder_shouldThrow() {
+        ECPoint internalKey = Taproot.internalKeyOf(BtcECKey.fromPublicOnly(
+            Utils.HEX.decode("030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc8ad")));
+
+        assertThrows(IllegalArgumentException.class,
+            () -> Taproot.applyTweak(internalKey, BtcECKey.CURVE.getN()));
+        assertThrows(IllegalArgumentException.class,
+            () -> Taproot.applyTweak(internalKey, BtcECKey.CURVE.getN().add(BigInteger.ONE)));
+    }
+
+    @Test
+    public void applyTweak_withTweakJustBelowCurveOrder_shouldNotThrow() {
+        ECPoint internalKey = Taproot.internalKeyOf(BtcECKey.fromPublicOnly(
+            Utils.HEX.decode("030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc8ad")));
+
+        assertEquals(32,
+            Taproot.applyTweak(internalKey, BtcECKey.CURVE.getN().subtract(BigInteger.ONE)).length);
     }
 
     private static void assertDerives(String internalKeyXOnly, String expectedOutputKey) {
