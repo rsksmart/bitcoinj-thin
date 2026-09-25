@@ -189,7 +189,10 @@ public class SegwitAddress implements Address {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SegwitAddress other = (SegwitAddress) o;
-        return this.params == other.params && witnessVersion == other.witnessVersion
+        // Upstream compares its Network by reference, which is safe there because Network is an
+        // enum. NetworkParameters is not, so two instances of the same network would be unequal
+        // while hashCode, which goes through Objects.hash, reports them equal.
+        return this.params.equals(other.params) && witnessVersion == other.witnessVersion
                 && Arrays.equals(this.witnessProgram, other.witnessProgram);
     }
 

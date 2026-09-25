@@ -5,12 +5,15 @@ import co.rsk.bitcoinj.params.RegTestParams;
 import co.rsk.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Locale;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -84,16 +87,48 @@ public class SegwitAddressTest {
     }
 
     @Test
+    /**
+     * Each vector is asserted against each network separately. Parsing them in sequence inside one
+     * try meant a tb1 vector threw on the mainnet call for network mismatch and the testnet call
+     * never ran, so the check the vector exists for was never reached.
+     */
     public void fromBech32_withInvalidAddresses_shouldThrow() {
         for (String invalid : INVALID_ADDRESSES) {
-            try {
-                SegwitAddress.fromBech32(MAINNET, invalid);
-                SegwitAddress.fromBech32(TESTNET, invalid);
-                fail(invalid);
-            } catch (AddressFormatException expected) {
-                // expected
-            }
+            assertThrows(invalid, AddressFormatException.class,
+                () -> SegwitAddress.fromBech32(MAINNET, invalid));
+            assertThrows(invalid, AddressFormatException.class,
+                () -> SegwitAddress.fromBech32(TESTNET, invalid));
         }
+    }
+
+    /**
+     * Every supported shape on every network, built from a program rather than transcribed, so the
+     * combinations missing from the vector list above are covered without adding literals that
+     * could be mistyped.
+     */
+    @Test
+    public void toBech32_thenFromBech32_shouldRoundTripOnEveryNetwork() {
+        byte[] pubKeyHash = Utils.HEX.decode("f7ee9ab7297134a0ccc76f3d50e94def17488f2c");
+        byte[] scriptHash =
+            Utils.HEX.decode("1863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262");
+
+        for (NetworkParameters params : new NetworkParameters[]{MAINNET, TESTNET, REGTEST}) {
+            assertRoundTrips(params, 0, pubKeyHash);
+            assertRoundTrips(params, 0, scriptHash);
+            assertRoundTrips(params, 1, scriptHash);
+        }
+    }
+
+    private void assertRoundTrips(NetworkParameters params, int witnessVersion, byte[] program) {
+        SegwitAddress built = SegwitAddress.fromProgram(params, witnessVersion, program);
+        String bech32 = built.toBech32();
+
+        SegwitAddress reparsed = SegwitAddress.fromBech32(params, bech32);
+
+        assertEquals(bech32, built, reparsed);
+        assertEquals(bech32, witnessVersion, reparsed.getWitnessVersion());
+        assertArrayEquals(bech32, program, reparsed.getWitnessProgram());
+        assertTrue(bech32, bech32.startsWith(params.getSegwitHrp() + "1"));
     }
 
     @Test
@@ -270,6 +305,26 @@ public class SegwitAddressTest {
 
         assertEquals(fromProgram, fromBech32);
         assertEquals(fromProgram.hashCode(), fromBech32.hashCode());
+    }
+
+    /**
+     * Upstream compares its Network by reference. NetworkParameters is not an enum, so a second
+     * instance of the same network has to still be equal, or a HashMap lookup misses while
+     * hashCode says the two agree.
+     */
+    @Test
+    public void equals_withASecondInstanceOfTheSameNetwork_shouldReturnTrue() {
+        byte[] program = Utils.HEX.decode("f7ee9ab7297134a0ccc76f3d50e94def17488f2c");
+
+        SegwitAddress fromSingleton = SegwitAddress.fromHash(RegTestParams.get(), program);
+        SegwitAddress fromNewInstance = SegwitAddress.fromHash(new RegTestParams(), program);
+
+        assertEquals(fromSingleton, fromNewInstance);
+        assertEquals(fromSingleton.hashCode(), fromNewInstance.hashCode());
+
+        Map<SegwitAddress, String> byAddress = new HashMap<>();
+        byAddress.put(fromSingleton, "found");
+        assertEquals("found", byAddress.get(fromNewInstance));
     }
 
     @Test

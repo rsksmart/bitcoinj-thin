@@ -28,8 +28,8 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by {@link Base58}, {@link Bech32} and the {@code EncodedPrivateKey} hierarchy of
-     * classes when you try to decode data and the data isn't of the right size. You shouldn't allow the user to proceed
+     * This exception is thrown by {@link Base58}, {@link Bech32} and the address classes when you try to
+     * decode data and the data isn't of the right size. You shouldn't allow the user to proceed
      * in this case.
      */
     public static class InvalidDataLength extends AddressFormatException {
@@ -57,8 +57,8 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by the {@code EncodedPrivateKey} hierarchy of classes when you try and decode an
-     * address or private key with an invalid prefix (version header or human-readable part). You shouldn't allow the
+     * This exception is thrown by the address classes when you try and decode an address with an invalid
+     * prefix (version header or human-readable part). You shouldn't allow the
      * user to proceed in this case.
      */
     public static class InvalidPrefix extends AddressFormatException {
@@ -72,8 +72,8 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by the {@code EncodedPrivateKey} hierarchy of classes when you try and decode an
-     * address with a prefix (version header or human-readable part) that used by another network (usually: mainnet vs
+     * This exception is thrown by the address classes when you try and decode an address with a prefix
+     * (version header or human-readable part) that is used by another network (usually: mainnet vs
      * testnet). You shouldn't allow the user to proceed in this case as they are trying to send money across different
      * chains, an operation that is guaranteed to destroy the money.
      */

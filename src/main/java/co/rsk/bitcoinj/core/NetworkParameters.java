@@ -310,6 +310,10 @@ public abstract class NetworkParameters {
     /**
      * First byte of a base58 encoded P2SH address.  P2SH addresses are defined as part of BIP0013.
      */
+    public int getP2SHHeader() {
+        return p2shHeader;
+    }
+
     /**
      * The human-readable part of a segwit address on this network, as defined by BIP173.
      *
@@ -332,9 +336,6 @@ public abstract class NetworkParameters {
         throw new IllegalStateException("No segwit human-readable part is defined for network " + getId());
     }
 
-    public int getP2SHHeader() {
-        return p2shHeader;
-    }
 
     /** First byte of a base58 encoded dumped private key. See {@link co.rsk.bitcoinj.core.DumpedPrivateKey}. */
     public int getDumpedPrivateKeyHeader() {
