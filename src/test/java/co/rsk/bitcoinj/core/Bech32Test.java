@@ -7,6 +7,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class Bech32Test {
 
@@ -141,6 +142,20 @@ public class Bech32Test {
 
         assertThrows(AddressFormatException.class,
             () -> Bech32.decodeBytes(encoded, "bcrt", Encoding.BECH32M));
+    }
+
+    /**
+     * BIP173 caps an encoded string at 90 characters. Nothing else in this class reaches that
+     * check: every valid vector is well under it, and the invalid ones fail earlier.
+     */
+    @Test
+    public void encode_withOutputLongerThanNinety_shouldThrow() {
+        byte[] tooLong = new byte[60];
+
+        AddressFormatException e = assertThrows(AddressFormatException.class,
+            () -> Bech32.encodeBytes(Bech32.Encoding.BECH32M, "bcrt", tooLong));
+
+        assertTrue(e.getMessage(), e.getMessage().contains("too long"));
     }
 
     @Test
