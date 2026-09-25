@@ -23,15 +23,14 @@ import java.util.Arrays;
  * used by that network. You shouldn't allow the user to proceed in this case as they are trying to send money across
  * different chains, an operation that is guaranteed to destroy the money.
  */
-public class WrongNetworkException extends AddressFormatException {
+public class WrongNetworkException extends AddressFormatException.WrongNetwork {
     /** The version code that was provided in the address. */
     public int verCode;
     /** The list of acceptable versions that were expected given the addresses network parameters. */
     public int[] acceptableVersions;
     
     public WrongNetworkException(int verCode, int[] acceptableVersions) {
-        super("Version code of address did not match acceptable versions for network: " + verCode + " not in " +
-          Arrays.toString(acceptableVersions));
+        super(verCode);
         this.verCode = verCode;
         this.acceptableVersions = acceptableVersions;
     }
