@@ -6,6 +6,7 @@ import co.rsk.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -122,6 +123,30 @@ public class AddressParserTest {
         assertTrue(p2tr, taproot instanceof SegwitAddress);
         assertEquals(p2tr, 1, ((SegwitAddress) taproot).getWitnessVersion());
         assertEquals(p2tr, TAPROOT_PROGRAM, Utils.HEX.encode(taproot.getHash()));
+    }
+
+    /**
+     * Each encoding has to report its own reason. Trying one and falling back to the other made a
+     * malformed address of one kind come back with the other kind's error.
+     */
+    @Test
+    public void parseAddress_withMalformedLegacyAddress_shouldReportABase58Failure() {
+        AddressParser parser = AddressParser.getDefault(REGTEST);
+
+        AddressFormatException e = assertThrows(AddressFormatException.class,
+            () -> parser.parseAddress("n47u2xVMrzaVpgGDK5TJjZHKggM7r8CdAn"));
+
+        assertFalse(e.getMessage(), e.getMessage().contains("Mixed case"));
+    }
+
+    @Test
+    public void parseAddress_withMalformedSegwitAddress_shouldReportABech32Failure() {
+        AddressParser parser = AddressParser.getDefault(REGTEST);
+
+        AddressFormatException e = assertThrows(AddressFormatException.class,
+            () -> parser.parseAddress("bcrt1q7lhf4defwy62pnx8du74p62daut53revy0wmk3"));
+
+        assertTrue(e.getMessage(), e.getMessage().toLowerCase().contains("checksum"));
     }
 
     @Test

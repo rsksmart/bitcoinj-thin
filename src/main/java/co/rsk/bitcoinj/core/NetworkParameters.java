@@ -322,6 +322,19 @@ public abstract class NetworkParameters {
      * so a wrong one does not produce a broken address, it produces a valid one for another
      * network.</p>
      */
+    /**
+     * Whether the textual form carries a segwit human-readable part, of any network.
+     *
+     * <p>Any network, not just this one: a bech32 address for another network has to reach the
+     * segwit decoder so that it is reported as a wrong network, rather than reaching the base58
+     * one and being reported as malformed base58.</p>
+     */
+    public static boolean hasSegwitHrp(String address) {
+        String lowerCase = address.toLowerCase(java.util.Locale.ROOT);
+
+        return lowerCase.startsWith("bc1") || lowerCase.startsWith("tb1") || lowerCase.startsWith("bcrt1");
+    }
+
     public String getSegwitHrp() {
         if (ID_MAINNET.equals(getId())) {
             return "bc";

@@ -38,31 +38,23 @@ public interface AddressParser {
     Address parseAddress(String addressString) throws AddressFormatException;
 
     /**
-     * <p>Base58 first, bech32 second, which is upstream's order. A wrong network is reported as
-     * such from either encoding, rather than being reduced to a format error.</p>
+     * <p>The encoding is chosen by the prefix, not by trying one and falling back to the other.
+     * Upstream tries base58 first and reports its failure whenever bech32 also fails, so a bech32
+     * address for another network comes back as an illegal base58 character. Swapping which
+     * failure wins just moves the problem to the other encoding: a malformed base58 address then
+     * reports a bech32 error. Only picking the decoder up front lets each encoding report its
+     * own reason, which is what a caller reading consensus storage needs.</p>
      *
-     * <p>Upstream's per-network method discards both bech32 failures: it rethrows the base58 one
-     * when bech32 reports the wrong network, and replaces any other bech32 failure with a bare
-     * exception carrying only the input string. Both lose the reason an address was rejected,
-     * which matters when the caller is reading consensus storage. Upstream's own any-network
-     * method reaches the same conclusion on the second: the lossy line is commented out there.</p>
-     *
-     * <p>Letting both through is what removes the inner try altogether, so the structure here is
-     * shorter than upstream's. The base58 catch stays, since without it a wrong network on base58
-     * would fall through and be retried as bech32.</p>
+     * <p>The prefix is matched against the segwit part of any network, not just this one, so that
+     * a bech32 address for another network reaches the segwit decoder and is reported as a wrong
+     * network rather than as malformed base58.</p>
      *
      * @param params the network to parse for
      * @return a parser for that network
      */
     static AddressParser getDefault(NetworkParameters params) {
-        return addressString -> {
-            try {
-                return LegacyAddress.fromBase58(params, addressString);
-            } catch (AddressFormatException.WrongNetwork x) {
-                throw x;
-            } catch (AddressFormatException x) {
-                return SegwitAddress.fromBech32(params, addressString);
-            }
-        };
+        return addressString -> NetworkParameters.hasSegwitHrp(addressString)
+            ? SegwitAddress.fromBech32(params, addressString)
+            : LegacyAddress.fromBase58(params, addressString);
     }
 }
