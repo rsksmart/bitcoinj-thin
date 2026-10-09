@@ -45,6 +45,8 @@ public abstract class NetworkParameters {
     public static final String ID_MAINNET = "org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
     public static final String ID_TESTNET = "org.bitcoin.test";
+    /** The string returned by getId() for testnet4. Must match the value used in the (full) bitcoinj fork. */
+    public static final String ID_TESTNET4 = "org.bitcoin.testnet4";
     /** The string returned by getId() for regtest mode. */
     public static final String ID_REGTEST = "org.bitcoin.regtest";
     /** Unit test network. */
@@ -119,6 +121,30 @@ public abstract class NetworkParameters {
             throw new RuntimeException(e);
         }
         genesisBlock.addTransaction(t);
+        return genesisBlock;
+    }
+
+    /**
+     * Builds a genesis block with a custom coinbase input script and a custom output public key.
+     * Most Bitcoin networks (mainnet, testnet3, regtest) share the original
+     * "The Times 03/Jan/2009 ..." coinbase, but testnet4 (BIP-94) uses a different coinbase
+     * message and output, which produces a different merkle root and genesis hash.
+     * The caller is expected to set the genesis time/difficulty/nonce afterwards.
+     */
+    protected static BtcBlock buildGenesisBlock(NetworkParameters params, byte[] coinbaseScriptSig, byte[] outputPubKey) {
+        BtcBlock genesisBlock = new BtcBlock(params, BtcBlock.BLOCK_VERSION_GENESIS);
+        BtcTransaction coinbaseTransaction = new BtcTransaction(params);
+        try {
+            coinbaseTransaction.addInput(new TransactionInput(params, coinbaseTransaction, coinbaseScriptSig));
+            ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
+            Script.writeBytes(scriptPubKeyBytes, outputPubKey);
+            scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
+            coinbaseTransaction.addOutput(
+                new TransactionOutput(params, coinbaseTransaction, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
+        } catch (Exception cannotHappen) {
+            throw new RuntimeException(cannotHappen);
+        }
+        genesisBlock.addTransaction(coinbaseTransaction);
         return genesisBlock;
     }
 
@@ -207,6 +233,8 @@ public abstract class NetworkParameters {
             return MainNetParams.get();
         } else if (id.equals(ID_TESTNET)) {
             return TestNet3Params.get();
+        } else if (id.equals(ID_TESTNET4)) {
+            return TestNet4Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
         } else if (id.equals(ID_REGTEST)) {
