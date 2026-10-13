@@ -1277,6 +1277,124 @@ public class ScriptTest {
         );
     }
 
+    @Test
+    public void getP2SHSigOpCount_whenRedeemScriptHas16Keys_shouldCount16SigOps() {
+        // Arrange
+        int totalKeys = 16;
+        List<BtcECKey> keys = RedeemScriptUtils.getNKeys(totalKeys);
+        int threshold = 9;
+        Script redeemScript = ScriptBuilder.createRedeemScript(threshold, keys);
+        Script scriptSig = new ScriptBuilder()
+            .smallNum(0)
+            .data(redeemScript.getProgram())
+            .build();
+
+        // Act
+        long sigOpCount = Script.getP2SHSigOpCount(scriptSig.getProgram());
+
+        // Assert
+        assertEquals(totalKeys, sigOpCount);
+    }
+
+    @Test
+    public void isSentToMultiSig_whenRedeemScriptHas16Keys_shouldReturnTrue() {
+        // Arrange
+        int totalKeys = 16;
+        List<BtcECKey> keys = RedeemScriptUtils.getNKeys(totalKeys);
+        int threshold = 9;
+        Script redeemScript = ScriptBuilder.createRedeemScript(threshold, keys);
+
+        // Act & Assert
+        assertTrue(redeemScript.isSentToMultiSig());
+    }
+
+    @Test
+    public void isSentToMultiSig_whenRedeemScriptHasThreshold16_shouldReturnTrue() {
+        // Arrange
+        int totalKeys = 20;
+        List<BtcECKey> keys = RedeemScriptUtils.getNKeys(totalKeys);
+        int threshold = 16;
+        Script redeemScript = ScriptBuilder.createRedeemScript(threshold, keys);
+
+        // Act & Assert
+        assertTrue(redeemScript.isSentToMultiSig());
+    }
+
+    @Test
+    public void getNumberOfSignaturesRequiredToSpend_whenRedeemScriptHasThreshold16_shouldReturn16() {
+        // Arrange
+        int totalKeys = 20;
+        List<BtcECKey> keys = RedeemScriptUtils.getNKeys(totalKeys);
+        int threshold = 16;
+        Script redeemScript = ScriptBuilder.createRedeemScript(threshold, keys);
+
+        // Act
+        int numberOfSignaturesRequired = redeemScript.getNumberOfSignaturesRequiredToSpend();
+
+        // Assert
+        assertEquals(threshold, numberOfSignaturesRequired);
+    }
+
+    @Test
+    public void createP2SHOutputScript_with16Keys_shouldHashRedeemScriptEncodedWithOp16() {
+        // Arrange
+        int totalKeys = 16;
+        List<BtcECKey> keys = RedeemScriptUtils.getNKeys(totalKeys);
+        int threshold = 9;
+
+        // Act
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(threshold, keys);
+
+        // Assert
+        assertTrue(p2shOutputScript.isPayToScriptHash());
+
+        List<BtcECKey> sortedKeys = new ArrayList<>(keys);
+        sortedKeys.sort(BtcECKey.PUBKEY_COMPARATOR);
+        // Script.createMultiSigOutputScript always encodes M and N with OP_N opcodes
+        byte[] expectedRedeemScriptProgram = Script.createMultiSigOutputScript(threshold, sortedKeys);
+        byte[] expectedHash = Utils.sha256hash160(expectedRedeemScriptProgram);
+        assertArrayEquals(expectedHash, p2shOutputScript.getPubKeyHash());
+    }
+
+    @Test
+    public void createMultiSigOutputScript_with17Keys_shouldThrowIAE() {
+        // Arrange
+        int totalKeys = 17;
+        List<BtcECKey> keys = RedeemScriptUtils.getNKeys(totalKeys);
+        int threshold = 9;
+
+        // Act & Assert
+        // Script.createMultiSigOutputScript only supports up to 16 keys (OP_N)
+        assertThrows(IllegalArgumentException.class, () -> Script.createMultiSigOutputScript(threshold, keys));
+    }
+
+    @Test
+    public void createP2SHOutputScript_with17Keys_shouldHashRedeemScriptEncodedWithPushData() {
+        // Arrange
+        int totalKeys = 17;
+        List<BtcECKey> keys = RedeemScriptUtils.getNKeys(totalKeys);
+        int threshold = 9;
+
+        // Act
+        Script p2shOutputScript = ScriptBuilder.createP2SHOutputScript(threshold, keys);
+
+        // Assert
+        assertTrue(p2shOutputScript.isPayToScriptHash());
+        List<BtcECKey> sortedKeys = new ArrayList<>(keys);
+        sortedKeys.sort(BtcECKey.PUBKEY_COMPARATOR);
+        // Build the expected redeem script by hand, with N (17) encoded as a push of 0x11
+        ScriptBuilder expectedRedeemScriptBuilder = new ScriptBuilder().smallNum(threshold);
+        for (BtcECKey key : sortedKeys) {
+            expectedRedeemScriptBuilder.data(key.getPubKey());
+        }
+        Script expectedRedeemScript = expectedRedeemScriptBuilder
+            .data(new byte[]{ 0x11 })
+            .op(OP_CHECKMULTISIG)
+            .build();
+        byte[] expectedHash = Utils.sha256hash160(expectedRedeemScript.getProgram());
+        assertArrayEquals(expectedHash, p2shOutputScript.getPubKeyHash());
+    }
+
     private void assertScriptSigStructure(
         List<ScriptChunk> chunks,
         int expectedChunksSize,
