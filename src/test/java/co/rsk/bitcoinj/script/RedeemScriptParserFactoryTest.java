@@ -1,5 +1,6 @@
 package co.rsk.bitcoinj.script;
 
+import static co.rsk.bitcoinj.script.RedeemScriptUtils.getNKeys;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -40,8 +41,8 @@ public class RedeemScriptParserFactoryTest {
 
     @Test(expected = ScriptException.class)
     public void get_whenMalFormedRedeemScript_shouldThrowScriptException() {
-        Script malFormeScript = RedeemScriptUtils.createCustomRedeemScript(defaultRedeemScriptKeys);
-        RedeemScriptParserFactory.get(malFormeScript.getChunks());
+        Script malFormedScript = RedeemScriptUtils.createCustomRedeemScript(defaultRedeemScriptKeys);
+        RedeemScriptParserFactory.get(malFormedScript.getChunks());
     }
 
     @Test(expected = ScriptException.class)
@@ -135,9 +136,45 @@ public class RedeemScriptParserFactoryTest {
     }
 
     @Test
+    public void get_whenP2shErpRedeemScript_with16Members_shouldReturnRedeemScriptParser() {
+        List<BtcECKey> btcMembersKeys = getNKeys(16);
+
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+            btcMembersKeys,
+            emergencyRedeemScriptKeys,
+            CSV_VALUE
+        );
+
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(redeemScript.getChunks());
+
+        Assert.assertTrue(redeemScriptParser instanceof P2shErpRedeemScriptParser);
+    }
+
+    @Test
     public void get_whenFlyoverP2shErpRedeemScript_shouldReturnRedeemScriptParser() {
         Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
             defaultRedeemScriptKeys,
+            emergencyRedeemScriptKeys,
+            CSV_VALUE
+        );
+
+        Script flyoverRedeemScript = RedeemScriptUtils.createFlyoverRedeemScript(
+            FLYOVER_DERIVATION_HASH,
+            redeemScript
+        );
+
+        RedeemScriptParser redeemScriptParser = RedeemScriptParserFactory.get(flyoverRedeemScript.getChunks());
+
+        assertTrue(redeemScriptParser instanceof FlyoverRedeemScriptParser);
+        assertTrue(redeemScriptParser.hasErpFormat());
+    }
+
+    @Test
+    public void get_whenFlyoverP2shErpRedeemScript_with16Members_shouldReturnRedeemScriptParser() {
+        List<BtcECKey> btcMembersKeys = getNKeys(16);
+
+        Script redeemScript = RedeemScriptUtils.createP2shErpRedeemScript(
+            btcMembersKeys,
             emergencyRedeemScriptKeys,
             CSV_VALUE
         );
