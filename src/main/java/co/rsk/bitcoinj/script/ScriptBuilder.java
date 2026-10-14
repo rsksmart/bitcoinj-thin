@@ -118,7 +118,7 @@ public class ScriptBuilder {
      * shortest encoding possible.
      */
     public ScriptBuilder number(long num) {
-        if (num >= 0 && num < 16) {
+        if (num >= 0 && num <= 16) {
             return smallNum((int) num);
         } else {
             return bigNum(num);
@@ -130,7 +130,7 @@ public class ScriptBuilder {
      * uses shortest encoding possible.
      */
     public ScriptBuilder number(int index, long num) {
-        if (num >= 0 && num < 16) {
+        if (num >= 0 && num <= 16) {
             return addChunk(index, new ScriptChunk(Script.encodeToOpN((int) num), null));
         } else {
             return bigNum(index, num);
@@ -440,8 +440,8 @@ public class ScriptBuilder {
      * redeem script in the lexicographical sorting order.
      */
     public static Script createRedeemScript(int threshold, List<BtcECKey> pubkeys) {
-        pubkeys = new ArrayList<BtcECKey>(pubkeys);
-        Collections.sort(pubkeys, BtcECKey.PUBKEY_COMPARATOR);
+        pubkeys = new ArrayList<>(pubkeys);
+        pubkeys.sort(BtcECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
     }
 
